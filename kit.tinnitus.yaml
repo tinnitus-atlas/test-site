@@ -79,13 +79,14 @@ doi_check:
   require_quote_match: true
 
 feeds:
-  trials: { source: clinicaltrials_gov_v2, condition: tinnitus, condition_record: "tin:tinnitus", max_results: 50 }
+  trials: { source: clinicaltrials_gov_v2, condition: tinnitus, condition_record: "tin:tinnitus", since_days: 30, max_results: 100 }
   papers: { source: europe_pmc, query: 'TITLE:"tinnitus"', since_days: 30, max_results: 50 }
   devices:
     source: openfda_device
     classification_query: tinnitus   # discover product codes whose device name mentions tinnitus
     product_codes: [QVN]             # QVN: combined acoustic and electrical stimulation device for tinnitus
-    max_results: 50
+    since_days: 90                   # FDA decisions are rare; older ones belong to a one-off backfill
+    max_results: 100
 
 # Records that claim a regulatory status must cite the regulator itself.
 regulatory:

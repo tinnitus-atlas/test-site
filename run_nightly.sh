@@ -69,7 +69,8 @@ esac
 COUNT="$(python3 -c "import json;print(json.load(open('$REPORTS/proposals.json')).get('count',0))" 2>/dev/null || echo 0)"
 {
   echo "Nightly run $DAY"
-  cat "$REPORTS/summary.md"
+  if [ "$EXPORT" -eq 0 ] || [ "$EXPORT" -eq 3 ]; then cat "$REPORTS/summary.md"
+  else sed 's/^Status: all clear$/Status: Biolink export problems (checks otherwise clear)/' "$REPORTS/summary.md"; fi
   echo "$APPLY_LINE"
   echo "$HELD_LINE"
   echo "$EXPORT_LINE"
@@ -109,6 +110,7 @@ if [ "${NO_GIT:-0}" != "1" ] && [ "$COUNT" -gt 0 ]; then
   git checkout -q main >>"$LOG" 2>&1
 fi
 
+[ "${NO_GIT:-0}" = "1" ] && [ "$COUNT" -gt 0 ] && PR_LINE="No pull request (git disabled for this run)"
 echo "$PR_LINE" >> "$REPORTS/nightly.md"
 
 cat "$REPORTS/nightly.md"

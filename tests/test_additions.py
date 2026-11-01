@@ -1,5 +1,6 @@
 """Tests for the device feed, the regulatory audit rule and the manual quote override."""
 import copy
+import datetime as dt
 import json
 import sys
 import urllib.parse
@@ -33,7 +34,7 @@ DEVICE_ROUTES = {
     "classification.json": {"results": [{"product_code": "KLW", "device_name": "Masker, Tinnitus"}]},
     "510k.json": {"results": [
         {"k_number": "K999999", "device_name": "Example Sound Generator", "applicant": "Example Co",
-         "decision_date": "2026-09-01", "decision_description": "Substantially Equivalent", "product_code": "KLW"}]},
+         "decision_date": (dt.date.today() - dt.timedelta(days=10)).isoformat(), "decision_description": "Substantially Equivalent", "product_code": "KLW"}]},
 }
 
 
@@ -55,6 +56,31 @@ def test_device_feed_no_matches_is_empty_not_outage():
 def test_device_feed_outage():
     rep = feeds.devices(REAL, CFG["feeds"]["devices"], standin({}))
     assert rep["status"] == "unreachable"
+
+
+def test_device_feed_ignores_decisions_before_window():
+    routes = copy.deepcopy(DEVICE_ROUTES)
+    routes["510k.json"]["results"].append({"k_number": "K013827", "device_name": "Old masker", "decision_date": "2002-01-15"})
+    rep = feeds.devices(REAL, CFG["feeds"]["devices"], standin(routes))
+    assert [c["number"] for c in rep["candidates"]] == ["K999999"]
+
+
+def test_trial_feed_ignores_trials_not_updated_in_window(tmp_path):
+    recent = (dt.date.today() - dt.timedelta(days=3)).isoformat()
+    payload = {"studies": [
+        {"protocolSection": {"identificationModule": {"nctId": "NCT01111111", "briefTitle": "Old"},
+                             "statusModule": {"lastUpdatePostDateStruct": {"date": "2015-05-01"}}}},
+        {"protocolSection": {"identificationModule": {"nctId": "NCT02222222", "briefTitle": "Recent"},
+                             "statusModule": {"lastUpdatePostDateStruct": {"date": recent}}}}]}
+    rep = feeds.trials(REAL, CFG["feeds"]["trials"], standin({"query.cond=tinnitus": payload}))
+    assert [c["nct"] for c in rep["candidates"]] == ["NCT02222222"]
+
+
+def test_lenire_is_known_so_its_de_novo_is_not_proposed_as_new():
+    routes = {"classification.json": FetchError("404 for x"),
+              "510k.json": {"results": [{"k_number": "DEN210033", "device_name": "Lenire Tinnitus Treatment Device",
+                                         "decision_date": (dt.date.today() - dt.timedelta(days=5)).isoformat()}]}}
+    assert feeds.devices(REAL, CFG["feeds"]["devices"], standin(routes))["candidates"] == []
 
 
 def test_device_feed_skips_known_numbers():

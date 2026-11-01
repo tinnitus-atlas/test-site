@@ -28,7 +28,7 @@ if ! command -v kgx >/dev/null 2>&1; then
 fi
 
 echo "Running KGX validator (Biolink $VERSION) on the core graph..."
-if kgx validate --input-format jsonl --biolink-release "$VERSION" \
+if kgx validate --input-format jsonl --biolink-release "v$VERSION" \
      --output "$OUT/kgx_validation.json" "$OUT/core_nodes.jsonl" "$OUT/core_edges.jsonl"; then
   echo "KGX validation passed. Report: $OUT/kgx_validation.json"
 else

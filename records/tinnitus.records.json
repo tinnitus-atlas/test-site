@@ -169,6 +169,10 @@
         "fda_regulation": {
           "value": "21 CFR 874.3410",
           "source": "https://public-inspection.federalregister.gov/2026-11589.pdf"
+        },
+        "fda_submission_number": {
+          "value": "DEN210033",
+          "source": "https://api.fda.gov/device/510k.json?search=k_number:DEN210033"
         }
       },
       "sources": [

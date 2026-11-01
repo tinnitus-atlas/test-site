@@ -48,6 +48,7 @@ def trials(records: list[dict], conf: dict, http: Http) -> dict:
     except FetchError as exc:
         return {"status": "unreachable", "error": str(exc), "candidates": []}
     have = known_ncts(records)
+    since = (today() - dt.timedelta(days=int(conf.get("since_days", 30)))).isoformat()
     out = []
     for s in (data or {}).get("studies") or []:
         p = s.get("protocolSection") or {}
@@ -55,12 +56,14 @@ def trials(records: list[dict], conf: dict, http: Http) -> dict:
         nct = str(ident.get("nctId") or "").upper()
         if not nct or nct in have:
             continue
+        if ((p.get("statusModule") or {}).get("lastUpdatePostDateStruct") or {}).get("date", "9999") < since:
+            continue  # older backlog belongs to a deliberate backfill, not to the nightly proposals
         out.append({"nct": nct, "title": ident.get("briefTitle"), "status": (st.get("overallStatus") or "").lower(),
                     "phase": "/".join(x.lower() for x in des.get("phases") or []) or None,
                     "sponsor": ((p.get("sponsorCollaboratorsModule") or {}).get("leadSponsor") or {}).get("name"),
                     "last_update": (st.get("lastUpdatePostDateStruct") or {}).get("date"),
                     "url": f"https://clinicaltrials.gov/study/{nct}"})
-    return {"status": "ok", "candidates": out}
+    return {"status": "ok", "since": since, "candidates": out}
 
 
 def papers(records: list[dict], conf: dict, http: Http) -> dict:
@@ -126,16 +129,19 @@ def devices(records: list[dict], conf: dict, http: Http) -> dict:
     except FetchError as exc:
         return {"status": "unreachable", "error": str(exc), "candidates": []}
     have = known_device_numbers(records)
+    since = (today() - dt.timedelta(days=int(conf.get("since_days", 90)))).isoformat()
     out = []
     for row in rows:
         number = str(row.get("k_number") or "").upper()
         if not number or number in have:
             continue
+        if str(row.get("decision_date") or "9999") < since:
+            continue  # decided before the window: backfill, not news
         query = f"{OPENFDA}/510k.json?{qs({'search': f'k_number:{number}'})}"
         out.append({"number": number, "device_name": row.get("device_name"), "applicant": row.get("applicant"),
                     "decision_date": row.get("decision_date"), "decision": row.get("decision_description") or row.get("decision_code"),
                     "product_code": row.get("product_code"), "url": query})
-    return {"status": "ok", "product_codes": sorted(codes), "candidates": out}
+    return {"status": "ok", "since": since, "product_codes": sorted(codes), "candidates": out}
 
 
 def run(records: list[dict], cfg: dict, http: Http, reports_dir) -> dict:
