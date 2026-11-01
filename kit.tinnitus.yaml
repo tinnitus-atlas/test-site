@@ -103,7 +103,7 @@ proposals:
 site:
   title: Tinnitus Atlas
   tagline: An open, cited map of what is known about tinnitus, checked every night.
-  base_url: https://example.org          # replace with the real address before launch
+  base_url: https://test-site.pages.dev   # the Cloudflare Pages address; change when a domain is chosen
   repo_url: https://github.com/tinnitus-atlas/test-site
   licence_data: CC BY 4.0                 # undecided (CC BY vs CC BY-NC plus paid access); test_site overrides it
   test_site: true                         # hides the site from search engines and labels it unreviewed; set false at launch
