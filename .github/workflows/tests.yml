@@ -1,0 +1,20 @@
+# Runs the automated tests and a test build of the website on every change.
+name: Tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: git clone --depth 1 --branch v4.4.6 https://github.com/biolink/biolink-model /tmp/biolink-model
+      - run: BIOLINK_DIR=/tmp/biolink-model python3 -m pytest -q tests
+      - run: python3 site/build_site.py --config kit.tinnitus.yaml --records records/tinnitus.records.json --out public

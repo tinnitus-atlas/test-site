@@ -1,0 +1,145 @@
+# Knowledge Quality Kit configuration: tinnitus knowledge graph (v0.1)
+# Read by export_biolink.py (sections: project, biolink, kinds, predicates)
+# and by the quality checks (sections: freshness, registries, proposals).
+
+project:
+  name: Tinnitus Knowledge Graph
+  prefix: tin                     # own identifier namespace, e.g. tin:tinnitus
+  primary_knowledge_source: infores:tinnitus-kg   # own value; replace if registered elsewhere
+  default_agent_type: automated_agent
+  default_knowledge_level: knowledge_assertion
+
+biolink:
+  version: "4.4.6"
+  # Files are fetched from the release tag and cached unless --biolink-dir is given.
+  model_url: https://raw.githubusercontent.com/biolink/biolink-model/v{version}/src/biolink_model/schema/biolink_model.yaml
+  context_url: https://raw.githubusercontent.com/biolink/biolink-model/v{version}/project/jsonld/biolink_model.context.jsonld
+
+# Record kind -> Biolink categories. A record may override with its own "category" list.
+# export: false keeps a kind out of the Biolink graph (it stays on the website).
+kinds:
+  condition:        { category: [biolink:PhenotypicFeature] }      # tinnitus and its subtypes (HP)
+  related_condition: { category: [biolink:Disease] }               # hearing loss, Meniere's (MONDO)
+  mechanism:        { category: [biolink:PathologicalProcess] }
+  drug:             { category: [biolink:Drug] }
+  intervention:     { category: [biolink:Treatment] }              # CBT, sound therapy, neuromodulation therapy
+  device:           { category: [biolink:Device] }                 # specific device products
+  app:              { category: [biolink:Device] }                 # regulated digital therapeutics only
+  trial:            { category: [biolink:ClinicalTrial] }
+  paper:            { category: [biolink:JournalArticle] }
+  researcher:       { category: [biolink:Agent] }
+  organisation:     { category: [biolink:Agent] }
+  gene:             { category: [biolink:Gene] }
+  anatomy:          { category: [biolink:AnatomicalEntity] }
+  risk_factor:      { category: [biolink:EnvironmentalExposure] }
+  measure:          { category: [biolink:ClinicalMeasurement] }
+  open_question:    { export: false }
+
+# Project relationship name -> Biolink predicate.
+predicates:
+  treats: biolink:treats
+  in_trials_for: biolink:in_clinical_trials_for
+  studied_to_treat: biolink:studied_to_treat
+  applied_to_treat: biolink:applied_to_treat
+  ameliorates: biolink:ameliorates_condition
+  beneficial_in_models_for: biolink:beneficial_in_models_for
+  side_effect: biolink:has_side_effect
+  adverse_event: biolink:has_adverse_event
+  contributes_to: biolink:contributes_to
+  causes: biolink:causes
+  predisposes_to: biolink:predisposes_to_condition
+  subtype_of: biolink:subclass_of
+  has_phenotype: biolink:has_phenotype
+  target_for: biolink:target_for
+  located_in: biolink:located_in
+  member_of: biolink:member_of
+  studies_condition: biolink:related_to      # trial -> condition; Biolink has no closer predicate
+  related_to: biolink:related_to
+
+# ---- Used by the quality checks, not by the exporter ----
+
+freshness:                       # maximum age of asOf, in days
+  - { kinds: [trial], status: [recruiting, active, not_yet_recruiting], days: 120, critical: true }
+  - { kinds: [drug, intervention, device, app], days: 180, critical: true }
+  - { kinds: [condition, related_condition], days: 180, critical: true }
+  - { kinds: [trial], days: 365, critical: false }
+  - { kinds: [mechanism, gene, anatomy, risk_factor, measure], days: 365, critical: false }
+  - { kinds: [researcher, organisation], days: 365, critical: false }
+  - { kinds: [paper], days: 730, critical: false }
+  - { kinds: [open_question], days: 180, critical: false }
+critical_stale_limit: 0.05       # build fails above 5 percent of critical records
+
+registries:                      # fact-check sources
+  - { kind: trial, source: clinicaltrials_gov_v2, id_field: xrefs, id_prefix: CLINICALTRIALS,
+      compare: [overall_status, phase, primary_completion_date, enrollment] }
+  - { kind: drug, source: openfda_label, compare: [us_approval], enabled: false }
+
+doi_check:
+  resolver: europe_pmc
+  require_quote_match: true
+
+feeds:
+  trials: { source: clinicaltrials_gov_v2, condition: tinnitus, condition_record: "tin:tinnitus", max_results: 50 }
+  papers: { source: europe_pmc, query: 'TITLE:"tinnitus"', since_days: 30, max_results: 50 }
+  devices:
+    source: openfda_device
+    classification_query: tinnitus   # discover product codes whose device name mentions tinnitus
+    product_codes: [QVN]             # QVN: combined acoustic and electrical stimulation device for tinnitus
+    max_results: 50
+
+# Records that claim a regulatory status must cite the regulator itself.
+regulatory:
+  claim_terms: [approved, approval, cleared, clearance, authorised, authorized, authorisation, authorization,
+                de novo, ce mark, ce-marked, licensed]
+  fact_prefixes: [fda_, ema_, mhra_, regulatory_]
+  regulator_domains: [fda.gov, federalregister.gov, ecfr.gov, ema.europa.eu, ec.europa.eu, gov.uk,
+                      tga.gov.au, canada.ca, pmda.go.jp]
+
+proposals:
+  auto_apply_sources: []         # none: every change waits for a person
+
+# ---- Website (read by site/build_site.py) ----
+site:
+  title: Tinnitus Atlas
+  tagline: An open, cited map of what is known about tinnitus, checked every night.
+  base_url: https://example.org          # replace with the real address before launch
+  repo_url: https://github.com/tinnitus-atlas/test-site
+  licence_data: CC BY 4.0                 # undecided (CC BY vs CC BY-NC plus paid access); test_site overrides it
+  test_site: true                         # hides the site from search engines and labels it unreviewed; set false at launch
+  licence_code: MIT
+  kinds:                                  # order and labels on the site
+    condition: { label: Condition, plural: Conditions, path: conditions, schema: MedicalCondition }
+    related_condition: { label: Related condition, plural: Related conditions, path: related-conditions, schema: MedicalCondition }
+    intervention: { label: Treatment, plural: Treatments, path: treatments, schema: MedicalTherapy }
+    drug: { label: Drug, plural: Drugs, path: drugs, schema: Drug }
+    device: { label: Device, plural: Devices, path: devices, schema: MedicalDevice }
+    app: { label: App, plural: Apps, path: apps, schema: SoftwareApplication }
+    trial: { label: Trial, plural: Trials, path: trials, schema: MedicalTrial }
+    mechanism: { label: Mechanism, plural: Mechanisms, path: mechanisms, schema: MedicalEntity }
+    risk_factor: { label: Risk factor, plural: Risk factors, path: risk-factors, schema: MedicalRiskFactor }
+    measure: { label: Measure, plural: Measures, path: measures, schema: MedicalEntity }
+    gene: { label: Gene, plural: Genes, path: genes, schema: Gene }
+    anatomy: { label: Anatomy, plural: Anatomy, path: anatomy, schema: AnatomicalStructure }
+    paper: { label: Paper or guideline, plural: Papers and guidelines, path: papers, schema: ScholarlyArticle }
+    researcher: { label: Researcher, plural: Researchers, path: researchers, schema: Person }
+    organisation: { label: Organisation, plural: Organisations, path: organisations, schema: Organization }
+    open_question: { label: Open question, plural: Open questions, path: open-questions, schema: Question }
+  predicate_labels:                       # forward phrase | reverse phrase
+    treats: [treats, treated by]
+    in_trials_for: [in clinical trials for, in clinical trials]
+    studied_to_treat: [studied as a treatment for, studied treatments]
+    applied_to_treat: [used off-label for, used off-label]
+    ameliorates: [improves, improved by]
+    beneficial_in_models_for: [helped in lab or animal models of, helped in models]
+    side_effect: [has the side effect, side effect of]
+    adverse_event: [has the adverse event, adverse event of]
+    contributes_to: [contributes to, contributing factors]
+    causes: [causes, caused by]
+    predisposes_to: [raises the risk of, raised by]
+    subtype_of: [is a subtype of, subtypes]
+    has_phenotype: [features, featured in]
+    target_for: [proposed drug target for, proposed drug targets]
+    located_in: [located in, location of]
+    member_of: [member of, members]
+    studies_condition: [studies, studied in]
+    related_to: [related to, related]

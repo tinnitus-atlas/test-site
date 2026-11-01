@@ -1,0 +1,36 @@
+# Runs every check against the real services (Europe PMC, ClinicalTrials.gov, openFDA) and the official
+# Biolink validator, without changing any file. Start it from the Actions tab > Live check > Run workflow.
+# The digest appears on the run's summary page; the full reports are attached to the run.
+name: Live check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: git clone --depth 1 --branch v4.4.6 https://github.com/biolink/biolink-model /tmp/biolink-model
+      - name: Run all checks (no git changes)
+        env:
+          NO_GIT: "1"
+          BIOLINK_DIR: /tmp/biolink-model
+        run: |
+          chmod +x run_nightly.sh run_validation.sh
+          code=0; ./run_nightly.sh || code=$?
+          { echo "## Live check (exit code $code: 0 all clear, 1 blocking findings, 2 run failed)"; echo; \
+            cat reports/nightly.md 2>/dev/null || echo "nightly.md missing"; } >> "$GITHUB_STEP_SUMMARY"
+          [ "$code" -lt 2 ]
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: |
+            reports/
+            exports/

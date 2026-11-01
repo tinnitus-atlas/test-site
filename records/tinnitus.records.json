@@ -1,0 +1,324 @@
+{
+  "_note": "Starter records for a tinnitus knowledge graph. Every quote was copied from the linked source on 2026-10-31 and is kept under 15 words. agentType is automated_agent until a person approves each relationship. Not medical advice.",
+  "records": [
+    {
+      "id": "tin:tinnitus",
+      "kind": "condition",
+      "name": "Tinnitus",
+      "tldr": "Hearing a sound such as ringing, buzzing or hissing when no outside sound is present.",
+      "asOf": "2026-10-31",
+      "xrefs": [
+        "HP:0000360"
+      ],
+      "sources": [
+        {
+          "url": "https://hsrc.himmelfarb.gwu.edu/smhs_surgery_facpubs/230",
+          "label": "Clinical practice guideline: Tinnitus (Tunkel et al., 2014)",
+          "pmid": "25273878"
+        },
+        {
+          "url": "https://iegext02.helmholtz-munich.de/phenodis/symptom/show/287",
+          "label": "Human Phenotype Ontology term for tinnitus"
+        }
+      ]
+    },
+    {
+      "id": "tin:hearing-impairment",
+      "kind": "related_condition",
+      "name": "Hearing impairment",
+      "tldr": "Reduced ability to hear sound; hearing-related factors are among the few tinnitus risk factors with supporting evidence.",
+      "asOf": "2026-10-31",
+      "xrefs": [
+        "HP:0000365"
+      ],
+      "sources": [
+        {
+          "url": "https://pred.uni-regensburg.de/id/eprint/58235/",
+          "label": "Low evidence for tinnitus risk factors: a systematic review and meta-analysis (Biswas et al., 2023)"
+        },
+        {
+          "url": "https://iegext02.helmholtz-munich.de/phenodis/symptom/show/292",
+          "label": "Human Phenotype Ontology term for hearing impairment"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "contributes_to",
+          "object": "tin:tinnitus",
+          "quote": "positive causal associations were found for various hearing-related factors",
+          "sourceUrl": "https://pred.uni-regensburg.de/id/eprint/58235/",
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        }
+      ]
+    },
+    {
+      "id": "tin:cbt",
+      "kind": "intervention",
+      "name": "Cognitive behavioural therapy for tinnitus",
+      "tldr": "A talking therapy that changes how a person thinks about and reacts to tinnitus, rather than removing the sound.",
+      "asOf": "2026-10-31",
+      "sources": [
+        {
+          "url": "https://www.cochrane.org/evidence/CD012614_cognitive-behavioural-therapy-tinnitus",
+          "label": "Cognitive behavioural therapy for tinnitus (Cochrane review, Fuller et al., 2020)",
+          "doi": "10.1002/14651858.CD012614.pub2"
+        },
+        {
+          "url": "https://github.com/monarch-initiative/MAXO",
+          "label": "Medical Action Ontology (MAXO): term MAXO:0000883, cognitive behavior therapy"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "ameliorates",
+          "object": "tin:tinnitus",
+          "quote": "reducing the negative impact that tinnitus can have on quality of life",
+          "publications": [
+            "doi:10.1002/14651858.CD012614.pub2"
+          ],
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        }
+      ],
+      "xrefs": [
+        "MAXO:0000883"
+      ]
+    },
+    {
+      "id": "tin:sound-therapy-devices",
+      "kind": "intervention",
+      "name": "Sound therapy with hearing aids or sound generators",
+      "tldr": "Devices that amplify outside sound or add background sound; a 2018 review found they may make little or no difference to tinnitus severity, on low-certainty evidence.",
+      "asOf": "2026-10-31",
+      "sources": [
+        {
+          "url": "https://cochrane.org/evidence/CD013094_sound-therapy-using-amplification-devices-or-sound-generators-tinnitus",
+          "label": "Sound therapy (using amplification devices or sound generators) for tinnitus (Cochrane review, Sereda et al., 2018)",
+          "doi": "10.1002/14651858.CD013094.pub2"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "studied_to_treat",
+          "object": "tin:tinnitus",
+          "quote": "might result in little or no difference in tinnitus symptom severity",
+          "publications": [
+            "doi:10.1002/14651858.CD013094.pub2"
+          ],
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        }
+      ],
+      "closeMatches": [
+        {
+          "id": "MAXO:0009030",
+          "label": "hearing aid usage",
+          "note": "covers hearing aids only, not sound generators; not an exact match"
+        }
+      ]
+    },
+    {
+      "id": "tin:bimodal-neuromodulation",
+      "kind": "intervention",
+      "name": "Bimodal neuromodulation (sound plus tongue stimulation)",
+      "tldr": "Pairs sounds played through headphones with mild electrical pulses to the tongue, aiming to retrain how the brain processes sound.",
+      "asOf": "2026-10-31",
+      "sources": [
+        {
+          "url": "https://repository.nottingham.ac.uk/entities/publication/4a193b32-1954-4764-a447-ef2f365252b3",
+          "label": "Bimodal neuromodulation combining sound and tongue stimulation reduces tinnitus symptoms (Conlon et al., 2020)",
+          "doi": "10.1126/scitranslmed.abb2830"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "studied_to_treat",
+          "object": "tin:tinnitus",
+          "quote": "participants achieved a statistically significant reduction in tinnitus symptom severity",
+          "publications": [
+            "doi:10.1126/scitranslmed.abb2830"
+          ],
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        }
+      ],
+      "closeMatches": [
+        {
+          "id": "MAXO:0000939",
+          "label": "stimulation procedure",
+          "note": "much broader parent term; no exact MAXO term exists yet"
+        }
+      ]
+    },
+    {
+      "id": "tin:lenire",
+      "kind": "device",
+      "name": "Lenire",
+      "tldr": "A commercial bimodal neuromodulation device for tinnitus; the FDA classified it as a class II device through the De Novo pathway on 6 March 2023.",
+      "asOf": "2026-10-31",
+      "facts": {
+        "fda_decision_date": {
+          "value": "2023-03-06",
+          "source": "https://public-inspection.federalregister.gov/2026-11589.pdf"
+        },
+        "fda_device_class": {
+          "value": "II",
+          "source": "https://public-inspection.federalregister.gov/2026-11589.pdf"
+        },
+        "fda_regulation": {
+          "value": "21 CFR 874.3410",
+          "source": "https://public-inspection.federalregister.gov/2026-11589.pdf"
+        }
+      },
+      "sources": [
+        {
+          "url": "https://public-inspection.federalregister.gov/2026-11589.pdf",
+          "label": "FDA final order: classification of the combined acoustic and electrical external stimulation device for the relief of tinnitus (Federal Register, Docket FDA-2026-N-6010)"
+        },
+        {
+          "url": "https://www.lenire.com/lenire-granted-fda-approval/",
+          "label": "Lenire granted FDA approval (manufacturer announcement, 2023)"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "studied_to_treat",
+          "object": "tin:tinnitus",
+          "quote": "On March 6, 2023, FDA issued an order to the requester classifying the device into class II.",
+          "sourceUrl": "https://public-inspection.federalregister.gov/2026-11589.pdf",
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        },
+        {
+          "predicate": "related_to",
+          "object": "tin:bimodal-neuromodulation",
+          "quote": "a combined acoustic and electrical intraoral stimulation device for the relief of tinnitus",
+          "sourceUrl": "https://www.lenire.com/lenire-granted-fda-approval/",
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        },
+        {
+          "predicate": "related_to",
+          "object": "tin:neuromod-devices",
+          "knowledgeLevel": "not_provided",
+          "agentType": "automated_agent"
+        }
+      ]
+    },
+    {
+      "id": "tin:neuromod-devices",
+      "kind": "organisation",
+      "name": "Neuromod Devices",
+      "tldr": "Dublin-based company that makes the Lenire tinnitus treatment device.",
+      "asOf": "2026-10-31",
+      "sources": [
+        {
+          "url": "https://www.lenire.com/lenire-granted-fda-approval/",
+          "label": "Lenire granted FDA approval (manufacturer announcement, 2023)"
+        }
+      ]
+    },
+    {
+      "id": "tin:trial-tent-a",
+      "kind": "trial",
+      "name": "Treatment Evaluation of Neuromodulation for Tinnitus (TENT-A)",
+      "tldr": "Randomised, triple-blind exploratory trial in Ireland and Germany comparing three bimodal stimulation settings over 12 weeks.",
+      "asOf": "2026-10-31",
+      "xrefs": [
+        "CLINICALTRIALS:NCT02669069"
+      ],
+      "sources": [
+        {
+          "url": "https://clinicaltrials.gov/study/NCT02669069",
+          "label": "ClinicalTrials.gov registry entry NCT02669069"
+        },
+        {
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5665258",
+          "label": "Bi-modal stimulation in the treatment of tinnitus: study protocol (BMJ Open, 2017)",
+          "doi": "10.1136/bmjopen-2017-018465",
+          "pmid": "29074518"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "studies_condition",
+          "object": "tin:tinnitus",
+          "quote": "Bi-modal stimulation in the treatment of tinnitus",
+          "publications": [
+            "doi:10.1136/bmjopen-2017-018465"
+          ],
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        },
+        {
+          "predicate": "related_to",
+          "object": "tin:bimodal-neuromodulation",
+          "knowledgeLevel": "not_provided",
+          "agentType": "automated_agent"
+        }
+      ]
+    },
+    {
+      "id": "tin:tinnitus-handicap-inventory",
+      "kind": "measure",
+      "name": "Tinnitus Handicap Inventory (THI)",
+      "tldr": "A self-report questionnaire that scores how much tinnitus affects daily life.",
+      "asOf": "2026-10-31",
+      "sources": [
+        {
+          "url": "https://www.qxmd.com/r/8630207",
+          "label": "Development of the Tinnitus Handicap Inventory (Newman, Jacobson and Spitzer, 1996)",
+          "pmid": "8630207"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "related_to",
+          "object": "tin:tinnitus",
+          "quote": "The total scale yielded excellent internal consistency reliability",
+          "publications": [
+            "PMID:8630207"
+          ],
+          "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent"
+        }
+      ]
+    },
+    {
+      "id": "tin:aao-hns-guideline-2014",
+      "kind": "paper",
+      "name": "Clinical practice guideline: Tinnitus (AAO-HNSF, 2014)",
+      "tldr": "US clinical guideline that recommends cognitive behavioural therapy for persistent, bothersome tinnitus and hearing aid evaluation when hearing loss is present.",
+      "asOf": "2026-10-31",
+      "xrefs": [
+        "PMID:25273878"
+      ],
+      "sources": [
+        {
+          "url": "https://hsrc.himmelfarb.gwu.edu/smhs_surgery_facpubs/230",
+          "label": "Clinical practice guideline: Tinnitus (Tunkel et al., 2014)",
+          "pmid": "25273878"
+        },
+        {
+          "url": "https://apps.asha.org/EvidenceMaps/Articles/ArticleSummary/8129f8e7-1e46-4886-b59b-f94df2a0b86a",
+          "label": "ASHA Evidence Maps summary of the 2014 tinnitus guideline"
+        }
+      ],
+      "relations": [
+        {
+          "predicate": "related_to",
+          "object": "tin:cbt",
+          "knowledgeLevel": "not_provided",
+          "agentType": "automated_agent"
+        },
+        {
+          "predicate": "related_to",
+          "object": "tin:sound-therapy-devices",
+          "knowledgeLevel": "not_provided",
+          "agentType": "automated_agent"
+        }
+      ]
+    }
+  ]
+}

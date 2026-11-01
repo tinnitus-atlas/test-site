@@ -1,0 +1,103 @@
+{
+  "_note": "Example records for testing the exporter. Names, identifiers other than HP:0000360, publications and quotes are placeholders, not medical facts.",
+  "records": [
+    {
+      "id": "tin:tinnitus",
+      "kind": "condition",
+      "name": "Tinnitus",
+      "tldr": "Hearing sound, such as ringing, when no external sound is present.",
+      "asOf": "2026-11-02",
+      "xrefs": ["HP:0000360"],
+      "sources": [{ "url": "https://hpo.jax.org/", "label": "Human Phenotype Ontology" }]
+    },
+    {
+      "id": "tin:pulsatile-tinnitus",
+      "kind": "condition",
+      "name": "Example subtype",
+      "tldr": "Placeholder subtype record with no standard identifier yet.",
+      "asOf": "2026-11-02",
+      "sources": [{ "url": "https://example.org/subtype", "label": "Example source" }],
+      "relations": [
+        { "predicate": "subtype_of", "object": "tin:tinnitus", "knowledgeLevel": "knowledge_assertion",
+          "agentType": "manual_agent", "publications": ["PMID:00000000"], "quote": "EXAMPLE quote." }
+      ]
+    },
+    {
+      "id": "tin:example-drug-a",
+      "kind": "drug",
+      "name": "Example drug A",
+      "tldr": "Placeholder drug record.",
+      "asOf": "2026-11-02",
+      "xrefs": ["CHEBI:0000001"],
+      "sources": [{ "url": "https://example.org/drug", "label": "Example source" }],
+      "relations": [
+        { "predicate": "in_trials_for", "object": "tin:tinnitus", "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent", "primarySource": "infores:clinical-trials-gov",
+          "publications": ["PMID:00000000"], "quote": "EXAMPLE quote." },
+        { "predicate": "predisposes_to", "object": "tin:missing-record", "knowledgeLevel": "knowledge_assertion",
+          "agentType": "automated_agent", "publications": ["PMID:00000000"], "quote": "EXAMPLE quote." }
+      ]
+    },
+    {
+      "id": "tin:example-sound-therapy",
+      "kind": "intervention",
+      "name": "Example sound therapy",
+      "tldr": "Placeholder intervention record.",
+      "asOf": "2026-11-02",
+      "xrefs": ["MAXO:0000001"],
+      "sources": [{ "url": "https://example.org/therapy", "label": "Example source" }],
+      "relations": [
+        { "predicate": "ameliorates", "object": "tin:tinnitus", "knowledgeLevel": "knowledge_assertion",
+          "agentType": "manual_validation_of_automated_agent", "publications": ["PMID:00000000"],
+          "quote": "EXAMPLE quote." }
+      ]
+    },
+    {
+      "id": "tin:example-trial-1",
+      "kind": "trial",
+      "name": "Example trial",
+      "tldr": "Placeholder trial record.",
+      "asOf": "2026-11-02",
+      "status": "recruiting",
+      "xrefs": ["CLINICALTRIALS:NCT00000000"],
+      "sources": [{ "url": "https://clinicaltrials.gov/", "label": "ClinicalTrials.gov" }],
+      "relations": [
+        { "predicate": "studies_condition", "object": "tin:tinnitus", "knowledgeLevel": "knowledge_assertion",
+          "agentType": "text_mining_agent", "primarySource": "infores:clinical-trials-gov" }
+      ]
+    },
+    {
+      "id": "tin:example-mechanism",
+      "kind": "mechanism",
+      "name": "Example mechanism",
+      "tldr": "Placeholder mechanism record with no standard identifier.",
+      "asOf": "2026-11-02",
+      "sources": [{ "url": "https://example.org/mechanism", "label": "Example source" }],
+      "relations": [
+        { "predicate": "contributes_to", "object": "tin:tinnitus", "knowledgeLevel": "prediction",
+          "agentType": "automated_agent" }
+      ]
+    },
+    {
+      "id": "tin:example-gene",
+      "kind": "gene",
+      "name": "Example gene",
+      "tldr": "Placeholder gene record.",
+      "asOf": "2026-11-02",
+      "xrefs": ["HGNC:0000001"],
+      "sources": [{ "url": "https://example.org/gene", "label": "Example source" }],
+      "relations": [
+        { "predicate": "target_for", "object": "tin:tinnitus", "knowledgeLevel": "prediction",
+          "agentType": "automated_agent" }
+      ]
+    },
+    {
+      "id": "tin:open-question-1",
+      "kind": "open_question",
+      "name": "Example open question",
+      "tldr": "Placeholder; open questions stay on the website and are not exported.",
+      "asOf": "2026-11-02",
+      "sources": [{ "url": "https://example.org/question", "label": "Example source" }]
+    }
+  ]
+}

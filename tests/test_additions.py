@@ -1,0 +1,135 @@
+"""Tests for the device feed, the regulatory audit rule and the manual quote override."""
+import copy
+import json
+import sys
+import urllib.parse
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from kgkit import apply as ap  # noqa: E402
+from kgkit import audit, doi_check, feeds, proposals  # noqa: E402
+from kgkit.common import FetchError, Http  # noqa: E402
+
+CFG = yaml.safe_load((ROOT / "kit.tinnitus.yaml").read_text())
+REAL = json.loads((ROOT / "records" / "tinnitus.records.json").read_text())["records"]
+
+
+def standin(routes):
+    def fetch(url):
+        d = urllib.parse.unquote_plus(url)
+        for needle, payload in routes.items():
+            if needle in d:
+                if isinstance(payload, Exception):
+                    raise payload
+                return payload
+        raise FetchError(f"no route {url}")
+    return Http(fetcher=fetch)
+
+
+DEVICE_ROUTES = {
+    "classification.json": {"results": [{"product_code": "KLW", "device_name": "Masker, Tinnitus"}]},
+    "510k.json": {"results": [
+        {"k_number": "K999999", "device_name": "Example Sound Generator", "applicant": "Example Co",
+         "decision_date": "2026-09-01", "decision_description": "Substantially Equivalent", "product_code": "KLW"}]},
+}
+
+
+# --- device feed ----------------------------------------------------------------
+
+def test_device_feed_discovers_codes_and_candidates(tmp_path):
+    rep = feeds.devices(REAL, CFG["feeds"]["devices"], standin(DEVICE_ROUTES))
+    assert rep["product_codes"] == ["KLW", "QVN"]
+    c = rep["candidates"][0]
+    assert c["number"] == "K999999" and c["url"].startswith("https://api.fda.gov/device/510k.json")
+
+
+def test_device_feed_no_matches_is_empty_not_outage():
+    routes = {"classification.json": FetchError("404 for x"), "510k.json": FetchError("404 for y")}
+    rep = feeds.devices(REAL, CFG["feeds"]["devices"], standin(routes))
+    assert rep["status"] == "ok" and rep["candidates"] == []
+
+
+def test_device_feed_outage():
+    rep = feeds.devices(REAL, CFG["feeds"]["devices"], standin({}))
+    assert rep["status"] == "unreachable"
+
+
+def test_device_feed_skips_known_numbers():
+    recs = copy.deepcopy(REAL)
+    recs.append({"id": "tin:device-k999999", "kind": "device", "name": "x", "tldr": "x", "asOf": "2026-11-01",
+                 "sources": [{"url": "https://api.fda.gov"}], "facts": {"fda_submission_number": {"value": "K999999", "source": "https://api.fda.gov/x"}}})
+    rep = feeds.devices(recs, CFG["feeds"]["devices"], standin(DEVICE_ROUTES))
+    assert rep["candidates"] == []
+
+
+def test_device_proposal_applies_and_passes_regulatory_rule(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "feeds.json").write_text(json.dumps({"devices": feeds.devices(REAL, CFG["feeds"]["devices"], standin(DEVICE_ROUTES))}))
+    props = proposals.run(REAL, CFG, reports)["proposals"]
+    assert props[0]["type"] == "new_record" and "K999999" in props[0]["claim"]
+    recs = copy.deepcopy(REAL)
+    res = ap.apply_selected(recs, props, {1: props[0]["claim"]}, CFG, [], "2026-11-01")
+    new = next(r for r in recs if r["id"] == "tin:device-k999999")
+    assert res["applied"][0]["created"] and new["facts"]["fda_decision"]["value"] == "Substantially Equivalent"
+    assert new["relations"][0]["predicate"] == "related_to"
+    assert audit.run(recs, CFG, tmp_path / "a")["held_records"] == []
+    again = ap.apply_selected(recs, props, {1: props[0]["claim"]}, CFG, [], "2026-11-01")
+    assert again["skipped"]
+
+
+# --- regulatory rule ---------------------------------------------------------------
+
+def base(**kw):
+    r = {"id": "tin:device-x", "kind": "device", "name": "Device X", "tldr": "A device.", "asOf": "2026-11-01",
+         "sources": [{"url": "https://maker.example.com/news"}]}
+    r.update(kw)
+    return r
+
+
+def codes(recs, tmp_path):
+    return {i["code"] for i in audit.run(recs, CFG, tmp_path)["issues"] if i["blocking"]}
+
+
+def test_claim_word_without_regulator_source_blocks(tmp_path):
+    assert "regulatory-claim-without-regulator-source" in codes([base(tldr="FDA cleared hearing device.")], tmp_path)
+
+
+def test_claim_word_with_regulator_source_passes(tmp_path):
+    r = base(tldr="FDA cleared hearing device.", sources=[{"url": "https://www.accessdata.fda.gov/x"}])
+    assert "regulatory-claim-without-regulator-source" not in codes([r], tmp_path)
+
+
+def test_lookalike_domain_is_not_a_regulator(tmp_path):
+    r = base(tldr="Approved in 2024.", sources=[{"url": "https://fda.gov.example.com/x"}])
+    assert "regulatory-claim-without-regulator-source" in codes([r], tmp_path)
+
+
+def test_regulatory_fact_needs_its_own_regulator_source(tmp_path):
+    r = base(sources=[{"url": "https://www.fda.gov/x"}], facts={"fda_decision_date": {"value": "2023-01-01", "source": "https://maker.example.com"}})
+    assert "regulatory-fact-without-regulator-source" in codes([r], tmp_path)
+
+
+def test_no_claim_no_rule(tmp_path):
+    assert not {c for c in codes([base()], tmp_path) if c.startswith("regulatory")}
+
+
+def test_real_records_pass_regulatory_rule(tmp_path):
+    assert not {c for c in codes(REAL, tmp_path) if c.startswith("regulatory")}
+
+
+# --- manual quote override -------------------------------------------------------------
+
+def test_manual_quote_override(tmp_path):
+    recs = [{"id": "tin:t", "kind": "condition", "name": "Tinnitus", "tldr": "x", "asOf": "2026-11-01", "sources": [{"url": "u"}]},
+            {"id": "tin:cbt", "kind": "intervention", "name": "CBT for tinnitus", "tldr": "x", "asOf": "2026-11-01",
+             "sources": [{"url": "u", "label": "CBT tinnitus", "doi": "10.1/cbt"}],
+             "relations": [{"predicate": "ameliorates", "object": "tin:t", "quote": "words only in the full text",
+                            "publications": ["doi:10.1/cbt"], "knowledgeLevel": "knowledge_assertion",
+                            "quoteVerified": {"by": "editor", "on": "2026-11-01"}}]}]
+    h = Http(fetcher=lambda url: {"resultList": {"result": [{"title": "CBT for tinnitus", "abstractText": "Other text."}]}})
+    rep = doi_check.run(recs, h, tmp_path)
+    assert rep["quotes"][0]["class"] == "quote_manual_ok" and rep["held_records"] == []
