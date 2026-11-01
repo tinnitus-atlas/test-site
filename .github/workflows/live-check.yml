@@ -27,6 +27,12 @@ jobs:
           { echo "## Live check (exit code $code: 0 all clear, 1 blocking findings, 2 run failed)"; echo; \
             cat reports/nightly.md 2>/dev/null || echo "nightly.md missing"; } >> "$GITHUB_STEP_SUMMARY"
           [ "$code" -lt 2 ]
+      - name: Show details
+        if: always()
+        run: |
+          for f in exports/export_report.json exports/kgx_validation.json reports/factcheck.json; do
+            echo "===== $f"; [ -f "$f" ] && head -c 6000 "$f"; echo; done
+          echo "===== nightly.log (last 60 lines)"; tail -n 60 reports/nightly.log 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
