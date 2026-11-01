@@ -28,7 +28,10 @@ if ! command -v kgx >/dev/null 2>&1; then
 fi
 
 echo "Running KGX validator (Biolink $VERSION) on the core graph..."
-if kgx validate --input-format jsonl --biolink-release "v$VERSION" \
+# The prefix list of this Biolink release: from the local checkout if given, else from the export's download cache.
+if [ -n "${BIOLINK_DIR:-}" ]; then CONTEXT="$(find "$BIOLINK_DIR" -name biolink_model.context.jsonld | head -n 1)"
+else CONTEXT="$HOME/.cache/kg-biolink-export/$VERSION/biolink_model.context.jsonld"; fi
+if python3 tools/kgx_validate.py --release "$VERSION" --context "$CONTEXT" \
      --output "$OUT/kgx_validation.json" "$OUT/core_nodes.jsonl" "$OUT/core_edges.jsonl"; then
   echo "KGX validation passed. Report: $OUT/kgx_validation.json"
 else
