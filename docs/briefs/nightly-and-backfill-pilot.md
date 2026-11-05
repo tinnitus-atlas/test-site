@@ -34,6 +34,16 @@ How it is delivered:
 - No item may appear in both the pilot pull request and a nightly pull request: exclude anything already listed in an open proposals pull request, and rely on the seen list (`records/seen_proposals.json`) after merge.
 - Write `reports/backfill_pilot.md` with: counts per category, how many trials were skipped as off-topic and the list of their registry numbers (so a person can spot-check ten), the share of proposed items whose quote and citation checks passed, and run time.
 
+## Part C: review page (queued, build only after the pilot is judged)
+
+Purpose: let maintainers approve or reject proposals without using GitHub's pull request screen. Do not start before the owner confirms the pilot passed. Decide with the owner first: who may approve, and whether clinical items need a second approver before launch.
+
+- A password-protected page on the existing Cloudflare Pages site. Maintainers log in with an emailed link, no GitHub account needed.
+- One card per proposal: claim, why it surfaced, evidence with a source link, the verbatim quote, confidence, and what exactly would change. Buttons: Approve, Reject, Skip for now. Filter by type and confidence.
+- A decision is written to the repository as a commit (or an update of the nightly pull request description), so GitHub stays the auditable record and the existing apply step needs no change. Every decision records who made it and when.
+- Rejected items go to the seen list so they are not proposed again.
+- Runs on the hosting service's free tier; the stored credential is limited to this repository.
+
 ## Pilot success checks (a person judges these)
 
 - At least about 90% of proposed trials are on-topic in a ten-item spot check.
@@ -46,6 +56,19 @@ How it is delivered:
 - Order: run the pilot and merge its pull request before enabling the nightly schedule, or accept that the first nightly pull request overlaps. The no-duplicates rule above covers the overlap.
 - Applying and publishing are two steps: merging the pull request does nothing by itself; the next nightly run applies ticked items and pushes the records, and that push triggers the site rebuild on the hosting service. Verify this end to end with one ticked item.
 - Each approved-and-applied pull request is applied once; its number is stored in `records/applied_prs.json`.
+
+## Definition of done (every task below must meet all of these)
+
+1. All tests pass: `BIOLINK_DIR=<folder with the Biolink model at tag v4.4.6> python3 -m pytest -q tests`. The suite had 110 passing tests on 2026-11-05; the count may rise, never fall, and nothing may be skipped to make it pass.
+2. New behaviour has new tests, using stand-in responses for the internet, as the existing tests do.
+3. The Live check workflow (Actions tab > Live check > Run workflow) finishes with Status: all clear and a valid Biolink export.
+4. Rules in the status doc hold: no record changes without a person ticking and merging; quotes verbatim and under 15 words; regulatory claims cite a regulator; test mode stays on; code and text stay generic (no personal details, machine names or accounts).
+5. Commits go to a branch and a pull request; the owner or Claude reviews before merge to `main`. Commit messages carry the session's attribution lines.
+6. Per task, the done-when:
+   - Part A: a manual start of the nightly workflow completes, posts or skips the digest as configured, and opens a "Nightly proposals" pull request when there are proposals; ticking one item and merging, then starting the workflow again, writes that record to `records/` and the site rebuilds with it.
+   - Part B: the pilot pull request exists, holds no item from the last 30 days or already in another open proposals pull request, and `reports/backfill_pilot.md` exists with every count named above.
+   - Part C: a maintainer can approve one proposal on the page and see the decision in the repository within a minute; the next nightly run applies it.
+7. Report back with: what changed, test count before and after, links to the workflow runs, and anything that deviated from this brief.
 
 ## Reversibility
 

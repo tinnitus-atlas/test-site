@@ -1,0 +1,33 @@
+# Temporary: manual start of the full nightly run (git enabled) to test the approval flow end to end.
+# To be replaced by the scheduled nightly workflow specified in docs/briefs/nightly-and-backfill-pilot.md.
+name: Nightly (manual test)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency: nightly
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: git clone --depth 1 --branch v4.4.6 https://github.com/biolink/biolink-model /tmp/biolink-model
+      - name: Nightly run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BIOLINK_DIR: /tmp/biolink-model
+        run: |
+          git config user.name "kg-nightly"
+          git config user.email "kg-nightly@users.noreply.github.com"
+          chmod +x run_nightly.sh run_validation.sh
+          code=0; ./run_nightly.sh || code=$?
+          { echo "## Nightly run (exit code $code)"; echo; cat reports/nightly.md 2>/dev/null || echo "nightly.md missing"; } >> "$GITHUB_STEP_SUMMARY"
+          [ "$code" -lt 2 ]
