@@ -1,0 +1,12 @@
+{
+  "generated": "2026-11-05T23:55:17+00:00",
+  "check": "freshness",
+  "records": 10,
+  "critical_records": 6,
+  "critical_stale": 0,
+  "critical_stale_share": 0.0,
+  "limit": 0.05,
+  "breach": false,
+  "stale": [],
+  "records_without_rule": []
+}
