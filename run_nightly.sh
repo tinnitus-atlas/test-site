@@ -26,20 +26,36 @@ if [ "${NO_GIT:-0}" != "1" ]; then
   git checkout -q -- "$REPORTS" 2>/dev/null || true
   git checkout -q main >>"$LOG" 2>&1 && git pull -q --ff-only origin main >>"$LOG" 2>&1 || fail "git pull failed"
 
-  # Apply proposals ticked and merged since the last run, then publish them to main.
-  python3 -m kgkit.apply --config "$CONFIG" --records "$RECORDS" --from-github >>"$LOG" 2>&1
-  case $? in
-    0)
-      if [ -n "$(git status --porcelain -- "$(dirname "$RECORDS")")" ]; then
-        { git add -- "$(dirname "$RECORDS")" && git commit -q -m "Apply approved proposals $DAY" && git push -q origin main; } >>"$LOG" 2>&1 \
-          || fail "could not push applied proposals"
-        APPLY_LINE="Approved proposals: applied and published to the records"
-      else
-        APPLY_LINE="Approved proposals: none newly approved"
-      fi;;
-    1) APPLY_LINE="Approved proposals: NOT applied, they would break the audit (see reports/nightly.log)";;
-    *) APPLY_LINE="Approved proposals: could not read merged pull requests (see reports/nightly.log)";;
+  # Do not apply the same proposals twice while the previous apply pull request is still open.
+  OPEN_APPLY=0
+  if command -v gh >/dev/null 2>&1; then
+    OPEN_APPLY="$(gh pr list --state open --search "Apply approved proposals in:title" --json number -q length 2>/dev/null || echo 0)"
+  fi
+  case "$OPEN_APPLY" in
+    ''|*[!0-9]*) OPEN_APPLY=0;;
   esac
+
+  if [ "$OPEN_APPLY" -gt 0 ]; then
+    APPLY_LINE="Approved proposals: waiting, the previous apply pull request is still open"
+  else
+    # Apply proposals ticked and merged since the last run, then publish them through a pull request.
+    python3 -m kgkit.apply --config "$CONFIG" --records "$RECORDS" --from-github >>"$LOG" 2>&1
+    case $? in
+      0)
+        if [ -n "$(git status --porcelain -- "$(dirname "$RECORDS")")" ]; then
+          URL="$(tools/publish_via_pr.sh "nightly/apply-$DAY" "Apply approved proposals $DAY" "$(dirname "$RECORDS")" 2>>"$LOG")"
+          case $? in
+            0) APPLY_LINE="Approved proposals: applied; pull request $URL merges itself once the checks pass";;
+            3) APPLY_LINE="Approved proposals: applied; pull request $URL needs a manual merge (auto-merge unavailable)";;
+            *) fail "could not publish applied proposals";;
+          esac
+        else
+          APPLY_LINE="Approved proposals: none newly approved"
+        fi;;
+      1) APPLY_LINE="Approved proposals: NOT applied, they would break the audit (see reports/nightly.log)";;
+      *) APPLY_LINE="Approved proposals: could not read merged pull requests (see reports/nightly.log)";;
+    esac
+  fi
 fi
 
 python3 -m kgkit --config "$CONFIG" --records "$RECORDS" --reports "$REPORTS" >>"$LOG" 2>&1
@@ -52,9 +68,12 @@ HELD_DEST="$(dirname "$RECORDS")/held_records.json"
 python3 -c "import json,sys;d=json.load(open(sys.argv[1]));json.dump({'held_records':d.get('held_records',[])},open(sys.argv[2],'w'),indent=2)" \
   "$REPORTS/held_records.json" "$HELD_DEST" >>"$LOG" 2>&1
 if [ "${NO_GIT:-0}" != "1" ] && [ -n "$(git status --porcelain -- "$HELD_DEST")" ]; then
-  { git add -- "$HELD_DEST" && git commit -q -m "Update held records $DAY" && git push -q origin main; } >>"$LOG" 2>&1 \
-    && HELD_LINE="Website: held list updated and published (the site rebuilds automatically)" \
-    || HELD_LINE="Website: could not publish the held list (see reports/nightly.log)"
+  URL="$(tools/publish_via_pr.sh "nightly/held-$DAY" "Update held records $DAY" "$HELD_DEST" 2>>"$LOG")"
+  case $? in
+    0) HELD_LINE="Website: held list goes through pull request $URL, which merges itself once the checks pass";;
+    3) HELD_LINE="Website: held list goes through pull request $URL and needs a manual merge (auto-merge unavailable)";;
+    *) HELD_LINE="Website: could not publish the held list (see reports/nightly.log)";;
+  esac
 fi
 
 OUT="exports" ./run_validation.sh "$RECORDS" >>"$LOG" 2>&1
