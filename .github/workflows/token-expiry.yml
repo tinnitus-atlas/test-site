@@ -1,0 +1,30 @@
+# Reports when NIGHTLY_TOKEN expires (GitHub's token-expiration response header). The build pipeline's
+# pre-flight reads the line "NIGHTLY_TOKEN expires: ..." from the latest run and fails 14 days ahead.
+name: Token expiry
+on:
+  schedule:
+    - cron: "41 6 * * 1"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  expiry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report token expiry
+        id: expiry
+        env:
+          NIGHTLY_TOKEN: ${{ secrets.NIGHTLY_TOKEN }}
+        run: |
+          if [ -z "${NIGHTLY_TOKEN:-}" ]; then
+            echo "NIGHTLY_TOKEN expires: not-configured"
+            exit 0
+          fi
+          hdr="$(mktemp)"
+          code="$(curl -sS -o /dev/null -D "$hdr" -w '%{http_code}' -H "Authorization: Bearer $NIGHTLY_TOKEN" https://api.github.com/rate_limit || true)"
+          if [ "$code" != "200" ]; then
+            echo "NIGHTLY_TOKEN expires: invalid (HTTP ${code:-000})"
+            exit 1
+          fi
+          exp="$(tr -d '\r' < "$hdr" | awk -F': ' 'tolower($1) == "github-authentication-token-expiration" {print $2}')"
+          echo "NIGHTLY_TOKEN expires: ${exp:-never}"
