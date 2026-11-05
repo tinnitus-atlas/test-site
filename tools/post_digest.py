@@ -119,12 +119,15 @@ def build_digest(report: str | None, exit_code: int, log_tail: str = "") -> str:
 def post(text: str, url: str, timeout: float = 15) -> bool:
     global _LAST_ERROR
     _LAST_ERROR = ""
+    if not url.startswith("https://"):
+        _LAST_ERROR = "address is not https"
+        return False
     try:
         body = json.dumps({"content": text, "text": text}).encode("utf-8")
         request = urllib.request.Request(
             url, data=body, headers={"Content-Type": "application/json"}, method="POST"
         )
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected -- address comes from a repository secret and is checked to be https
             response.read()
         return True
     except Exception as exc:
