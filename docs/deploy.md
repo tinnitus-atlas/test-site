@@ -23,14 +23,14 @@ Free-plan limits that matter here: 500 builds a month, 20,000 files per site, 20
 ## 2. Connect Cloudflare Pages (once)
 
 1. Sign in at https://dash.cloudflare.com (a free account is enough).
-2. In the left menu click **Workers & Pages**, then **Create**, then the **Pages** tab, then **Connect to Git**.
+2. In the left menu click **Workers & Pages**, then **Create application**, then the **Pages** tab (not the default Workers view), then **Import an existing Git repository** ([Cloudflare guide](https://developers.cloudflare.com/pages/framework-guides/deploy-anything)).
 3. Choose GitHub, authorise Cloudflare, and select the `tinnitus-atlas` repository. Click **Begin setup**.
 4. Fill in the build settings exactly:
    - **Production branch:** `main`
    - **Framework preset:** `None`
    - **Build command:** `pip install pyyaml==6.0.2 && python3 site/build_site.py --config kit.tinnitus.yaml --records records/tinnitus.records.json --out public`
    - **Build output directory:** `public`
-5. Click **Save and Deploy**. After about a minute the site is live at an address like `tinnitus-atlas.pages.dev`.
+5. Deploy. After about a minute the site is live at an address like `tinnitus-atlas.pages.dev`.
 
 The Cloudflare build image includes Python 3.13 ([build image](https://developers.cloudflare.com/pages/configuration/build-image/)). The `_headers` file the builder writes lets other sites and agents read the JSON API ([custom headers](https://developers.cloudflare.com/pages/configuration/headers/)).
 

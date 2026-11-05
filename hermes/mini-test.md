@@ -41,15 +41,15 @@ What it proves: the citation, quote, trial and FDA checks reach the real service
 
 ## Step 3. [Browser: your Cloudflare account] Connect the repository
 
-1. https://dash.cloudflare.com > **Workers & Pages** > **Create application** > **Pages** tab > **Connect to Git**.
+1. https://dash.cloudflare.com > **Workers & Pages** > **Create application** > **Pages** tab (not the default Workers view) > **Import an existing Git repository**. A Workers application shows a placeholder page instead of the site.
 2. Choose **GitHub**. If asked, click **Install & Authorize** and allow access to `test-site` only.
 3. Select `test-site`, click **Begin setup**, and fill in exactly:
-   - Project name: `test-site`
+   - Project name: `tinnitus-atlas-test`
    - Production branch: `main`
    - Framework preset: `None`
    - Build command: `pip install pyyaml==6.0.2 && python3 site/build_site.py --config kit.tinnitus.yaml --records records/tinnitus.records.json --out public`
    - Build output directory: `public`
-4. Click **Save and Deploy**. You should see "Success" and a link like `https://test-site.pages.dev`. Tell Claude the address; Claude sets it in the configuration, which triggers the first automatic rebuild.
+4. Deploy. You should see a link like `https://tinnitus-atlas-test.pages.dev`, and the page should say "Tinnitus Atlas" with a yellow "Test version" banner. Tell Claude the address; Claude sets it in the configuration, which triggers the first automatic rebuild.
 
 ## How you know it worked
 
