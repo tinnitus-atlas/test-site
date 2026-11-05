@@ -89,6 +89,9 @@ def _normal_digest(report: str) -> str:
     in_top = False
     proposals = 0
     for line in source[1:]:
+        if in_top and line.strip() == "none":  # copied exactly, as the format in hermes/nightly-job.md asks
+            lines.append(line.strip())
+            continue
         if in_top and _is_proposal(line):
             if proposals < 10:
                 lines.append(line)
