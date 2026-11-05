@@ -127,7 +127,7 @@ def post(text: str, url: str, timeout: float = 15) -> bool:
         request = urllib.request.Request(
             url, data=body, headers={"Content-Type": "application/json"}, method="POST"
         )
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected -- address comes from a repository secret and is checked to be https
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             response.read()
         return True
     except Exception as exc:
