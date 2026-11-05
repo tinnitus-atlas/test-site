@@ -14,6 +14,8 @@ Rules:
   review_paper  adds the paper to records/review_queue.json for a person or agent to read; it never edits
                 the records directly.
 Each pull request is applied once; its number is stored in records/applied_prs.json.
+Every feed proposal (new record or paper) in a merged pull request, ticked or not, is added to
+records/seen_proposals.json so that ignored items are not proposed again.
 
 Usage:
   python3 -m kgkit.apply --config kit.yaml --records records/x.json --from-github
@@ -35,6 +37,7 @@ from typing import Callable
 
 from . import audit
 from .common import KitError, load_config, load_records
+from .proposals import SEEN_TYPES, proposal_key
 
 HEADING = re.compile(r"^## (\d+)\. (.+)$")
 TICK = re.compile(r"^- \[([ xX])\] Approved\s*$")
@@ -185,6 +188,8 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
         return 2
     folder = Path(args.records).parent
     applied_path, queue_path = folder / "applied_prs.json", folder / "review_queue.json"
+    seen_path = folder / "seen_proposals.json"
+    seen = json.loads(seen_path.read_text()) if seen_path.exists() else []
     applied_prs = json.loads(applied_path.read_text()) if applied_path.exists() else []
     queue = json.loads(queue_path.read_text()) if queue_path.exists() else []
     today = dt.date.today().isoformat()
@@ -243,6 +248,14 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
         data = work
     Path(args.records).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     queue_path.write_text(json.dumps(queue, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    known = {e["key"] for e in seen}
+    for _, _, props in batches:
+        for pr_ in props:
+            k = proposal_key(pr_) if pr_.get("type") in SEEN_TYPES else None
+            if k and k not in known:
+                seen.append({"key": k, "reviewed": today})
+                known.add(k)
+    seen_path.write_text(json.dumps(seen, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     applied_path.write_text(json.dumps(applied_prs + [b[0] for b in batches], indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
     return 0

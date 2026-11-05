@@ -71,6 +71,7 @@ def test_trial_feed_ignores_trials_not_updated_in_window(tmp_path):
         {"protocolSection": {"identificationModule": {"nctId": "NCT01111111", "briefTitle": "Old"},
                              "statusModule": {"lastUpdatePostDateStruct": {"date": "2015-05-01"}}}},
         {"protocolSection": {"identificationModule": {"nctId": "NCT02222222", "briefTitle": "Recent"},
+                             "conditionsModule": {"conditions": ["Tinnitus"]},
                              "statusModule": {"lastUpdatePostDateStruct": {"date": recent}}}}]}
     rep = feeds.trials(REAL, CFG["feeds"]["trials"], standin({"query.cond=tinnitus": payload}))
     assert [c["nct"] for c in rep["candidates"]] == ["NCT02222222"]
@@ -159,3 +160,71 @@ def test_manual_quote_override(tmp_path):
     h = Http(fetcher=lambda url: {"resultList": {"result": [{"title": "CBT for tinnitus", "abstractText": "Other text."}]}})
     rep = doi_check.run(recs, h, tmp_path)
     assert rep["quotes"][0]["class"] == "quote_manual_ok" and rep["held_records"] == []
+
+
+# --- trial relevance filter and seen list -------------------------------------------
+
+def _study(nct, title, conditions, official=None):
+    recent = (dt.date.today() - dt.timedelta(days=3)).isoformat()
+    return {"protocolSection": {
+        "identificationModule": {"nctId": nct, "briefTitle": title, **({"officialTitle": official} if official else {})},
+        "conditionsModule": {"conditions": conditions},
+        "statusModule": {"lastUpdatePostDateStruct": {"date": recent}}}}
+
+
+def test_trial_feed_drops_studies_that_only_mention_the_condition():
+    payload = {"studies": [
+        _study("NCT03000001", "Sleep aid in chronic pain", ["Insomnia", "Chronic Pain"]),
+        _study("NCT03000002", "Sound therapy trial", ["Tinnitus"]),
+        _study("NCT03000003", "Bimodal stimulation for Tinnitus", ["Hearing Disorder"]),
+        _study("NCT03000004", "Device study", ["Hearing Disorder"], official="A trial of masking in chronic TINNITUS")]}
+    rep = feeds.trials(REAL, CFG["feeds"]["trials"], standin({"query.cond=tinnitus": payload}))
+    assert [c["nct"] for c in rep["candidates"]] == ["NCT03000002", "NCT03000003", "NCT03000004"]
+    assert rep["off_topic_skipped"] == ["NCT03000001"]
+
+
+def test_trial_feed_relevance_terms_are_configurable():
+    payload = {"studies": [_study("NCT03000005", "Ringing in the ears study", ["Hearing Disorder"])]}
+    conf = {**CFG["feeds"]["trials"], "relevance_terms": ["ringing in the ears"]}
+    rep = feeds.trials(REAL, conf, standin({"query.cond=tinnitus": payload}))
+    assert [c["nct"] for c in rep["candidates"]] == ["NCT03000005"]
+
+
+def _feed_report():
+    return {"trials": {"candidates": [{"nct": "NCT03000002", "title": "T", "url": "u"}]},
+            "papers": {"candidates": [{"title": "P", "doi": "10.1/abc", "url": "u2"}]},
+            "devices": {"candidates": []}}
+
+
+def test_proposal_keys_are_stable():
+    props = proposals.from_feeds(_feed_report())
+    assert sorted(proposals.proposal_key(p) for p in props) == ["new_record:trial:clinicaltrials:nct03000002",
+                                                                  "review_paper:doi:10.1/abc"]
+
+
+def test_seen_proposals_are_not_proposed_again(tmp_path):
+    from kgkit.common import write_report
+    write_report(tmp_path, "feeds", _feed_report())
+    first = proposals.run(REAL, CFG, tmp_path)
+    assert first["count"] == 2
+    seen = {proposals.proposal_key(p) for p in first["proposals"]}
+    second = proposals.run(REAL, CFG, tmp_path, seen)
+    assert second["count"] == 0 and second["already_reviewed_skipped"] == 2
+
+
+def test_merged_unticked_feed_proposals_land_in_seen_list(tmp_path):
+    import shutil
+    rec = tmp_path / "records.json"
+    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec)
+    props = proposals.from_feeds(_feed_report())
+    (tmp_path / "proposals.json").write_text(json.dumps({"proposals": props}))
+    body = proposals.to_markdown(props)  # nothing ticked
+    (tmp_path / "body.md").write_text(body)
+    code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
+                    "--proposals", str(tmp_path / "proposals.json"), "--label", "t1"])
+    assert code == 0
+    seen = json.loads((tmp_path / "seen_proposals.json").read_text())
+    assert {e["key"] for e in seen} == {"new_record:trial:clinicaltrials:nct03000002", "review_paper:doi:10.1/abc"}
+    code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
+                    "--proposals", str(tmp_path / "proposals.json"), "--label", "t2"])
+    assert len(json.loads((tmp_path / "seen_proposals.json").read_text())) == 2  # no duplicates

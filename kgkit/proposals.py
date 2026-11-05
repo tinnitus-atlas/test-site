@@ -89,6 +89,22 @@ def from_feeds(feeds: dict) -> list[dict]:
     return out
 
 
+SEEN_TYPES = {"new_record", "review_paper"}  # feed findings; registry updates track the records themselves
+
+
+def proposal_key(p: dict) -> str | None:
+    """Stable identity of a feed proposal across nights (a trial number, device number or paper id)."""
+    a = p.get("apply") or {}
+    if p["type"] == "review_paper" and a.get("cite"):
+        return f"review_paper:{str(a['cite']).lower()}"
+    if p["type"] == "new_record":
+        rec = a.get("new_record") or {}
+        ident = rec.get("key") or ((rec.get("xrefs") or [None])[0])
+        if ident:
+            return f"new_record:{rec.get('kind', 'trial')}:{str(ident).lower()}"
+    return None
+
+
 def to_markdown(props: list[dict]) -> str:
     lines = ["# Proposed changes", "", f"{len(props)} proposals. Approve by merging; reject by deleting the line.", ""]
     for i, p in enumerate(props, 1):
@@ -102,16 +118,25 @@ def to_markdown(props: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def run(records: list[dict], cfg: dict, reports_dir) -> dict:
+def run(records: list[dict], cfg: dict, reports_dir, seen: set[str] | None = None) -> dict:
     by_id = {r["id"]: r for r in records if r.get("id")}
     props = from_factcheck(read_report(reports_dir, "factcheck"), by_id) + from_feeds(read_report(reports_dir, "feeds"))
+    suppressed = 0
+    if seen:
+        kept = []
+        for p in props:
+            if p["type"] in SEEN_TYPES and proposal_key(p) in seen:
+                suppressed += 1
+            else:
+                kept.append(p)
+        props = kept
     order = {"high": 0, "medium": 1, "low": 2}
     props.sort(key=lambda p: (order.get(p["confidence"], 3), p["type"], p["claim"]))
     auto = set((cfg.get("proposals") or {}).get("auto_apply_sources") or [])
     for p in props:
         p["auto_apply"] = p["origin"] in auto and p["type"] == "update"
     report = {"check": "proposals", "count": len(props), "auto_apply": sum(p["auto_apply"] for p in props),
-              "proposals": props}
+              "already_reviewed_skipped": suppressed, "proposals": props}
     write_report(reports_dir, "proposals", report)
     from pathlib import Path
     (Path(reports_dir) / "proposals.md").write_text(to_markdown(props), encoding="utf-8")

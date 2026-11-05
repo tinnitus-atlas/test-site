@@ -39,17 +39,28 @@ def known_papers(records: list[dict]) -> set[tuple]:
     return out
 
 
+def is_on_topic(protocol: dict, terms: list[str]) -> bool:
+    """A registry search for a condition also returns studies that merely mention it (as a keyword, a
+    secondary outcome or one of many conditions). Keep a study only if a relevance term appears in its
+    listed conditions or in its brief or official title."""
+    ident = protocol.get("identificationModule") or {}
+    conditions = (protocol.get("conditionsModule") or {}).get("conditions") or []
+    haystack = " ".join([str(ident.get("briefTitle") or ""), str(ident.get("officialTitle") or ""), *map(str, conditions)]).lower()
+    return any(t.lower() in haystack for t in terms)
+
+
 def trials(records: list[dict], conf: dict, http: Http) -> dict:
     params = {"query.cond": conf["condition"], "sort": "LastUpdatePostDate:desc",
               "pageSize": min(int(conf.get("max_results", 50)), 100),
-              "fields": "NCTId,BriefTitle,OverallStatus,Phase,LastUpdatePostDate,LeadSponsorName"}
+              "fields": "NCTId,BriefTitle,OfficialTitle,Condition,OverallStatus,Phase,LastUpdatePostDate,LeadSponsorName"}
     try:
         data = http.get_json(f"{CTGOV}?{qs(params)}")
     except FetchError as exc:
         return {"status": "unreachable", "error": str(exc), "candidates": []}
     have = known_ncts(records)
     since = (today() - dt.timedelta(days=int(conf.get("since_days", 30)))).isoformat()
-    out = []
+    terms = conf.get("relevance_terms") or [conf["condition"]]
+    out, off_topic = [], []
     for s in (data or {}).get("studies") or []:
         p = s.get("protocolSection") or {}
         ident, st, des = p.get("identificationModule") or {}, p.get("statusModule") or {}, p.get("designModule") or {}
@@ -58,12 +69,15 @@ def trials(records: list[dict], conf: dict, http: Http) -> dict:
             continue
         if ((p.get("statusModule") or {}).get("lastUpdatePostDateStruct") or {}).get("date", "9999") < since:
             continue  # older backlog belongs to a deliberate backfill, not to the nightly proposals
+        if not is_on_topic(p, terms):
+            off_topic.append(nct)
+            continue
         out.append({"nct": nct, "title": ident.get("briefTitle"), "status": (st.get("overallStatus") or "").lower(),
                     "phase": "/".join(x.lower() for x in des.get("phases") or []) or None,
                     "sponsor": ((p.get("sponsorCollaboratorsModule") or {}).get("leadSponsor") or {}).get("name"),
                     "last_update": (st.get("lastUpdatePostDateStruct") or {}).get("date"),
                     "url": f"https://clinicaltrials.gov/study/{nct}"})
-    return {"status": "ok", "since": since, "candidates": out}
+    return {"status": "ok", "since": since, "candidates": out, "off_topic_skipped": off_topic}
 
 
 def papers(records: list[dict], conf: dict, http: Http) -> dict:

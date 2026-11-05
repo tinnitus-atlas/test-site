@@ -35,6 +35,7 @@ def summarise(results: dict) -> tuple[dict, str]:
         "new_papers": len(((results.get("feeds") or {}).get("papers") or {}).get("candidates") or []),
         "new_devices": len(((results.get("feeds") or {}).get("devices") or {}).get("candidates") or []),
         "proposals": (results.get("proposals") or {}).get("count"),
+        "already_reviewed_skipped": (results.get("proposals") or {}).get("already_reviewed_skipped", 0),
         "skipped_checks": [c for c in ORDER if c not in results],
     }
     doi = results.get("doi") or {}
@@ -63,6 +64,8 @@ def summarise(results: dict) -> tuple[dict, str]:
         lines.append(f"Registry mismatches: {fc.get('high', 0)} high, {fc.get('medium', 0)} medium, {fc.get('low', 0)} low")
     lines.append(f"Feeds: {s['new_trials']} new trials, {s['new_papers']} new papers, {s['new_devices']} new FDA device decisions")
     lines.append(f"Proposals awaiting approval: {s['proposals'] or 0}")
+    if s["already_reviewed_skipped"]:
+        lines.append(f"Not proposed again (already reviewed): {s['already_reviewed_skipped']}")
     if s["skipped_checks"]:
         lines.append("Not run: " + ", ".join(s["skipped_checks"]))
     return s, "\n".join(lines)
@@ -103,7 +106,9 @@ def main(argv: list[str] | None = None) -> int:
         elif check == "freshness":
             results[check] = freshness.run(records, cfg, reports)
         elif check == "proposals":
-            results[check] = proposals.run(records, cfg, reports)
+            seen_file = Path(args.records).parent / "seen_proposals.json"
+            seen = {e["key"] for e in json.loads(seen_file.read_text())} if seen_file.exists() else set()
+            results[check] = proposals.run(records, cfg, reports, seen)
         print(f"ran {check}")
 
     summary, text = summarise(results)

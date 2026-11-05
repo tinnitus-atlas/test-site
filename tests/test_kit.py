@@ -232,6 +232,7 @@ def test_trial_feed_skips_known(tmp_path):
     payload = {"studies": [
         {"protocolSection": {"identificationModule": {"nctId": "NCT02669069", "briefTitle": "TENT-A"}}},
         {"protocolSection": {"identificationModule": {"nctId": "NCT09999999", "briefTitle": "New"},
+                              "conditionsModule": {"conditions": ["Tinnitus"]},
                              "statusModule": {"overallStatus": "RECRUITING"}, "designModule": {"phases": ["PHASE2"]}}}]}
     rep = feeds.run(REAL, CFG, http({"query.cond=tinnitus": payload, "europepmc": {"resultList": {"result": []}}}), tmp_path)
     assert [c["nct"] for c in rep["trials"]["candidates"]] == ["NCT09999999"]
@@ -255,7 +256,7 @@ def test_feeds_outage_is_reported(tmp_path):
 
 def test_proposals_from_reports(tmp_path):
     factcheck.run([trial(status="recruiting")], CFG, http({"NCT00000001": study()}), tmp_path)
-    feeds.run([trial()], CFG, http({"query.cond": {"studies": [{"protocolSection": {"identificationModule": {"nctId": "NCT05555555", "briefTitle": "X"}}}]},
+    feeds.run([trial()], CFG, http({"query.cond": {"studies": [{"protocolSection": {"identificationModule": {"nctId": "NCT05555555", "briefTitle": "X"}, "conditionsModule": {"conditions": ["Tinnitus"]}}}]},
                                     "europepmc": {"resultList": {"result": []}}}), tmp_path)
     rep = proposals.run([trial(status="recruiting")], CFG, tmp_path)
     types = [p["type"] for p in rep["proposals"]]
