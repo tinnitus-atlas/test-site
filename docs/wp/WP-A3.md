@@ -8,8 +8,8 @@
 | Required level | L2, reason: one small new script plus two contained edits in run_nightly.sh, behaviour fully covered by tests with a local remote and a stand-in gh; R2 because it publishes record changes |
 | Owner override | Owner-approved unrated routing (Test 1 option A) |
 | Data class | public |
-| Model used | <filled in at dispatch> |
-| Reviewer | different model from the builder (routing rule) |
+| Model used | opencode/deepseek-v4.1-flash-free (default routing), round 1, $0 |
+| Reviewer | breaker opencode/glm-5.3-flash-free (41 tests) after a 20-min timeout on qwen3.6-35b-a3b-mlx; reviewer opencode/glm-5.3-flash-free (approve, no findings) |
 | Branch | wp/A3-publish-via-pr |
 | Test commit | 58c3305 |
 | Breaker test file | `tests/test_breaker_wpa3.py` |
@@ -80,15 +80,15 @@ bash -n tools/publish_via_pr.sh
 ## Sign-off
 | Check | Result |
 |---|---|
-| 1. Gate passed on final commit | |
-| 2. Acceptance tests unchanged since test commit | |
-| 3. No newly skipped or disabled tests | |
-| 4. Only in-scope files changed (or extras explained) | |
-| 5. No secrets, personal data, machine names, local paths | |
-| 6. Review findings resolved | |
-| 7. Summary matches the diff | |
-| R1: most important file read | |
-| R2: advisor or Opus consulted, full risky diff read, owner yes for deploy/publish/send/delete | |
+| 1. Gate passed on final commit | PASS dde76c3 (193 passed incl. A1-A3 acceptance + 41 breaker, bash -n both scripts, scanners clean) |
+| 2. Acceptance tests unchanged since test commit | yes (gate lock check) |
+| 3. No newly skipped or disabled tests | yes (gate skip check) |
+| 4. Only in-scope files changed (or extras explained) | yes; extras are the spec, lock and breaker test file |
+| 5. No secrets, personal data, machine names, local paths | yes (gitleaks, local-path check, diff read) |
+| 6. Review findings resolved | yes, none raised |
+| 7. Summary matches the diff | yes |
+| R1: most important file read | yes |
+| R2: advisor or Opus consulted, full risky diff read, owner yes for deploy/publish/send/delete | advisor consulted 2026-11-05; full diff read; nothing deployed or sent (merge waits for the owner) |
 
-Signed off by:  Date:
-Known issues accepted:
+Signed off by: Manager (Claude Opus), advisor consulted  Date: 2026-11-05
+Known issues accepted: auto-merge cannot happen until the owner enables Allow auto-merge and a required status check on main (until then the script exits 3 and a person merges); auto-merge on a Free-plan public repo is not confirmed by the docs; with the built-in token checks need approval, so auto-merge also needs NIGHTLY_TOKEN; the night's checks run on records before the apply; held-list pull requests from two nights can conflict

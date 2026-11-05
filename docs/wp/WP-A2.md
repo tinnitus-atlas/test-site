@@ -8,8 +8,8 @@
 | Required level | L2, reason: one new workflow file following live-check.yml, every requirement covered by the acceptance tests; R2 because it uses a credential, pushes and sends messages |
 | Owner override | Owner-approved unrated routing (Test 1 option A) |
 | Data class | public |
-| Model used | <filled in at dispatch> |
-| Reviewer | different model from the builder (routing rule) |
+| Model used | opencode/deepseek-v4.1-flash-free (default routing), round 1 |
+| Reviewer | breaker opencode/glm-5.3-flash-free (28 tests); reviewer qwen3.6-35b-a3b-mlx after GLM stalled; verdict approve, no findings |
 | Branch | wp/A2-nightly-workflow |
 | Test commit | 73fdfbb |
 | Breaker test file | `tests/test_breaker_wpa2.py` |
@@ -84,15 +84,15 @@ python -m pytest -q tests
 ## Sign-off
 | Check | Result |
 |---|---|
-| 1. Gate passed on final commit | |
-| 2. Acceptance tests unchanged since test commit | |
-| 3. No newly skipped or disabled tests | |
-| 4. Only in-scope files changed (or extras explained) | |
-| 5. No secrets, personal data, machine names, local paths | |
-| 6. Review findings resolved | |
-| 7. Summary matches the diff | |
-| R1: most important file read | |
-| R2: advisor or Opus consulted, full risky diff read, owner yes for deploy/publish/send/delete | |
+| 1. Gate passed on final commit | PASS c4f0739 (159 passed + 28 breaker, scanners clean); 1 earlier FAIL caused by the gate sandbox (global git config), fixed in the pipeline |
+| 2. Acceptance tests unchanged since test commit | yes (gate lock check) |
+| 3. No newly skipped or disabled tests | yes (gate skip check) |
+| 4. Only in-scope files changed (or extras explained) | yes; extras are the spec, lock and breaker test file |
+| 5. No secrets, personal data, machine names, local paths | yes (gitleaks, local-path check, diff read) |
+| 6. Review findings resolved | yes, none raised |
+| 7. Summary matches the diff | yes |
+| R1: most important file read | yes |
+| R2: advisor or Opus consulted, full risky diff read, owner yes for deploy/publish/send/delete | advisor consulted 2026-11-05; full diff read; nothing deployed or sent (merge waits for the owner) |
 
-Signed off by:  Date:
-Known issues accepted:
+Signed off by: Manager (Claude Opus), advisor consulted  Date: 2026-11-05
+Known issues accepted: secret names NIGHTLY_TOKEN and NIGHTLY_WEBHOOK_URL chosen by the manager (brief does not name them); with the built-in token, test checks on the nightly's pull requests wait for approval
