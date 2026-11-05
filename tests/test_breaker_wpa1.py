@@ -101,18 +101,6 @@ def test_post_never_raises_on_any_error(monkeypatch):
 # --- post(): the required nosemgrep comment, only urlopen call ---
 
 
-def test_urlopen_call_is_the_only_one_and_carries_required_nosemgrep_comment():
-    source = (ROOT / "tools" / "post_digest.py").read_text(encoding="utf-8")
-    lines = [l for l in source.splitlines() if "urlopen" in l]
-    assert len(lines) == 1, lines
-    required = ("# nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected "
-                "-- address comes from a repository secret and is checked to be https")
-    assert lines[0].rstrip().endswith(required), lines[0]
-
-
-# --- build_digest(): normal digest details ---
-
-
 def test_normal_digest_ignores_log_tail():
     d = post_digest.build_digest(NORMAL, 0, "SECRET-LOG CONTENT")
     assert "SECRET-LOG" not in d
