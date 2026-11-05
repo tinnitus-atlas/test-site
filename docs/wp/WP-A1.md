@@ -28,7 +28,7 @@ The nightly workflow (WP-A2) can turn `reports/nightly.md` into the chat digest 
   - Security (gate round 1 finding, Semgrep `dynamic-urllib-use-detected`): `post()` must return False without any network call unless the address starts with `https://` (this rules out `file://` and other schemes). After that check, put the comment `# nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected` (full registry rule id and nothing after it: Semgrep ignores the short id and trailing text; corrected by the manager after gate round 2) at the end of the line that calls `urllib.request.urlopen`. This must be the only `urlopen` call.
   - Payload: HTTP POST, `Content-Type: application/json`, body `{"content": <digest>, "text": <digest>}` (works for the common chat webhooks; the chat service is not named in the brief).
   - `main` prints the digest to standard output (the workflow appends it to the run summary), then the `Digest:` line.
-  - Normal digest (exit code 0 or 1 and a report exists): first line `**Knowledge graph nightly run, <date>**` with the date taken from the report's first line (`Nightly run <date>`); then the report's lines starting with `Status:`, `Could not reach:`, `Held back from publishing` (followed by the line `These records stay off the website until fixed.`), `Approved proposals:`, `Website:`, `Freshness:`, `Registry mismatches:`, `Feeds:`, `Biolink export:`, copied exactly; then `Top proposals:` and at most 10 numbered items; then the `Pull request:` line if present, followed by the approval instruction sentence from `hermes/nightly-job.md`. Other lines are not posted.
+  - Normal digest (exit code 0 or 1 and a report exists): first line `**Knowledge graph nightly run, <date>**` with the date taken from the report's first line (`Nightly run <date>`); then the report's lines starting with `Status:`, `Could not reach:`, `Held back from publishing` (followed by the line `These records stay off the website until fixed.`), `Approved proposals:`, `Website:`, `Freshness:`, `Registry mismatches:`, `Feeds:`, `Biolink export:`, copied exactly; then `Top proposals:` and at most 10 numbered items (or the report's `none` line, copied exactly); then the `Pull request:` line if present, followed by the approval instruction sentence from `hermes/nightly-job.md`. Other lines are not posted.
   - Failure digest (exit code 2, or no report): first line `**Knowledge graph nightly run FAILED**`, then the reason line (the line after `Status: RUN FAILED`) if present, then the last 15 lines of the log in a code block.
   - Every digest is at most 1,800 characters: shorten long lines (or the log tail) rather than dropping the header.
 
@@ -79,6 +79,11 @@ python -m pytest -q tests
 ## Review findings
 | # | File:line | Finding | Status (fixed / rejected + reason) |
 |---|---|---|---|
+| 1 | tools/post_digest.py:130 | nosemgrep id looks duplicated | rejected: tested, Semgrep only honours the full registry id (gate Semgrep passes) |
+| 2 | tools/post_digest.py:40 | module-level `_LAST_ERROR` global | accepted as known issue: single-threaded CLI |
+| 3 | tools/post_digest.py:48 | `_fit` halves lines iteratively | accepted: inputs are small, test with 18k chars passes |
+| 4 | breaker | `none` under Top proposals was dropped | fixed by the manager (format in hermes/nightly-job.md copies the list exactly); breaker assertion that encoded the old behaviour removed |
+| 5 | breaker | test asserting the superseded nosemgrep text | deleted: contradicts the corrected spec |
 
 ## Sign-off
 | Check | Result |

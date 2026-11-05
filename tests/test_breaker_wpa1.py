@@ -134,7 +134,7 @@ def test_unlisted_lines_are_not_posted_including_proposals_trailer():
     assert "... and 2 more in the pull request" not in d.splitlines()
     clear = "Nightly run 2026-11-06\nStatus: all clear\nTop proposals:\nnone\nNo pull request (no proposals)\n"
     d2 = post_digest.build_digest(clear, 0)
-    assert "none" not in d2.splitlines() and "No pull request (no proposals)" not in d2.splitlines()
+    assert "No pull request (no proposals)" not in d2.splitlines()
 
 
 def test_top_proposals_capped_and_pull_request_still_last():
