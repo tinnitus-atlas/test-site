@@ -513,6 +513,7 @@ def make_nightly_repo(tmp_path):
     """Copy the repository, turn it into a clone of a fresh bare remote, and configure the gh stub."""
     run = tmp_path / "nightly_run"
     shutil.copytree(ROOT, run, ignore=shutil.ignore_patterns(".git", "__pycache__", "reports", "exports", ".pytest_cache"))
+    (run / "records" / "held_records.json").unlink(missing_ok=True)  # the run must create it, also once main holds one
     subprocess.run(["git", "init", "-q", "-b", "main", "."], cwd=run, check=True, capture_output=True)
     subprocess.run(["git", "config", "user.name", "test"], cwd=run, check=True, capture_output=True)
     subprocess.run(["git", "config", "user.email", "test@example.org"], cwd=run, check=True, capture_output=True)
@@ -574,6 +575,8 @@ def test_run_nightly_publishes_held_list_through_pull_request(tmp_path):
     subject = sh(nightly["remote"], "log", "-1", "--format=%s", held[0]).stdout.strip()
     assert subject.startswith("Update held records "), subject
     assert sh(nightly["remote"], "rev-parse", "main").stdout.strip() == nightly["main_sha"]  # main never pushed
+    if "Proposals awaiting approval: 0" not in out["md"]:  # proposals exist: their branch must reach the remote
+        assert any(x.startswith("proposals/") for x in refs), (refs, out["md"])
 
 
 def test_run_nightly_held_list_auto_merge_refused(tmp_path):

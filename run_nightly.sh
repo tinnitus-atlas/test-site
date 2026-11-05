@@ -113,7 +113,7 @@ if [ "${NO_GIT:-0}" != "1" ] && [ "$COUNT" -gt 0 ]; then
   BRANCH="proposals/$DAY"
   {
     git checkout -q -B "$BRANCH" &&
-    git add "$REPORTS"/*.json "$REPORTS"/proposals.md &&
+    git add -f "$REPORTS"/*.json "$REPORTS"/proposals.md &&  # reports/ is ignored; kgkit.apply reads reports/proposals.json from the merged pull request
     git commit -q -m "Nightly proposals $DAY ($COUNT)" &&
     git push -q -f origin "$BRANCH"
   } >>"$LOG" 2>&1 || PR_LINE="Pull request: could not push branch $BRANCH (see reports/nightly.log)"
