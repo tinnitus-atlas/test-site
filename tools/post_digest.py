@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -119,6 +120,9 @@ def build_digest(report: str | None, exit_code: int, log_tail: str = "") -> str:
     return _normal_digest(report)
 
 
+USER_AGENT = "kg-nightly-digest/1.0 (+https://github.com/tinnitus-atlas/test-site)"
+
+
 def post(text: str, url: str, timeout: float = 15) -> bool:
     global _LAST_ERROR
     _LAST_ERROR = ""
@@ -128,11 +132,16 @@ def post(text: str, url: str, timeout: float = 15) -> bool:
     try:
         body = json.dumps({"content": text, "text": text}).encode("utf-8")
         request = urllib.request.Request(
-            url, data=body, headers={"Content-Type": "application/json"}, method="POST"
+            url, data=body, method="POST",
+            # Discord's front end refuses Python's default User-Agent (HTTP 403, error 1010)
+            headers={"Content-Type": "application/json", "User-Agent": USER_AGENT},
         )
         with urllib.request.urlopen(request, timeout=timeout) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             response.read()
         return True
+    except urllib.error.HTTPError as exc:
+        _LAST_ERROR = "HTTP %d" % exc.code
+        return False
     except Exception as exc:
         _LAST_ERROR = type(exc).__name__
         return False
@@ -160,11 +169,14 @@ def main(argv: list[str] | None = None) -> int:
     url = (os.environ.get(WEBHOOK_ENV) or "").strip()
     if not url:
         print("Digest: skipped (no webhook configured)")
+        print("Digest: skipped (no webhook configured)", file=sys.stderr)  # the run log shows the outcome too
         return 0
     if post(digest, url):
-        print("Digest: posted")
+        status = "Digest: posted"
     else:
-        print(f"Digest: posting FAILED ({_LAST_ERROR or 'error'})")
+        status = f"Digest: posting FAILED ({_LAST_ERROR or 'error'})"
+    print(status)
+    print(status, file=sys.stderr)
     return 0
 
 
