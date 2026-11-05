@@ -1,0 +1,66 @@
+# Runs the nightly job on a schedule and on demand. The digest appears on the run's summary page and is
+# posted to the chat webhook when the NIGHTLY_WEBHOOK_URL secret is configured.
+name: Nightly
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: git clone --depth 1 --branch v4.4.6 https://github.com/biolink/biolink-model /tmp/biolink-model
+      - name: Check the nightly token
+        id: token-check
+        env:
+          NIGHTLY_TOKEN_SET: ${{ secrets.NIGHTLY_TOKEN != '' }}
+        run: |
+          if [ "${NIGHTLY_TOKEN_SET:-}" != "true" ]; then
+            {
+              echo "## Token note"
+              echo
+              echo "NIGHTLY_TOKEN is not configured, so the built-in token is used. Its pushes and pull requests do not start the test workflow, and checks on its pull requests wait for approval."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Nightly run
+        id: nightly
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+          BIOLINK_DIR: /tmp/biolink-model
+        run: |
+          git config user.name "kg-nightly"
+          git config user.email "kg-nightly@users.noreply.github.com"
+          chmod +x run_nightly.sh run_validation.sh
+          code=0; ./run_nightly.sh || code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+      - name: Post digest
+        id: digest
+        if: always()
+        env:
+          NIGHTLY_WEBHOOK_URL: ${{ secrets.NIGHTLY_WEBHOOK_URL }}
+          RUN_CODE: ${{ steps.nightly.outputs.code }}
+        run: |
+          python3 tools/post_digest.py --report reports/nightly.md --log reports/nightly.log --exit-code "${RUN_CODE:-2}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Fail when the run itself failed
+        id: fail-on-error
+        if: always() && steps.nightly.outputs.code != '0' && steps.nightly.outputs.code != '1'
+        env:
+          RUN_CODE: ${{ steps.nightly.outputs.code }}
+        run: |
+          echo "Nightly run failed with exit code ${RUN_CODE:-unknown}: see reports/nightly.log and reports/nightly.md."
+          exit 1
