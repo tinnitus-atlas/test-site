@@ -79,6 +79,8 @@ def test_post_posts_json_payload_over_https_and_returns_true(monkeypatch):
     assert req.full_url == "https://hooks.example.org/abc"
     assert req.get_method() == "POST"
     assert req.headers.get("Content-type") == "application/json"
+    ua = req.headers.get("User-agent") or ""
+    assert ua and not ua.startswith("Python-urllib")  # Discord refuses the default agent (HTTP 403, error 1010)
     assert json.loads(req.data.decode()) == {"content": "digest body", "text": "digest body"}
     assert kwargs.get("timeout") == 15
 
