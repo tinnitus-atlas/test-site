@@ -28,6 +28,7 @@ import argparse
 import copy
 import datetime as dt
 import json
+import os
 import re
 import subprocess
 import sys
@@ -158,10 +159,16 @@ def run_cmd(args: list[str]) -> str:
     return subprocess.run(args, check=True, capture_output=True, text=True).stdout
 
 
+TRUSTED_AUTHORS = "varioso,varioso-bot"  # untrusted-text rule: only these accounts' pull requests are read
+
+
 def merged_proposal_prs(runner: Runner) -> list[dict]:
     out = runner(["gh", "pr", "list", "--state", "merged", "--search", "Nightly proposals in:title",
-                  "--limit", "30", "--json", "number,title,body,mergeCommit"])
-    return sorted(json.loads(out or "[]"), key=lambda p: p["number"])
+                  "--limit", "30", "--json", "number,title,body,mergeCommit,author"])
+    trusted = {a.strip() for a in os.environ.get("NIGHTLY_TRUSTED_AUTHORS", TRUSTED_AUTHORS).split(",") if a.strip()}
+    prs = [p for p in json.loads(out or "[]")
+           if (p.get("author") or {}).get("login") in trusted and (p.get("title") or "").startswith("Nightly proposals")]
+    return sorted(prs, key=lambda p: p["number"])
 
 
 def proposals_at(runner: Runner, commit: str) -> list[dict]:
