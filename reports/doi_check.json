@@ -1,0 +1,288 @@
+{
+  "generated": "2026-11-06T16:15:11+00:00",
+  "check": "doi",
+  "counts": {
+    "confirmed": 13,
+    "quote_unverifiable": 3,
+    "quote_ok": 5
+  },
+  "held_records": [],
+  "citations": [
+    {
+      "record": "tin:tinnitus",
+      "where": "source",
+      "id": "pmid:25273878",
+      "label": "Clinical practice guideline: Tinnitus (Tunkel et al., 2014)",
+      "class": "confirmed",
+      "shared_words": [
+        "guideline",
+        "practice",
+        "tinnitu"
+      ],
+      "indexed_title": "Clinical practice guideline: tinnitus",
+      "indexed_year": 2014,
+      "indexed_journal": "Otolaryngology--head and neck surgery : official journal of American Academy of Otolaryngology-Head and Neck Surgery"
+    },
+    {
+      "record": "tin:cbt",
+      "where": "source",
+      "id": "doi:10.1002/14651858.cd012614.pub2",
+      "label": "Cognitive behavioural therapy for tinnitus (Cochrane review, Fuller et al., 2020)",
+      "class": "confirmed",
+      "shared_words": [
+        "behavioural",
+        "cognitive",
+        "therapy",
+        "tinnitu"
+      ],
+      "indexed_title": "Cognitive behavioural therapy for tinnitus",
+      "indexed_year": 2020,
+      "indexed_journal": "The Cochrane database of systematic reviews"
+    },
+    {
+      "record": "tin:cbt",
+      "where": "relation[0]",
+      "id": "doi:10.1002/14651858.cd012614.pub2",
+      "label": "ameliorates",
+      "class": "confirmed",
+      "shared_words": [
+        "behavioural",
+        "cognitive",
+        "therapy",
+        "tinnitu"
+      ],
+      "indexed_title": "Cognitive behavioural therapy for tinnitus",
+      "indexed_year": 2020,
+      "indexed_journal": "The Cochrane database of systematic reviews"
+    },
+    {
+      "record": "tin:sound-therapy-devices",
+      "where": "source",
+      "id": "doi:10.1002/14651858.cd013094.pub2",
+      "label": "Sound therapy (using amplification devices or sound generators) for tinnitus (Cochrane review, Sereda et al., 2018)",
+      "class": "confirmed",
+      "shared_words": [
+        "amplification",
+        "device",
+        "generator",
+        "sound",
+        "therapy",
+        "tinnitu"
+      ],
+      "indexed_title": "Sound therapy (using amplification devices and/or sound generators) for tinnitus",
+      "indexed_year": 2018,
+      "indexed_journal": "The Cochrane database of systematic reviews"
+    },
+    {
+      "record": "tin:sound-therapy-devices",
+      "where": "relation[0]",
+      "id": "doi:10.1002/14651858.cd013094.pub2",
+      "label": "studied_to_treat",
+      "class": "confirmed",
+      "shared_words": [
+        "device",
+        "generator",
+        "sound",
+        "therapy",
+        "tinnitu"
+      ],
+      "indexed_title": "Sound therapy (using amplification devices and/or sound generators) for tinnitus",
+      "indexed_year": 2018,
+      "indexed_journal": "The Cochrane database of systematic reviews"
+    },
+    {
+      "record": "tin:bimodal-neuromodulation",
+      "where": "source",
+      "id": "doi:10.1126/scitranslmed.abb2830",
+      "label": "Bimodal neuromodulation combining sound and tongue stimulation reduces tinnitus symptoms (Conlon et al., 2020)",
+      "class": "confirmed",
+      "shared_words": [
+        "bimodal",
+        "combining",
+        "neuromodulation",
+        "reduce",
+        "sound",
+        "stimulation",
+        "symptom",
+        "tinnitu",
+        "tongue"
+      ],
+      "indexed_title": "Bimodal neuromodulation combining sound and tongue stimulation reduces tinnitus symptoms in a large randomized clinical study",
+      "indexed_year": 2020,
+      "indexed_journal": "Science translational medicine"
+    },
+    {
+      "record": "tin:bimodal-neuromodulation",
+      "where": "relation[0]",
+      "id": "doi:10.1126/scitranslmed.abb2830",
+      "label": "studied_to_treat",
+      "class": "confirmed",
+      "shared_words": [
+        "bimodal",
+        "neuromodulation",
+        "sound",
+        "stimulation",
+        "tongue"
+      ],
+      "indexed_title": "Bimodal neuromodulation combining sound and tongue stimulation reduces tinnitus symptoms in a large randomized clinical study",
+      "indexed_year": 2020,
+      "indexed_journal": "Science translational medicine"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "where": "source",
+      "id": "doi:10.1136/bmjopen-2017-018465",
+      "label": "Bi-modal stimulation in the treatment of tinnitus: study protocol (BMJ Open, 2017)",
+      "class": "confirmed",
+      "shared_words": [
+        "exploratory",
+        "modal",
+        "protocol",
+        "stimulation",
+        "tinnitu",
+        "treatment"
+      ],
+      "indexed_title": "Bi-modal stimulation in the treatment of tinnitus: a study protocol for an exploratory trial to optimise stimulation parameters and patient subtyping",
+      "indexed_year": 2017,
+      "indexed_journal": "BMJ open"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "where": "source",
+      "id": "pmid:29074518",
+      "label": "Bi-modal stimulation in the treatment of tinnitus: study protocol (BMJ Open, 2017)",
+      "class": "confirmed",
+      "shared_words": [
+        "exploratory",
+        "modal",
+        "protocol",
+        "stimulation",
+        "tinnitu",
+        "treatment"
+      ],
+      "indexed_title": "Bi-modal stimulation in the treatment of tinnitus: a study protocol for an exploratory trial to optimise stimulation parameters and patient subtyping",
+      "indexed_year": 2017,
+      "indexed_journal": "BMJ open"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "where": "relation[0]",
+      "id": "doi:10.1136/bmjopen-2017-018465",
+      "label": "studies_condition",
+      "class": "confirmed",
+      "shared_words": [
+        "exploratory",
+        "stimulation",
+        "tinnitu",
+        "treatment"
+      ],
+      "indexed_title": "Bi-modal stimulation in the treatment of tinnitus: a study protocol for an exploratory trial to optimise stimulation parameters and patient subtyping",
+      "indexed_year": 2017,
+      "indexed_journal": "BMJ open"
+    },
+    {
+      "record": "tin:tinnitus-handicap-inventory",
+      "where": "source",
+      "id": "pmid:8630207",
+      "label": "Development of the Tinnitus Handicap Inventory (Newman, Jacobson and Spitzer, 1996)",
+      "class": "confirmed",
+      "shared_words": [
+        "development",
+        "handicap",
+        "inventory",
+        "tinnitu"
+      ],
+      "indexed_title": "Development of the Tinnitus Handicap Inventory",
+      "indexed_year": 1996,
+      "indexed_journal": "Archives of otolaryngology--head & neck surgery"
+    },
+    {
+      "record": "tin:tinnitus-handicap-inventory",
+      "where": "relation[0]",
+      "id": "pmid:8630207",
+      "label": "related_to",
+      "class": "confirmed",
+      "shared_words": [
+        "handicap",
+        "inventory",
+        "tinnitu"
+      ],
+      "indexed_title": "Development of the Tinnitus Handicap Inventory",
+      "indexed_year": 1996,
+      "indexed_journal": "Archives of otolaryngology--head & neck surgery"
+    },
+    {
+      "record": "tin:aao-hns-guideline-2014",
+      "where": "source",
+      "id": "pmid:25273878",
+      "label": "Clinical practice guideline: Tinnitus (Tunkel et al., 2014)",
+      "class": "confirmed",
+      "shared_words": [
+        "guideline",
+        "practice",
+        "tinnitu"
+      ],
+      "indexed_title": "Clinical practice guideline: tinnitus",
+      "indexed_year": 2014,
+      "indexed_journal": "Otolaryngology--head and neck surgery : official journal of American Academy of Otolaryngology-Head and Neck Surgery"
+    }
+  ],
+  "quotes": [
+    {
+      "record": "tin:hearing-impairment",
+      "relation": "tin:hearing-impairment relation[0] contributes_to -> tin:tinnitus",
+      "quote": "positive causal associations were found for various hearing-related factors",
+      "class": "quote_unverifiable",
+      "source_url": "https://pred.uni-regensburg.de/id/eprint/58235/"
+    },
+    {
+      "record": "tin:cbt",
+      "relation": "tin:cbt relation[0] ameliorates -> tin:tinnitus",
+      "quote": "reducing the negative impact that tinnitus can have on quality of life",
+      "class": "quote_ok",
+      "source_url": null
+    },
+    {
+      "record": "tin:sound-therapy-devices",
+      "relation": "tin:sound-therapy-devices relation[0] studied_to_treat -> tin:tinnitus",
+      "quote": "might result in little or no difference in tinnitus symptom severity",
+      "class": "quote_ok",
+      "source_url": null
+    },
+    {
+      "record": "tin:bimodal-neuromodulation",
+      "relation": "tin:bimodal-neuromodulation relation[0] studied_to_treat -> tin:tinnitus",
+      "quote": "participants achieved a statistically significant reduction in tinnitus symptom severity",
+      "class": "quote_ok",
+      "source_url": null
+    },
+    {
+      "record": "tin:lenire",
+      "relation": "tin:lenire relation[0] studied_to_treat -> tin:tinnitus",
+      "quote": "On March 6, 2023, FDA issued an order to the requester classifying the device into class II.",
+      "class": "quote_unverifiable",
+      "source_url": "https://public-inspection.federalregister.gov/2026-11589.pdf"
+    },
+    {
+      "record": "tin:lenire",
+      "relation": "tin:lenire relation[1] related_to -> tin:bimodal-neuromodulation",
+      "quote": "a combined acoustic and electrical intraoral stimulation device for the relief of tinnitus",
+      "class": "quote_unverifiable",
+      "source_url": "https://www.lenire.com/lenire-granted-fda-approval/"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "relation": "tin:trial-tent-a relation[0] studies_condition -> tin:tinnitus",
+      "quote": "Bi-modal stimulation in the treatment of tinnitus",
+      "class": "quote_ok",
+      "source_url": null
+    },
+    {
+      "record": "tin:tinnitus-handicap-inventory",
+      "relation": "tin:tinnitus-handicap-inventory relation[0] related_to -> tin:tinnitus",
+      "quote": "The total scale yielded excellent internal consistency reliability",
+      "class": "quote_ok",
+      "source_url": null
+    }
+  ]
+}

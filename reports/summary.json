@@ -1,0 +1,29 @@
+{
+  "generated": "2026-11-06T16:15:11+00:00",
+  "blocking": false,
+  "held_records": [],
+  "doi": {
+    "confirmed": 13,
+    "quote_unverifiable": 3,
+    "quote_ok": 5
+  },
+  "audit": {},
+  "factcheck": {
+    "high": 0,
+    "medium": 0,
+    "low": 4
+  },
+  "freshness": {
+    "critical_stale": 0,
+    "critical_records": 6,
+    "critical_stale_share": 0.0,
+    "breach": false
+  },
+  "new_trials": 14,
+  "new_papers": 19,
+  "new_devices": 1,
+  "proposals": 38,
+  "already_reviewed_skipped": 0,
+  "skipped_checks": [],
+  "unreachable": []
+}

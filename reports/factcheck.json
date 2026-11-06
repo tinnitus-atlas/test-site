@@ -1,0 +1,92 @@
+{
+  "generated": "2026-11-06T16:15:03+00:00",
+  "check": "factcheck",
+  "checked": 1,
+  "findings": [
+    {
+      "record": "tin:trial-tent-a",
+      "name": "Treatment Evaluation of Neuromodulation for Tinnitus (TENT-A)",
+      "field": "status",
+      "recorded": null,
+      "registry": "completed",
+      "severity": "low",
+      "reason": "Record has no status; registry has one",
+      "source": "https://clinicaltrials.gov/study/NCT02669069"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "name": "Treatment Evaluation of Neuromodulation for Tinnitus (TENT-A)",
+      "field": "facts.phase",
+      "recorded": null,
+      "registry": "na",
+      "severity": "low",
+      "reason": "Record has no phase; registry has one",
+      "source": "https://clinicaltrials.gov/study/NCT02669069"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "name": "Treatment Evaluation of Neuromodulation for Tinnitus (TENT-A)",
+      "field": "facts.primary_completion_date",
+      "recorded": null,
+      "registry": "2017-07-31",
+      "severity": "low",
+      "reason": "Registry primary completion date is 2017-07-31 (ACTUAL)",
+      "source": "https://clinicaltrials.gov/study/NCT02669069"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "name": "Treatment Evaluation of Neuromodulation for Tinnitus (TENT-A)",
+      "field": "facts.enrollment",
+      "recorded": null,
+      "registry": 326,
+      "severity": "low",
+      "reason": "Registry enrolment is 326 (ACTUAL)",
+      "source": "https://clinicaltrials.gov/study/NCT02669069"
+    }
+  ],
+  "patches": [
+    {
+      "record": "tin:trial-tent-a",
+      "field": "status",
+      "current": null,
+      "proposed": "completed",
+      "reason": "Record has no status; registry has one",
+      "source": "https://clinicaltrials.gov/study/NCT02669069",
+      "severity": "low"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "field": "facts.phase",
+      "current": null,
+      "proposed": "na",
+      "reason": "Record has no phase; registry has one",
+      "source": "https://clinicaltrials.gov/study/NCT02669069",
+      "severity": "low"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "field": "facts.primary_completion_date",
+      "current": null,
+      "proposed": "2017-07-31",
+      "reason": "Registry primary completion date is 2017-07-31 (ACTUAL)",
+      "source": "https://clinicaltrials.gov/study/NCT02669069",
+      "severity": "low"
+    },
+    {
+      "record": "tin:trial-tent-a",
+      "field": "facts.enrollment",
+      "current": null,
+      "proposed": 326,
+      "reason": "Registry enrolment is 326 (ACTUAL)",
+      "source": "https://clinicaltrials.gov/study/NCT02669069",
+      "severity": "low"
+    }
+  ],
+  "unreachable": [],
+  "skipped": [],
+  "counts": {
+    "high": 0,
+    "medium": 0,
+    "low": 4
+  }
+}
