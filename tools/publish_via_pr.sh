@@ -40,6 +40,14 @@ fi
 
 git checkout -q main >&2 2>&1 || failed "could not return to main"
 
+# Untrusted-text rule: model-written changes never merge by themselves. A change counts as model-written when the
+# caller says so (MODEL_WRITTEN=1) or an added line carries the data model's "automated_agent" label.
+if [ "${MODEL_WRITTEN:-0}" = "1" ] || git diff main "$BRANCH" -- "$@" 2>/dev/null | grep -E '^\+' | grep -q 'automated_agent'; then
+  echo "publish_via_pr: model-written change, left for a person to review and merge" >&2
+  echo "$URL"
+  exit 3
+fi
+
 # Ask GitHub to merge the pull request once the checks pass. When that is not possible the pull request stays open
 # for a person, and the exit code says so.
 if gh pr merge "$BRANCH" --auto --squash --delete-branch >&2 2>&1; then
