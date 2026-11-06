@@ -42,10 +42,10 @@ python -m pytest -q tests
 ## Sign-off
 | Check | Result |
 |---|---|
-| 1. Gate passed on final commit | yes (runs/A8/gate-report.md) |
+| 1. Gate passed on final commit | re-gate after the WP-A2 hash update (runs/A8/gate-report.md) |
 | 2. Acceptance tests unchanged since test commit | yes |
 | 3. No newly skipped or disabled tests | yes |
-| 4. Only in-scope files changed (or extras explained) | yes, plus this spec and the lock file |
+| 4. Only in-scope files changed (or extras explained) | yes, plus this spec, the lock files, and (owner-approved 2026-11-06) the pinned live-check.yml hash in WP-A2's locked test `test_live_check_workflow_unchanged`, with WP-A2's lock re-locked |
 | 5. No secrets, personal data, machine names, local paths | yes |
 | 6. Review findings resolved | none |
 | 7. Summary matches the diff | yes |

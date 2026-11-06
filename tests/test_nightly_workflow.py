@@ -116,7 +116,7 @@ def test_failed_run_fails_workflow_after_digest(wf):
 
 def test_live_check_workflow_unchanged():
     h = hashlib.sha256((ROOT / ".github" / "workflows" / "live-check.yml").read_bytes()).hexdigest()
-    assert h == "081bc7fe40fe64e103890b4719c20658df8d5b3287f09724560d83a233eec3ab"
+    assert h == "00ebdb8ccd49688710b993335c3ede8d447d776768e04bd43ae7f0279360ead3"
 
 
 # ---- the workflow's own shell steps, run against stand-ins ----
