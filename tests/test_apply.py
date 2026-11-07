@@ -143,8 +143,8 @@ def test_from_github_with_standin(workspace):
     def runner(args):
         calls.append(args)
         if args[:3] == ["gh", "pr", "list"]:
-            return json.dumps([{"number": 12, "title": "Nightly proposals", "body": body, "mergeCommit": {"oid": "abc"}},
-                               {"number": 11, "title": "Nightly proposals", "body": "", "mergeCommit": {"oid": "def"}}])
+            return json.dumps([{"number": 12, "title": "Nightly proposals", "body": body, "mergeCommit": {"oid": "abc"}, "author": {"login": "varioso-bot"}},
+                               {"number": 11, "title": "Nightly proposals", "body": "", "mergeCommit": {"oid": "def"}, "author": {"login": "varioso-bot"}}])
         if args[:2] == ["git", "show"]:
             return json.dumps({"proposals": proposals()})
         raise AssertionError(args)

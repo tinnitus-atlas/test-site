@@ -12,7 +12,7 @@ This scheduled job runs the feeds, the five quality checks and the Biolink expor
 
 ## Creating the scheduled job
 
-Send the agent this message in chat, replacing `<PROJECT_DIR>` with the full folder path from step 2 (for example `/home/agent/kg-quality-kit`):
+Send the agent this message in chat, replacing `<PROJECT_DIR>` with the full folder path from step 2 (for example `/home/<user>/kg-quality-kit`):
 
 > Create a scheduled job named "kg-nightly" that runs every day at 03:17 in my time zone, delivers its result to the home chat channel, and uses the prompt below exactly as written.
 
