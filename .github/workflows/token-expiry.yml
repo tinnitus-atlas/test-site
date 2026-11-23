@@ -18,6 +18,7 @@ jobs:
         run: |
           if [ -z "${NIGHTLY_TOKEN:-}" ]; then
             echo "NIGHTLY_TOKEN expires: not-configured"
+            echo "::warning title=NIGHTLY_TOKEN missing::NIGHTLY_TOKEN is not configured, so the nightly cannot open proposals pull requests as the trusted bot."
             exit 0
           fi
           hdr="$(mktemp)"

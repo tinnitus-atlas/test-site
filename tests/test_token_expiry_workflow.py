@@ -82,3 +82,4 @@ def test_missing_secret(wf, tmp_path):
     r = run_step(wf, tmp_path, token="")
     assert r.returncode == 0
     assert "NIGHTLY_TOKEN expires: not-configured" in r.stdout
+    assert "::warning title=NIGHTLY_TOKEN missing::" in r.stdout
