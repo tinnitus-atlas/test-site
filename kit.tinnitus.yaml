@@ -99,6 +99,12 @@ regulatory:
 proposals:
   auto_apply_sources: []         # none: every change waits for a person
 
+drafting:                        # read by kgkit/draft.py (the drafting step)
+  review_mode: person            # every draft is ticked by a person; "sampled" is not available (model text never merges by itself)
+  cap: 20                        # most bare entries drafted per run
+  allowed_predicates: [studies_condition, in_trials_for, studied_to_treat, related_to]
+  banned_phrases: [cure, cures, cured, proven to, guaranteed, miracle, breakthrough, you should]
+
 # ---- Website (read by site/build_site.py) ----
 site:
   title: Tinnitus Atlas
