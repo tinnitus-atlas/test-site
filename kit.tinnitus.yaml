@@ -99,6 +99,13 @@ regulatory:
 proposals:
   auto_apply_sources: []         # none: every change waits for a person
 
+screener:                        # read by kgkit/screener.py: recommends tick or skip for every proposal; never approves
+  ai: false                      # true: an AI model also scores each item (needs SCREENER_BASE_URL and SCREENER_MODEL)
+  pre_tick: false                # true: strong items arrive with Approved already ticked; the reviewer unticks and merges
+  pre_tick_min: 0.8              # rules-and-learning score needed for a pre-tick (the AI score never counts)
+  tick_at: 0.65                  # at or above: "Recommended: tick"
+  skip_at: 0.35                  # at or below: "Recommended: skip"; between the two: "On the fence"
+
 drafting:                        # read by kgkit/draft.py (the drafting step)
   review_mode: person            # every draft is ticked by a person; "sampled" is not available (model text never merges by itself)
   cap: 20                        # most bare entries drafted per run
