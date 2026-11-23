@@ -301,6 +301,9 @@ def run(records: list[dict], cfg: dict, http: Http, drafter: Drafter, model: str
         t = tier(r, d, cfg)
         props.append(to_proposal(r, d, url, model, h, t))
         report["drafted"].append({"record": r["id"], "tier": t})
+    from .decisions import load_history
+    from .screener import screen
+    screen(props, cfg, load_history(queue_path))  # same folder as the records
     reports = Path(reports_dir)
     reports.mkdir(parents=True, exist_ok=True)
     write_report(reports, "proposals", {"check": "proposals", "mode": "drafts", "count": len(props), "auto_apply": 0,

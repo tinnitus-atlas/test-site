@@ -39,6 +39,10 @@ if [ "${NO_GIT:-0}" != "1" ]; then
     APPLY_LINE="Approved proposals: waiting, the previous apply pull request is still open"
   else
     # Apply proposals ticked and merged since the last run, then publish them through a pull request.
+    # First run with the decision history: fill it from every merged proposals pull request (ticked and skipped items).
+    if [ ! -f "$(dirname "$RECORDS")/decisions.jsonl" ]; then
+      python3 -m kgkit.decisions --config "$CONFIG" --records "$RECORDS" --rebuild-from-github >>"$LOG" 2>&1 || true
+    fi
     APPLY_NOTES="$REPORTS/apply_notes.txt"
     rm -f "$APPLY_NOTES"
     python3 -m kgkit.apply --config "$CONFIG" --records "$RECORDS" --from-github --notes "$APPLY_NOTES" >>"$LOG" 2>&1

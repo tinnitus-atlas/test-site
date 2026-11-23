@@ -66,6 +66,11 @@ def summarise(results: dict) -> tuple[dict, str]:
     lines.append(f"Proposals awaiting approval: {s['proposals'] or 0}")
     if s["already_reviewed_skipped"]:
         lines.append(f"Not proposed again (already reviewed): {s['already_reviewed_skipped']}")
+    pr = results.get("proposals") or {}
+    if pr.get("parked_waiting") or pr.get("parked_due"):
+        lines.append(f"Maybe later: {pr.get('parked_due', 0)} due again in this list, {pr.get('parked_waiting', 0)} still parked")
+    if pr.get("pre_ticked"):
+        lines.append(f"Pre-ticked by the screener (untick if you disagree): {pr['pre_ticked']}")
     if s["skipped_checks"]:
         lines.append("Not run: " + ", ".join(s["skipped_checks"]))
     return s, "\n".join(lines)
@@ -108,7 +113,8 @@ def main(argv: list[str] | None = None) -> int:
         elif check == "proposals":
             seen_file = Path(args.records).parent / "seen_proposals.json"
             seen = {e["key"] for e in json.loads(seen_file.read_text())} if seen_file.exists() else set()
-            results[check] = proposals.run(records, cfg, reports, seen)
+            from .decisions import load_history, load_parked
+            results[check] = proposals.run(records, cfg, reports, seen, load_parked(args.records), load_history(args.records))
         print(f"ran {check}")
 
     summary, text = summarise(results)

@@ -106,37 +106,59 @@ def proposal_key(p: dict) -> str | None:
 
 
 def to_markdown(props: list[dict]) -> str:
-    lines = ["# Proposed changes", "", f"{len(props)} proposals. Approve by merging; reject by deleting the line.", ""]
+    from .screener import line as screen_line
+    lines = ["# Proposed changes", "",
+             f"{len(props)} proposals. Tick Approved to add an item, or Maybe later to see it again in 90 days, then merge. "
+             "Items with neither box ticked count as reviewed and are not proposed again.", ""]
     for i, p in enumerate(props, 1):
+        s = screen_line(p)
+        ticked = "x" if (p.get("screen") or {}).get("pre_ticked") else " "
         lines += [f"## {i}. {p['claim']}", "",
                   f"- **Why it surfaced:** {p['why']}",
                   f"- **Evidence:** {p['evidence']} ([source]({p['source']}))",
                   f"- **Wrong if:** {p['wrong_if']}",
                   f"- **Confidence:** {p['confidence']}",
+                  *([s] if s else []),
                   f"- **To apply:** `{p['apply']}`",
-                  f"- [ ] Approved", ""]
+                  f"- [{ticked}] Approved",
+                  "- [ ] Maybe later", ""]
     return "\n".join(lines)
 
 
-def run(records: list[dict], cfg: dict, reports_dir, seen: set[str] | None = None) -> dict:
+def run(records: list[dict], cfg: dict, reports_dir, seen: set[str] | None = None,
+        parked: list[dict] | None = None, history: list[dict] | None = None, today: str | None = None) -> dict:
+    import datetime as dt
+    from .decisions import due_parked
+    from .screener import screen
     by_id = {r["id"]: r for r in records if r.get("id")}
     props = from_factcheck(read_report(reports_dir, "factcheck"), by_id) + from_feeds(read_report(reports_dir, "feeds"))
-    suppressed = 0
-    if seen:
-        kept = []
-        for p in props:
-            if p["type"] in SEEN_TYPES and proposal_key(p) in seen:
-                suppressed += 1
-            else:
-                kept.append(p)
-        props = kept
+    due, waiting = due_parked(parked or [], today or dt.date.today().isoformat())
+    suppressed, parked_waiting = 0, 0
+    kept, keys = [], set()
+    for p in props:
+        k = proposal_key(p) if p["type"] in SEEN_TYPES else None
+        if k and seen and k in seen:
+            suppressed += 1
+        elif k and k in waiting:
+            parked_waiting += 1
+        else:
+            kept.append(p)
+            if k:
+                keys.add(k)
+    for p in due:  # Maybe later items whose time is up come back even if the feeds no longer list them
+        k = proposal_key(p)
+        if not (k and (k in keys or (seen and k in seen))):
+            kept.append(p)
+    props = kept
     order = {"high": 0, "medium": 1, "low": 2}
     props.sort(key=lambda p: (order.get(p["confidence"], 3), p["type"], p["claim"]))
+    screen(props, cfg, history)
     auto = set((cfg.get("proposals") or {}).get("auto_apply_sources") or [])
     for p in props:
         p["auto_apply"] = p["origin"] in auto and p["type"] == "update"
     report = {"check": "proposals", "count": len(props), "auto_apply": sum(p["auto_apply"] for p in props),
-              "already_reviewed_skipped": suppressed, "proposals": props}
+              "already_reviewed_skipped": suppressed, "parked_waiting": parked_waiting, "parked_due": len(due),
+              "pre_ticked": sum(1 for p in props if (p.get("screen") or {}).get("pre_ticked")), "proposals": props}
     write_report(reports_dir, "proposals", report)
     from pathlib import Path
     (Path(reports_dir) / "proposals.md").write_text(to_markdown(props), encoding="utf-8")
