@@ -1,0 +1,47 @@
+# One-off backfill, started by hand: proposes older trials, papers and FDA device decisions in a pull request
+# titled "Nightly proposals backfill ...", so the existing approval and apply steps handle it unchanged.
+# Window: from "until_days" back to "since_days" back (pilot: 30 to 183). Later stages: 183 to 365, 365 to 730.
+name: Backfill
+on:
+  workflow_dispatch:
+    inputs:
+      since_days:
+        description: "Oldest edge of the window, in days back"
+        default: "183"
+      until_days:
+        description: "Newest edge of the window, in days back (30 = where the nightly stops)"
+        default: "30"
+      paper_cap:
+        description: "Most papers to propose (the rest are queued)"
+        default: "30"
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Backfill
+        id: backfill
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+          SINCE_DAYS: ${{ inputs.since_days }}
+          UNTIL_DAYS: ${{ inputs.until_days }}
+          PAPER_CAP: ${{ inputs.paper_cap }}
+        run: |
+          git config user.name "kg-nightly"
+          git config user.email "kg-nightly@users.noreply.github.com"
+          chmod +x run_backfill.sh
+          ./run_backfill.sh "${SINCE_DAYS:-183}" "${UNTIL_DAYS:-30}" "${PAPER_CAP:-30}" >> "$GITHUB_STEP_SUMMARY"
