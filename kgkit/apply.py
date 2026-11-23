@@ -13,6 +13,9 @@ Rules:
                 skipped if a record with the same id or registry identifier already exists.
   review_paper  adds the paper to records/review_queue.json for a person or agent to read; it never edits
                 the records directly.
+  draft         writes a drafted TL;DR, summary and quoted relationships into a bare entry, only if the entry
+                still holds the placeholder TL;DR the draft was written against; marks the relationships as
+                checked by a person (the person ticked the box).
 Each pull request is applied once; its number is stored in records/applied_prs.json.
 Every feed proposal (new record or paper) in a merged pull request with at least one ticked box, ticked or
 not, is added to records/seen_proposals.json so that ignored items are not proposed again. A merged pull
@@ -146,6 +149,26 @@ def apply_selected(records: list[dict], proposals: list[dict], approved: dict[in
             review_queue.append({"cite": cite, "title": p.get("claim", "").replace("Review new paper for relevant claims: ", ""),
                                  "url": p.get("source"), "added": today, "status": "to_read"})
             result["applied"].append({"number": number, "queued": cite})
+        elif p["type"] == "draft":
+            rec = by_id.get(a.get("record"))
+            if rec is None:
+                result["skipped"].append({"number": number, "reason": f"record {a.get('record')} no longer exists"})
+            elif (rec.get("tldr") or "").strip() != (a.get("expect_tldr") or "").strip():
+                result["conflicts"].append({"number": number, "record": rec["id"], "field": "tldr",
+                                            "expected": a.get("expect_tldr"), "found": rec.get("tldr")})
+            else:
+                rec["tldr"], rec["summary"], rec["asOf"] = a["tldr"].strip(), a["summary"].strip(), today
+                existing = {(x.get("predicate"), x.get("object"), x.get("quote")) for x in rec.get("relations") or []}
+                for rel in a.get("relations") or []:
+                    if (rel["predicate"], rel["object"], rel["quote"]) in existing:
+                        continue
+                    rec.setdefault("relations", []).append({
+                        "predicate": rel["predicate"], "object": rel["object"], "quote": rel["quote"].strip(),
+                        **({"sourceUrl": a["source_url"]} if a.get("source_url") else {}),
+                        "knowledgeLevel": "knowledge_assertion", "agentType": "manual_validation_of_automated_agent"})
+                if a.get("provenance"):
+                    rec["provenance"] = dict(a["provenance"], approved_on=today)
+                result["applied"].append({"number": number, "record": rec["id"], "drafted": True})
         else:
             result["skipped"].append({"number": number, "reason": f"unknown proposal type {p.get('type')}"})
     return result
