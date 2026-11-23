@@ -1,0 +1,64 @@
+# Drafting step, started by hand. Mode "sources" only fetches the source text and the drafter prompt for each bare
+# entry (and for any registry numbers given) and prints them, so a drafter can be tested without a model here.
+# Mode "draft" runs the drafting step and opens a "Nightly proposals drafts ..." pull request; it needs the repository
+# variables DRAFTER_BASE_URL and DRAFTER_MODEL and, for a hosted model, the secret DRAFTER_API_KEY.
+name: Drafting
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "sources (no model needed) or draft"
+        default: "sources"
+      trials:
+        description: "Optional registry numbers to include, separated by spaces (testing; nothing is saved)"
+        default: ""
+      cap:
+        description: "Most entries per run"
+        default: "20"
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+jobs:
+  drafting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Drafting
+        id: drafting
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+          MODE: ${{ inputs.mode }}
+          TRIALS: ${{ inputs.trials }}
+          CAP: ${{ inputs.cap }}
+          DRAFTER_BASE_URL: ${{ vars.DRAFTER_BASE_URL }}
+          DRAFTER_MODEL: ${{ vars.DRAFTER_MODEL }}
+          DRAFTER_API_KEY: ${{ secrets.DRAFTER_API_KEY }}
+        run: |
+          git config user.name "kg-nightly"
+          git config user.email "kg-nightly@users.noreply.github.com"
+          case "${CAP:-20}" in ''|*[!0-9]*) echo "cap must be a whole number"; exit 2;; esac
+          if [ "${MODE:-sources}" = "draft" ]; then
+            chmod +x run_drafts.sh
+            ./run_drafts.sh "${CAP:-20}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            args=()
+            for t in ${TRIALS:-}; do args+=(--trial "$t"); done
+            python3 -m kgkit.draft --config kit.tinnitus.yaml --records records/tinnitus.records.json --reports reports \
+              --sources-only --cap "${CAP:-20}" "${args[@]}"
+            echo "## Draft sources" >> "$GITHUB_STEP_SUMMARY"
+            python3 -c "import json;[print(f\"- {e['record']}: {e.get('url') or e.get('error')}\") for e in json.load(open('reports/draft_sources.json'))]" >> "$GITHUB_STEP_SUMMARY"
+            echo "DRAFT_SOURCES_JSON_BEGIN"
+            cat reports/draft_sources.json
+            echo "DRAFT_SOURCES_JSON_END"
+          fi

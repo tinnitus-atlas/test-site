@@ -252,3 +252,30 @@ def test_draft_audit_samples_only_drafted_entries(tmp_path):
     assert draft_audit.main(["--records", str(rec_file), "--reports", str(tmp_path), "--n", "30", "--seed", "1"]) == 0
     md = (tmp_path / "draft_audit.md").read_text()
     assert "Sample: 1 of 1 drafted entries" in md and done["id"] in md and "| Verdict |" in md
+
+
+def test_sources_only_needs_no_drafter_and_writes_text_and_prompt(tmp_path, monkeypatch):
+    monkeypatch.delenv("DRAFTER_BASE_URL", raising=False)
+    rec_file = tmp_path / "records.json"
+    rec_file.write_text(json.dumps({"records": records_with()}))
+    code = draft.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec_file), "--reports", str(tmp_path),
+                       "--sources-only", "--trial", "NCT06000001"], http=http())
+    assert code == 0
+    (e,) = json.loads((tmp_path / "draft_sources.json").read_text())
+    assert e["record"] == "tin:trial-nct06000001" and BRIEF in e["source_text"] and BRIEF in e["prompt"]
+    assert len(e["source_hash"]) == 64
+    assert json.loads(rec_file.read_text()) == {"records": records_with()}  # nothing saved
+
+
+def test_trial_option_rejects_bad_numbers(tmp_path):
+    assert draft.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(ROOT / "records" / "tinnitus.records.json"),
+                       "--reports", str(tmp_path), "--sources-only", "--trial", "NCT1; rm -rf /"]) == 2
+
+
+def test_drafting_workflow_is_manual_and_keeps_secrets_in_env():
+    text = (ROOT / ".github" / "workflows" / "drafting.yml").read_text()
+    wf = yaml.safe_load(text)
+    on = wf.get("on", wf.get(True))
+    assert set(on) == {"workflow_dispatch"}
+    run = wf["jobs"]["drafting"]["steps"][-1]["run"]
+    assert "${{" not in run  # inputs and secrets reach the shell only through env
