@@ -279,3 +279,9 @@ def test_drafting_workflow_is_manual_and_keeps_secrets_in_env():
     assert set(on) == {"workflow_dispatch"}
     run = wf["jobs"]["drafting"]["steps"][-1]["run"]
     assert "${{" not in run  # inputs and secrets reach the shell only through env
+
+
+def test_quote_of_a_section_label_fails():
+    d = good(relations=[{"predicate": "studies_condition", "object": "tin:tinnitus", "quote": "Conditions: Tinnitus"}])
+    reasons = draft.gate(d, bare_trial(), BRIEF + "\nConditions: Tinnitus", records_with(bare_trial()), CFG)
+    assert any("section label" in r for r in reasons), reasons

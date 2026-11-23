@@ -10,6 +10,7 @@ Rules:
 - summary: 60 to 120 words.
 - relations: 1 to 3 links to records in the RECORDS list. Each has a predicate from ALLOWED PREDICATES, the object
   record id, and a quote of fewer than 15 words copied word for word from the SOURCE TEXT that supports the link.
+  Quote the source's own sentences; never quote a line label such as "Conditions:" or "Intervention:".
 
 Answer with JSON only, in this shape:
 {"tldr": "...", "summary": "...", "relations": [{"predicate": "...", "object": "...", "quote": "..."}]}
