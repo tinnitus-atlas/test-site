@@ -323,6 +323,56 @@
           "agentType": "automated_agent"
         }
       ]
+    },
+    {
+      "id": "tin:trial-nct04066348",
+      "kind": "trial",
+      "name": "TNF-α Treatment of Blast-Induced Tinnitus",
+      "tldr": "Draft record from a registry feed; summary still to be written.",
+      "asOf": "2026-11-23",
+      "sources": [
+        {
+          "url": "https://clinicaltrials.gov/study/NCT04066348",
+          "label": "Registry entry"
+        }
+      ],
+      "xrefs": [
+        "CLINICALTRIALS:NCT04066348"
+      ],
+      "status": "active_not_recruiting",
+      "relations": [
+        {
+          "predicate": "studies_condition",
+          "object": "tin:tinnitus",
+          "knowledgeLevel": "not_provided",
+          "agentType": "manual_validation_of_automated_agent"
+        }
+      ]
+    },
+    {
+      "id": "tin:trial-nct07777549",
+      "kind": "trial",
+      "name": "A Study of the Safety and Efficacy of TRTL-913 in Healthy Volunteers (Part A) and in Adults With Tinnitus (Part B)",
+      "tldr": "Draft record from a registry feed; summary still to be written.",
+      "asOf": "2026-11-23",
+      "sources": [
+        {
+          "url": "https://clinicaltrials.gov/study/NCT07777549",
+          "label": "Registry entry"
+        }
+      ],
+      "xrefs": [
+        "CLINICALTRIALS:NCT07777549"
+      ],
+      "status": "recruiting",
+      "relations": [
+        {
+          "predicate": "studies_condition",
+          "object": "tin:tinnitus",
+          "knowledgeLevel": "not_provided",
+          "agentType": "manual_validation_of_automated_agent"
+        }
+      ]
     }
   ]
 }
