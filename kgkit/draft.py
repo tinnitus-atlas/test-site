@@ -323,6 +323,39 @@ def run(records: list[dict], cfg: dict, http: Http, drafter: Drafter, model: str
     return report
 
 
+def test_entry(nct: str, cfg: dict) -> dict:
+    condition = ((cfg.get("feeds") or {}).get("trials") or {}).get("condition_record")
+    rec = {"id": f"{cfg['project'].get('prefix', 'kg')}:trial-{nct.lower()}", "kind": "trial", "name": nct,
+           "tldr": PLACEHOLDER, "asOf": today_iso(), "xrefs": [f"CLINICALTRIALS:{nct}"],
+           "sources": [{"url": f"https://clinicaltrials.gov/study/{nct}", "label": "Registry entry"}]}
+    if condition:
+        rec["relations"] = [{"predicate": "studies_condition", "object": condition, "knowledgeLevel": "not_provided",
+                             "agentType": "manual_validation_of_automated_agent"}]
+    return rec
+
+
+def sources(records: list[dict], cfg: dict, http: Http, reports_dir, cap: int) -> list[dict]:
+    """Source text and the exact drafter prompt for each bare entry, so any drafter (or a person) can be tested."""
+    allowed = [p for p in settings(cfg)["allowed_predicates"] if p in (cfg.get("predicates") or {})]
+    out = []
+    for r in [x for x in records if is_bare(x)][:cap]:
+        try:
+            src = source_text(r, http)
+        except FetchError as exc:
+            out.append({"record": r["id"], "error": f"source unreachable: {exc}"})
+            continue
+        if not src:
+            out.append({"record": r["id"], "error": "no usable source text"})
+            continue
+        text, url = src
+        out.append({"record": r["id"], "url": url, "source_hash": hashlib.sha256(text.encode()).hexdigest(),
+                    "source_text": text, "prompt": prompt(r, records, text, allowed)})
+    reports = Path(reports_dir)
+    reports.mkdir(parents=True, exist_ok=True)
+    (reports / "draft_sources.json").write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return out
+
+
 def main(argv: list[str] | None = None, drafter: Drafter | None = None, http: Http | None = None) -> int:
     ap = argparse.ArgumentParser(prog="kgkit.draft", description="Draft finished entries for bare records")
     ap.add_argument("--config", required=True)
@@ -330,6 +363,10 @@ def main(argv: list[str] | None = None, drafter: Drafter | None = None, http: Ht
     ap.add_argument("--reports", default="reports")
     ap.add_argument("--cap", type=int)
     ap.add_argument("--cache", default=".cache/http")
+    ap.add_argument("--sources-only", action="store_true",
+                    help="fetch the source text and the drafter prompt for each bare entry into draft_sources.json; no drafter needed")
+    ap.add_argument("--trial", action="append", default=[], metavar="NCT",
+                    help="also treat this registry trial as a bare entry (testing; nothing is saved to the records)")
     args = ap.parse_args(argv)
     try:
         cfg = load_config(args.config)
@@ -337,6 +374,16 @@ def main(argv: list[str] | None = None, drafter: Drafter | None = None, http: Ht
     except KitError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    for nct in args.trial:
+        if not re.fullmatch(r"NCT\d{8}", nct.upper()):
+            print(f"error: {nct} is not a registry number like NCT01234567", file=sys.stderr)
+            return 2
+        records.append(test_entry(nct.upper(), cfg))
+    if args.sources_only:
+        out = sources(records, cfg, http or Http(cache_dir=args.cache), args.reports,
+                      args.cap if args.cap is not None else int(settings(cfg)["cap"]))
+        print(f"draft sources: {len(out)} entries written to {Path(args.reports) / 'draft_sources.json'}")
+        return 0
     drafter = drafter or openai_compatible()
     if drafter is None:
         print("error: no drafter configured; set DRAFTER_BASE_URL and DRAFTER_MODEL", file=sys.stderr)
