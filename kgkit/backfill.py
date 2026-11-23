@@ -189,7 +189,8 @@ def pilot_markdown(rep: dict) -> str:
 
 
 def run(records: list[dict], cfg: dict, http: Http, reports_dir, since_days: int, until_days: int, paper_cap: int,
-        seen: set[str], open_keys: set[str]) -> dict:
+        seen: set[str], open_keys: set[str], history: list[dict] | None = None) -> dict:
+    from .screener import screen
     t0 = time.time()
     start, end = window(since_days, until_days)
     conf = cfg.get("feeds") or {}
@@ -208,6 +209,7 @@ def run(records: list[dict], cfg: dict, http: Http, reports_dir, since_days: int
             excluded["open_pr"] += 1
         else:
             kept.append(p)
+    screen(kept, cfg, history)
     for p in kept:
         p["why"] = p["why"].replace("A new paper matching", "An older paper matching").replace(" was published", " was published in the backfill window")
         p["auto_apply"] = False
@@ -257,8 +259,9 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd, http: Http | N
         except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError) as exc:
             print(f"error: could not read open proposals pull requests: {exc}", file=sys.stderr)
             return 2
+    from .decisions import load_history
     rep = run(records, cfg, http or Http(cache_dir=args.cache), args.reports, args.since_days, args.until_days,
-              args.paper_cap, seen, open_keys)
+              args.paper_cap, seen, open_keys, load_history(args.records))
     print((Path(args.reports) / "backfill_pilot.md").read_text())
     return 0
 

@@ -18,7 +18,9 @@ Rules:
                 checked by a person (the person ticked the box).
 Each pull request is applied once; its number is stored in records/applied_prs.json.
 Every feed proposal (new record or paper) in a merged pull request with at least one ticked box, ticked or
-not, is added to records/seen_proposals.json so that ignored items are not proposed again. A merged pull
+not, is added to records/seen_proposals.json so that ignored items are not proposed again, except items ticked
+"Maybe later": those go to records/parked.json and come back when due (see kgkit/decisions.py). Every decision
+is added to records/decisions.jsonl. A merged pull
 request with no box ticked is skipped entirely: nothing is applied, it is not marked as applied, and its
 items stay open (they are proposed again, and ticking a box later still counts). The skip is written to the
 notes file (--notes) so the nightly digest can say so.
@@ -42,7 +44,7 @@ import tempfile
 from pathlib import Path
 from typing import Callable
 
-from . import audit
+from . import audit, decisions
 from .common import KitError, load_config, load_records
 from .proposals import SEEN_TYPES, proposal_key
 
@@ -188,9 +190,9 @@ def run_cmd(args: list[str]) -> str:
 TRUSTED_AUTHORS = "varioso,varioso-bot"  # untrusted-text rule: only these accounts' pull requests are read
 
 
-def merged_proposal_prs(runner: Runner) -> list[dict]:
+def merged_proposal_prs(runner: Runner, limit: int = 30) -> list[dict]:
     out = runner(["gh", "pr", "list", "--state", "merged", "--search", "Nightly proposals in:title",
-                  "--limit", "30", "--json", "number,title,body,mergeCommit,author"])
+                  "--limit", str(limit), "--json", "number,title,body,mergeCommit,author,mergedAt"])
     trusted = {a.strip() for a in os.environ.get("NIGHTLY_TRUSTED_AUTHORS", TRUSTED_AUTHORS).split(",") if a.strip()}
     prs = [p for p in json.loads(out or "[]")
            if (p.get("author") or {}).get("login") in trusted and (p.get("title") or "").startswith("Nightly proposals")]
@@ -259,7 +261,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     notes = []
     kept = []
     for label, body, props in batches:
-        if approved_numbers(body):
+        if approved_numbers(body) or decisions.maybe_numbers(body):
             kept.append((label, body, props))
         else:
             ref = f"pull request #{label}" if isinstance(label, int) else f"batch {label}"
@@ -297,13 +299,20 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     Path(args.records).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     queue_path.write_text(json.dumps(queue, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     known = {e["key"] for e in seen}
-    for _, _, props in batches:
+    parked = decisions.load_parked(args.records)
+    history = []
+    for label, body, props in batches:
+        approved, maybe = set(approved_numbers(body)), decisions.maybe_numbers(body)
+        parked, final = decisions.update_parked(parked, props, approved, maybe, today)
+        history += decisions.entries(label, props, approved, maybe, today)
         for pr_ in props:
             k = proposal_key(pr_) if pr_.get("type") in SEEN_TYPES else None
-            if k and k not in known:
+            if k and k not in known and decisions.key_of(pr_) in final:
                 seen.append({"key": k, "reviewed": today})
                 known.add(k)
     seen_path.write_text(json.dumps(seen, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    decisions.write_parked(args.records, parked)
+    decisions.write_history(args.records, history)
     applied_path.write_text(json.dumps(applied_prs + [b[0] for b in batches], indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
     return 0
