@@ -213,12 +213,13 @@ def test_seen_proposals_are_not_proposed_again(tmp_path):
 
 
 def test_merged_unticked_feed_proposals_land_in_seen_list(tmp_path):
+    # Unticked items of a pull request with at least one ticked box are treated as reviewed (seen).
     import shutil
     rec = tmp_path / "records.json"
     shutil.copy(ROOT / "records" / "tinnitus.records.json", rec)
     props = proposals.from_feeds(_feed_report())
     (tmp_path / "proposals.json").write_text(json.dumps({"proposals": props}))
-    body = proposals.to_markdown(props)  # nothing ticked
+    body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved", 1)  # first item ticked only
     (tmp_path / "body.md").write_text(body)
     code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
                     "--proposals", str(tmp_path / "proposals.json"), "--label", "t1"])
@@ -228,3 +229,16 @@ def test_merged_unticked_feed_proposals_land_in_seen_list(tmp_path):
     code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
                     "--proposals", str(tmp_path / "proposals.json"), "--label", "t2"])
     assert len(json.loads((tmp_path / "seen_proposals.json").read_text())) == 2  # no duplicates
+
+
+def test_merged_pull_request_with_no_tick_leaves_seen_list_untouched(tmp_path):
+    import shutil
+    rec = tmp_path / "records.json"
+    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec)
+    props = proposals.from_feeds(_feed_report())
+    (tmp_path / "proposals.json").write_text(json.dumps({"proposals": props}))
+    (tmp_path / "body.md").write_text(proposals.to_markdown(props))  # nothing ticked
+    code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
+                    "--proposals", str(tmp_path / "proposals.json"), "--label", "t1"])
+    assert code == 0
+    assert not (tmp_path / "seen_proposals.json").exists()

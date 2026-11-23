@@ -17,8 +17,11 @@ Rules:
                 still holds the placeholder TL;DR the draft was written against; marks the relationships as
                 checked by a person (the person ticked the box).
 Each pull request is applied once; its number is stored in records/applied_prs.json.
-Every feed proposal (new record or paper) in a merged pull request, ticked or not, is added to
-records/seen_proposals.json so that ignored items are not proposed again.
+Every feed proposal (new record or paper) in a merged pull request with at least one ticked box, ticked or
+not, is added to records/seen_proposals.json so that ignored items are not proposed again. A merged pull
+request with no box ticked is skipped entirely: nothing is applied, it is not marked as applied, and its
+items stay open (they are proposed again, and ticking a box later still counts). The skip is written to the
+notes file (--notes) so the nightly digest can say so.
 
 Usage:
   python3 -m kgkit.apply --config kit.yaml --records records/x.json --from-github
@@ -208,6 +211,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     ap.add_argument("--body", help="pull request description file (manual mode)")
     ap.add_argument("--proposals", help="proposals.json file (manual mode)")
     ap.add_argument("--label", default="manual", help="identifier stored in applied_prs.json for manual mode")
+    ap.add_argument("--notes", help="file to write one line per notice for the nightly digest")
     args = ap.parse_args(argv)
 
     try:
@@ -251,6 +255,20 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 2
         batches.append((args.label, body, props))
+
+    notes = []
+    kept = []
+    for label, body, props in batches:
+        if approved_numbers(body):
+            kept.append((label, body, props))
+        else:
+            ref = f"pull request #{label}" if isinstance(label, int) else f"batch {label}"
+            notes.append(f"{ref} was merged with no box ticked; its items stay open")
+    batches = kept
+    if args.notes:
+        Path(args.notes).write_text("".join(n + "\n" for n in notes), encoding="utf-8")
+    for n in notes:
+        print(f"Skipped: {n}")
 
     if not batches:
         print("Nothing to apply")

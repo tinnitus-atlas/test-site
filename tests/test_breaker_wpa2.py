@@ -11,7 +11,6 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 WF_PATH = ROOT / ".github" / "workflows" / "nightly.yml"
-MANUAL_PATH = ROOT / ".github" / "workflows" / "nightly-manual-test.yml"
 CHECKOUT_SHA = "11d5960a326750d5838078e36cf38b85af677262"
 SETUP_PYTHON_SHA = "a26af69be951a213d495a4c3e4e4022e16d87065"
 
@@ -113,11 +112,11 @@ def test_biolink_dir_is_the_clone_target(wf):
     assert step_env(step(wf, "nightly"))["BIOLINK_DIR"] in dests
 
 
-def test_git_user_matches_the_manual_test_workflow_and_never_disables_git(wf):
+def test_git_user_is_the_nightly_bot_identity_and_never_disables_git(wf):
+    # The temporary "Nightly (manual test)" workflow was removed (WP-A9); its git identity is pinned here.
     s = step(wf, "nightly")["run"]
-    manual = MANUAL_PATH.read_text()
-    for needle in re.findall(r'git config user\.(?:name|email) "[^"]+"', manual):
-        assert needle in s, needle
+    assert 'git config user.email "kg-nightly@users.noreply.github.com"' in s
+    assert re.search(r'git config user\.name "[^"]+"', s)
     assert "NO_GIT" not in WF_PATH.read_text()
 
 
