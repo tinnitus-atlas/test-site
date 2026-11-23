@@ -130,10 +130,48 @@ def test_change_that_breaks_audit_is_not_written(workspace):
     assert (workspace / "records" / "r.json").read_text() == before
 
 
-def test_nothing_ticked_changes_nothing_but_marks_applied(workspace):
+def test_nothing_ticked_changes_nothing_and_stays_open(workspace):
     before = load(workspace)
-    assert run_manual(workspace, set()) == 0
+    notes = workspace / "notes.txt"
+    body = workspace / "body.md"
+    body.write_text(ticked(proposals(), set()))
+    code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json"),
+                    "--body", str(body), "--proposals", str(workspace / "p.json"), "--label", "pr-1", "--notes", str(notes)])
+    assert code == 0
     assert load(workspace) == before
+    assert not (workspace / "records" / "applied_prs.json").exists()
+    assert not (workspace / "records" / "seen_proposals.json").exists()
+    assert "batch pr-1 was merged with no box ticked; its items stay open" in notes.read_text()
+
+
+def test_unticked_merged_pull_request_is_skipped_and_reported(workspace):
+    ticked_body = ticked(proposals(), {1})
+
+    def runner(args):
+        if args[:3] == ["gh", "pr", "list"]:
+            return json.dumps([
+                {"number": 12, "title": "Nightly proposals", "body": ticked(proposals(), set()), "mergeCommit": {"oid": "abc"}, "author": {"login": "varioso-bot"}},
+                {"number": 13, "title": "Nightly proposals", "body": ticked_body, "mergeCommit": {"oid": "def"}, "author": {"login": "varioso-bot"}}])
+        if args[:2] == ["git", "show"]:
+            return json.dumps({"proposals": proposals()})
+        raise AssertionError(args)
+
+    notes = workspace / "notes.txt"
+    code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json"),
+                    "--from-github", "--notes", str(notes)], runner=runner)
+    assert code == 0
+    assert json.loads((workspace / "records" / "applied_prs.json").read_text()) == [13]
+    assert notes.read_text() == "pull request #12 was merged with no box ticked; its items stay open\n"
+    assert load(workspace)["tin:trial-tent-a"]["status"] == "completed"
+
+
+def test_notes_file_is_empty_when_nothing_was_skipped(workspace):
+    notes = workspace / "notes.txt"
+    body = workspace / "body.md"
+    body.write_text(ticked(proposals(), {1}))
+    assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json"),
+                    "--body", str(body), "--proposals", str(workspace / "p.json"), "--label", "pr-1", "--notes", str(notes)]) == 0
+    assert notes.read_text() == ""
 
 
 def test_from_github_with_standin(workspace):

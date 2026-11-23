@@ -39,18 +39,25 @@ if [ "${NO_GIT:-0}" != "1" ]; then
     APPLY_LINE="Approved proposals: waiting, the previous apply pull request is still open"
   else
     # Apply proposals ticked and merged since the last run, then publish them through a pull request.
-    python3 -m kgkit.apply --config "$CONFIG" --records "$RECORDS" --from-github >>"$LOG" 2>&1
-    case $? in
+    APPLY_NOTES="$REPORTS/apply_notes.txt"
+    rm -f "$APPLY_NOTES"
+    python3 -m kgkit.apply --config "$CONFIG" --records "$RECORDS" --from-github --notes "$APPLY_NOTES" >>"$LOG" 2>&1
+    APPLY_CODE=$?
+    APPLY_NOTE=""
+    if [ -s "$APPLY_NOTES" ]; then
+      APPLY_NOTE=" Note: $(paste -sd ';' "$APPLY_NOTES" | sed 's/;/; /g')."
+    fi
+    case $APPLY_CODE in
       0)
         if [ -n "$(git status --porcelain -- "$(dirname "$RECORDS")")" ]; then
           URL="$(tools/publish_via_pr.sh "nightly/apply-$DAY" "Apply approved proposals $DAY" "$(dirname "$RECORDS")" 2>>"$LOG")"
           case $? in
-            0) APPLY_LINE="Approved proposals: applied; pull request $URL merges itself once the checks pass";;
-            3) APPLY_LINE="Approved proposals: applied; pull request $URL needs a manual merge (auto-merge unavailable)";;
+            0) APPLY_LINE="Approved proposals: applied; pull request $URL merges itself once the checks pass.$APPLY_NOTE";;
+            3) APPLY_LINE="Approved proposals: applied; pull request $URL needs a manual merge (auto-merge unavailable).$APPLY_NOTE";;
             *) fail "could not publish applied proposals";;
           esac
         else
-          APPLY_LINE="Approved proposals: none newly approved"
+          APPLY_LINE="Approved proposals: none newly approved.$APPLY_NOTE"
         fi;;
       1) APPLY_LINE="Approved proposals: NOT applied, they would break the audit (see reports/nightly.log)";;
       *) APPLY_LINE="Approved proposals: could not read merged pull requests (see reports/nightly.log)";;

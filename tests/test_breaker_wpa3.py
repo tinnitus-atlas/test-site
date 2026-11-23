@@ -419,15 +419,23 @@ def test_git_checkout_main_fails_on_no_main(tmp_path):
 
 
 def test_git_add_fails_on_permission_denied(tmp_path):
-    """If git add fails due to permissions, the script should exit 1."""
+    """If git add fails (here: permission denied), the script should exit 1.
+
+    The failure comes from a stand-in git that refuses only "add", so the test behaves the same for a normal
+    user and for an administrator account, which can read files whatever their permissions (WP-A10)."""
     repo = make_repo(tmp_path)
-    # Make a file unreadable
-    f = repo["work"] / "records" / "r.json"
-    f.write_text('{"changed": true}\n')
-    f.chmod(0o000)
+    (repo["work"] / "records" / "r.json").write_text('{"changed": true}\n')
+    real_git = shutil.which("git")
+    stub = repo["bin_dir"] / "git"
+    stub.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = "add" ]; then echo "error: open(\\"records/r.json\\"): Permission denied" >&2; exit 128; fi\n'
+        f'exec "{real_git}" "$@"\n'
+    )
+    stub.chmod(0o755)
     r = run_helper(repo, "nightly/test", "msg", "records")
     assert r.returncode == 1
-    f.chmod(0o644)  # restore for cleanup
+    assert "could not stage the changes" in r.stderr
 
 
 def test_git_push_fails_on_refused(tmp_path):
