@@ -45,27 +45,63 @@ from pathlib import Path
 from typing import Callable
 
 from . import audit, decisions
-from .common import KitError, load_config, load_records
+from .common import KitError, load_config, load_records, visible
 from .proposals import SEEN_TYPES, proposal_key
 
 HEADING = re.compile(r"^## (\d+)\. (.+)$")
+HELD_REASON = ("the details shown in the review differ from the data that would be applied; not applied and left "
+               "open for the next review")
 TICK = re.compile(r"^- \[([ xX])\] Approved\s*$")
 
 
 def approved_numbers(body: str) -> dict[int, str]:
-    """Map proposal number -> heading text for every section whose Approved box is ticked."""
+    """Map proposal number -> heading text for every section whose Approved box is ticked. Reads only the visible
+    text (see common.visible); a number whose heading appears twice is ambiguous and never counts."""
+    text = visible(body)
+    counts: dict[int, int] = {}
+    for line in text.splitlines():
+        h = HEADING.match(line.strip())
+        if h:
+            counts[int(h.group(1))] = counts.get(int(h.group(1)), 0) + 1
     out, current = {}, None
-    for line in (body or "").splitlines():
+    for line in text.splitlines():
         h = HEADING.match(line.strip())
         if h:
             current = (int(h.group(1)), h.group(2).strip())
             continue
         t = TICK.match(line.strip())
         if t and current:
-            if t.group(1).lower() == "x":
+            if t.group(1).lower() == "x" and counts.get(current[0]) == 1:
                 out[current[0]] = current[1]
             current = None
     return out
+
+
+def _flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+def shown_details(body: str, number: int) -> str | None:
+    """The folded details of item `number` as the reviewer sees them (whitespace collapsed), or None when the item is
+    not shown exactly once or has no details block."""
+    text = visible(body, keep_details=True)
+    lines = text.splitlines()
+    starts = [i for i, line in enumerate(lines) if (h := HEADING.match(line.strip())) and int(h.group(1)) == number]
+    if len(starts) != 1:
+        return None
+    rest = lines[starts[0] + 1:]
+    end = next((i for i, line in enumerate(rest) if line.startswith("## ") or line.startswith("# ")), len(rest))
+    section = "\n".join(rest[:end])
+    m = re.search(r"<details><summary>[^<]*</summary>(.*?)</details>", section, flags=re.S)
+    return _flat(m.group(1)) if m else None
+
+
+def shown_matches(body: str, number: int, proposal: dict) -> bool:
+    from .proposals import detail_lines
+    try:
+        return shown_details(body, number) == _flat("\n".join(detail_lines(proposal)))
+    except KeyError:
+        return False
 
 
 def slug(text: str) -> str:
@@ -88,7 +124,7 @@ def get_field(record: dict, field: str):
 
 
 def apply_selected(records: list[dict], proposals: list[dict], approved: dict[int, str], cfg: dict,
-                   review_queue: list[dict], today: str) -> dict:
+                   review_queue: list[dict], today: str, body: str | None = None) -> dict:
     by_id = {r["id"]: r for r in records}
     prefix = cfg["project"].get("prefix", "kg")
     condition = ((cfg.get("feeds") or {}).get("trials") or {}).get("condition_record")
@@ -100,6 +136,9 @@ def apply_selected(records: list[dict], proposals: list[dict], approved: dict[in
         p = proposals[number - 1]
         if p.get("claim", "").strip() != heading:
             result["skipped"].append({"number": number, "reason": "heading does not match the proposal; list was edited or reordered"})
+            continue
+        if body is not None and not shown_matches(body, number, p):
+            result["skipped"].append({"number": number, "reason": HELD_REASON})
             continue
         a = p.get("apply") or {}
         if p["type"] == "update":
@@ -288,7 +327,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     work = copy.deepcopy(records)
     report = []
     for label, body, props in batches:
-        res = apply_selected(work, props, approved_numbers(body), cfg, queue, today)
+        res = apply_selected(work, props, approved_numbers(body), cfg, queue, today, body=body)
         report.append({"source": label, **res})
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -310,10 +349,15 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     known = {e["key"] for e in seen}
     parked = decisions.load_parked(args.records)
     history = []
+    held_by = {r["source"]: {x["number"] for x in r["skipped"] if x.get("reason") == HELD_REASON} for r in report}
     for label, body, props in batches:
-        approved, maybe = set(approved_numbers(body)), decisions.maybe_numbers(body)
-        parked, final = decisions.update_parked(parked, props, approved, maybe, today)
-        history += decisions.entries(label, props, approved, maybe, today, decisions.reasons(body))
+        held = held_by.get(label, set())
+        approved, maybe = set(approved_numbers(body)) - held, decisions.maybe_numbers(body) - held
+        # Items held back by the details check are neither decided nor seen: they come back in the next review.
+        visible_props = [p if i not in held else dict(p, _held=True) for i, p in enumerate(props, 1)]
+        parked, final = decisions.update_parked(parked, visible_props, approved, maybe, today)
+        history += [e for i, e in enumerate(decisions.entries(label, visible_props, approved, maybe, today,
+                                                               decisions.reasons(body)), 1) if i not in held]
         for pr_ in props:
             k = proposal_key(pr_) if pr_.get("type") in SEEN_TYPES else None
             if k and k not in known and decisions.key_of(pr_) in final:

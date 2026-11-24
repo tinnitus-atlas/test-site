@@ -114,7 +114,6 @@ GROUPS = [("tick", "Recommended: tick", "Already ticked when the screener is sur
 def to_markdown(props: list[dict]) -> str:
     """One short block per item (title, recommendation, the two boxes) with the details folded away, grouped so the
     recommended items come first. Item headings stay "## <number>. <claim>": the apply step reads them."""
-    from .screener import line as screen_line
     counts = {g: sum(1 for p in props if (p.get("screen") or {}).get("recommendation") == g) for g, *_ in GROUPS}
     pre = sum(1 for p in props if (p.get("screen") or {}).get("pre_ticked"))
     lines = ["# Proposed changes", "",
@@ -130,20 +129,31 @@ def to_markdown(props: list[dict]) -> str:
         if any(p.get("screen") for _, p in numbered):
             lines += [f"# {title} ({len(items)})", "", *([f"_{hint}_", ""] if hint else [])]
         for i, p in items:
-            s = screen_line(p)
-            ticked = "x" if (p.get("screen") or {}).get("pre_ticked") else " "
-            lines += [f"## {i}. {p['claim']}", "",
-                      *([s] if s else []),
-                      f"- [{ticked}] Approved",
-                      "- [ ] Maybe later", "",
-                      "<details><summary>Details and source</summary>", "",
-                      f"- **Why it surfaced:** {p['why']}",
-                      f"- **Evidence:** {p['evidence']} ([source]({p['source']}))",
-                      f"- **Wrong if:** {p['wrong_if']}",
-                      f"- **Confidence:** {p['confidence']}",
-                      f"- **To apply:** `{p['apply']}`", "",
-                      "</details>", ""]
+            lines += item_lines(i, p)
     return "\n".join(lines)
+
+
+def detail_lines(p: dict) -> list[str]:
+    """The item's data as the reviewer sees it. The apply step checks these lines in the reviewed text against the
+    data it is about to apply, so the data cannot differ from what was read."""
+    return [f"- **Why it surfaced:** {p['why']}",
+            f"- **Evidence:** {p['evidence']} ([source]({p['source']}))",
+            f"- **Wrong if:** {p['wrong_if']}",
+            f"- **Confidence:** {p['confidence']}",
+            f"- **To apply:** `{p['apply']}`"]
+
+
+def item_lines(i: int, p: dict) -> list[str]:
+    from .screener import line as screen_line
+    s = screen_line(p)
+    ticked = "x" if (p.get("screen") or {}).get("pre_ticked") else " "
+    return [f"## {i}. {p['claim']}", "",
+            *([s] if s else []),
+            f"- [{ticked}] Approved",
+            "- [ ] Maybe later", "",
+            "<details><summary>Details and source</summary>", "",
+            *detail_lines(p), "",
+            "</details>", ""]
 
 
 def run(records: list[dict], cfg: dict, reports_dir, seen: set[str] | None = None,
