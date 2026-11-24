@@ -153,7 +153,7 @@ def test_pre_tick_never_for_devices_drafts_or_regulatory_wording():
 def test_pre_ticked_item_is_applied_like_a_person_tick(tmp_path):
     (p,) = screener.screen([update()], cfg(pre_tick=True))
     rec = tmp_path / "r.json"
-    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    rec.write_text((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())
     (tmp_path / "p.json").write_text(json.dumps({"proposals": [p]}))
     (tmp_path / "body.md").write_text(proposals.to_markdown([p]))
     assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
@@ -169,7 +169,7 @@ def test_pre_ticked_item_is_applied_like_a_person_tick(tmp_path):
 def run_apply(tmp_path, props, approved=(), maybe=(), label="t1"):
     rec = tmp_path / "r.json"
     if not rec.exists():
-        rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+        rec.write_text((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())
     (tmp_path / "p.json").write_text(json.dumps({"proposals": props}))
     md = proposals.to_markdown(props).splitlines()
     current = None
@@ -253,7 +253,7 @@ def test_rebuild_reads_every_merged_pull_request(tmp_path):
         raise AssertionError(args)
 
     rec = tmp_path / "r.json"
-    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    rec.write_text((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())
     assert decisions.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--rebuild-from-github"], runner=runner) == 0
     h = decisions.load_history(rec)
     assert [(x["decision"], x["pull_request"], x["date"]) for x in h] == [("approved", 12, "2026-11-07"), ("skipped", 12, "2026-11-07")]
@@ -299,7 +299,7 @@ def test_reason_lines_are_saved_and_shown_next_time(tmp_path):
     md = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved\nReason: mechanism studies in animals are fine")
     assert decisions.reasons(md) == {1: "mechanism studies in animals are fine"}
     rec = tmp_path / "r.json"
-    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    rec.write_text((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())
     (tmp_path / "p.json").write_text(json.dumps({"proposals": props}))
     (tmp_path / "body.md").write_text(md)
     ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
@@ -325,7 +325,7 @@ def test_rebuild_skips_pull_requests_with_no_ticks(tmp_path):
         return json.dumps({"proposals": props})
 
     rec = tmp_path / "r.json"
-    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    rec.write_text((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())
     decisions.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--rebuild-from-github"], runner=runner)
     assert decisions.load_history(rec) == []
 
@@ -341,6 +341,6 @@ def test_merged_re_review_settles_the_pull_request_it_replaces(tmp_path):
         return json.dumps({"proposals": props, "replaces": [12]})
 
     rec = tmp_path / "r.json"
-    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    rec.write_text((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())
     assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--from-github"], runner=runner) == 0
     assert json.loads((tmp_path / "applied_prs.json").read_text()) == [30, 12]

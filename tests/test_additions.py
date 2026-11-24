@@ -216,7 +216,7 @@ def test_merged_unticked_feed_proposals_land_in_seen_list(tmp_path):
     # Unticked items of a pull request with at least one ticked box are treated as reviewed (seen).
     import shutil
     rec = tmp_path / "records.json"
-    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec)
+    shutil.copy(ROOT / "tests" / "fixtures" / "tinnitus.records.json", rec)
     props = proposals.from_feeds(_feed_report())
     (tmp_path / "proposals.json").write_text(json.dumps({"proposals": props}))
     body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved", 1)  # first item ticked only
@@ -234,7 +234,7 @@ def test_merged_unticked_feed_proposals_land_in_seen_list(tmp_path):
 def test_merged_pull_request_with_no_tick_leaves_seen_list_untouched(tmp_path):
     import shutil
     rec = tmp_path / "records.json"
-    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec)
+    shutil.copy(ROOT / "tests" / "fixtures" / "tinnitus.records.json", rec)
     props = proposals.from_feeds(_feed_report())
     (tmp_path / "proposals.json").write_text(json.dumps({"proposals": props}))
     (tmp_path / "body.md").write_text(proposals.to_markdown(props))  # nothing ticked
