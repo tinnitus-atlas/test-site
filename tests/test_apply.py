@@ -254,3 +254,40 @@ def test_maybe_later_and_reasons_hidden_from_the_reviewer_never_count():
     from kgkit import decisions
     body = "<!--\n## 2. x\n- [x] Maybe later\nReason: hidden\n-->\n## 1. y\n- [ ] Maybe later\n"
     assert decisions.maybe_numbers(body) == set() and decisions.reasons(body) == {}
+
+
+def test_item_held_back_by_the_details_check_stays_open_for_the_next_review(workspace):
+    props = proposals()
+    body = workspace / "body.md"
+    body.write_text(ticked(props, {1}))                     # the reviewer saw "to: completed"
+    swapped = [dict(p) for p in props]
+    swapped[0] = dict(props[0], apply=dict(props[0]["apply"], to="terminated"))
+    (workspace / "p.json").write_text(json.dumps({"proposals": swapped}))
+    assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json"),
+                    "--body", str(body), "--proposals", str(workspace / "p.json"), "--label", "pr-9"]) == 0
+    assert load(workspace)["tin:trial-tent-a"].get("status") != "terminated"
+    rec_dir = workspace / "records"
+    seen = json.loads((rec_dir / "seen_proposals.json").read_text()) if (rec_dir / "seen_proposals.json").exists() else []
+    from kgkit.proposals import proposal_key
+    assert proposal_key(swapped[0]) not in {e["key"] for e in seen}
+    hist = (rec_dir / "decisions.jsonl").read_text() if (rec_dir / "decisions.jsonl").exists() else ""
+    assert props[0]["claim"] not in hist
+
+
+def test_an_unclosed_comment_or_fence_refuses_the_whole_text():
+    from kgkit.common import visible
+    props = proposals()
+    body = ticked(props, {1, 2})
+    assert ap.approved_numbers(body) and not ap.approved_numbers("<!-- oops\n" + body)
+    assert not ap.approved_numbers("```\n" + body)
+    odd = body.replace(props[0]["claim"], props[0]["claim"] + " <details")    # a stray tag inside a claim
+    assert set(ap.approved_numbers(odd)) == {1, 2}
+    assert visible("text with a `<details` mention") == "text with a `<details` mention"
+
+
+def test_multi_line_details_still_match(workspace):
+    props = proposals()
+    props[0] = dict(props[0], why="first paragraph\n\nsecond paragraph")
+    body = ticked(props, {1})
+    assert ap.shown_matches(body, 1, props[0])
+    assert ap.shown_matches(body.replace("\n", "\r\n"), 1, props[0])

@@ -207,12 +207,18 @@ def read_report(reports_dir: str | Path, name: str) -> dict | None:
 
 
 def visible(body: str | None, keep_details: bool = False) -> str:
-    """The part of a pull request text a reviewer actually sees: HTML comments and code blocks removed, and (unless
-    keep_details) the folded <details> blocks too. Boxes and item headings are read only from this, so text hidden
-    from the reviewer can never tick or add an item."""
+    """The part of a pull request text a reviewer actually sees: closed HTML comments and fenced code blocks removed,
+    and (unless keep_details) folded <details> blocks that start a line. Boxes and item headings are read only from
+    this, so text hidden from the reviewer can never tick or add an item. A comment or fence that is never closed
+    would hide the rest of the text, so such a text is refused as a whole (empty result: nothing is ticked)."""
     text = (body or "").replace("\r\n", "\n")
-    text = re.sub(r"<!--.*?(?:-->|\Z)", "", text, flags=re.S)
-    text = re.sub(r"^\s*(```|~~~).*?(?:^\s*\1|\Z)", "", text, flags=re.S | re.M)
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    if "<!--" in text:
+        return ""
+    fence = re.compile(r"^[ \t]*(```|~~~)[^\n]*\n.*?^[ \t]*\1[ \t]*$", flags=re.S | re.M)
+    text = fence.sub("", text)
+    if re.search(r"^[ \t]*(```|~~~)", text, flags=re.M):
+        return ""
     if not keep_details:
-        text = re.sub(r"<details\b.*?(?:</details>|\Z)", "", text, flags=re.S | re.I)
+        text = re.sub(r"^[ \t]*<details\b.*?</details>", "", text, flags=re.S | re.M | re.I)
     return text

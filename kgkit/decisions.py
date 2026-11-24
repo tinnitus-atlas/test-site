@@ -58,6 +58,8 @@ def reasons(body: str) -> dict[int, str]:
 
 
 def left_open(p: dict) -> bool:
+    if p.get("_held"):
+        return True                     # held back by the apply step's details check: decided next time
     """An unticked item the screener put on the fence is not a decision: it stays open for next week."""
     return (p.get("screen") or {}).get("recommendation") == "fence"
 

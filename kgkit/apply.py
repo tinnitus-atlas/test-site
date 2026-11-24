@@ -49,6 +49,8 @@ from .common import KitError, load_config, load_records, visible
 from .proposals import SEEN_TYPES, proposal_key
 
 HEADING = re.compile(r"^## (\d+)\. (.+)$")
+HELD_REASON = ("the details shown in the review differ from the data that would be applied; not applied and left "
+               "open for the next review")
 TICK = re.compile(r"^- \[([ xX])\] Approved\s*$")
 
 
@@ -75,22 +77,29 @@ def approved_numbers(body: str) -> dict[int, str]:
     return out
 
 
-def shown_details(body: str, number: int) -> list[str] | None:
-    """The detail lines of item `number` as the reviewer sees them, or None when the item is not shown exactly once."""
+def _flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+def shown_details(body: str, number: int) -> str | None:
+    """The folded details of item `number` as the reviewer sees them (whitespace collapsed), or None when the item is
+    not shown exactly once or has no details block."""
     text = visible(body, keep_details=True)
-    starts = [i for i, line in enumerate(text.splitlines()) if (h := HEADING.match(line.strip())) and int(h.group(1)) == number]
+    lines = text.splitlines()
+    starts = [i for i, line in enumerate(lines) if (h := HEADING.match(line.strip())) and int(h.group(1)) == number]
     if len(starts) != 1:
         return None
-    lines = text.splitlines()[starts[0] + 1:]
-    end = next((i for i, line in enumerate(lines) if line.startswith("## ") or line.startswith("# ")), len(lines))
-    return [line.rstrip() for line in lines[:end] if line.startswith("- **")
-            and not line.startswith("- **Screener:**")]
+    rest = lines[starts[0] + 1:]
+    end = next((i for i, line in enumerate(rest) if line.startswith("## ") or line.startswith("# ")), len(rest))
+    section = "\n".join(rest[:end])
+    m = re.search(r"<details><summary>[^<]*</summary>(.*?)</details>", section, flags=re.S)
+    return _flat(m.group(1)) if m else None
 
 
 def shown_matches(body: str, number: int, proposal: dict) -> bool:
     from .proposals import detail_lines
     try:
-        return shown_details(body, number) == detail_lines(proposal)
+        return shown_details(body, number) == _flat("\n".join(detail_lines(proposal)))
     except KeyError:
         return False
 
@@ -129,8 +138,7 @@ def apply_selected(records: list[dict], proposals: list[dict], approved: dict[in
             result["skipped"].append({"number": number, "reason": "heading does not match the proposal; list was edited or reordered"})
             continue
         if body is not None and not shown_matches(body, number, p):
-            result["skipped"].append({"number": number, "reason": "the details shown in the review differ from the data "
-                                      "that would be applied; not applied"})
+            result["skipped"].append({"number": number, "reason": HELD_REASON})
             continue
         a = p.get("apply") or {}
         if p["type"] == "update":
@@ -341,10 +349,15 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     known = {e["key"] for e in seen}
     parked = decisions.load_parked(args.records)
     history = []
+    held_by = {r["source"]: {x["number"] for x in r["skipped"] if x.get("reason") == HELD_REASON} for r in report}
     for label, body, props in batches:
-        approved, maybe = set(approved_numbers(body)), decisions.maybe_numbers(body)
-        parked, final = decisions.update_parked(parked, props, approved, maybe, today)
-        history += decisions.entries(label, props, approved, maybe, today, decisions.reasons(body))
+        held = held_by.get(label, set())
+        approved, maybe = set(approved_numbers(body)) - held, decisions.maybe_numbers(body) - held
+        # Items held back by the details check are neither decided nor seen: they come back in the next review.
+        visible_props = [p if i not in held else dict(p, _held=True) for i, p in enumerate(props, 1)]
+        parked, final = decisions.update_parked(parked, visible_props, approved, maybe, today)
+        history += [e for i, e in enumerate(decisions.entries(label, visible_props, approved, maybe, today,
+                                                               decisions.reasons(body)), 1) if i not in held]
         for pr_ in props:
             k = proposal_key(pr_) if pr_.get("type") in SEEN_TYPES else None
             if k and k not in known and decisions.key_of(pr_) in final:
