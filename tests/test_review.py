@@ -21,15 +21,17 @@ def trial(n, title="Tinnitus sound therapy trial"):
 def setup(tmp_path, props):
     rec_dir = tmp_path / "records"
     rec_dir.mkdir()
-    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec_dir / "r.json")
+    shutil.copy(ROOT / "tests" / "fixtures" / "tinnitus.records.json", rec_dir / "r.json")
     main_copy = tmp_path / "main_records"
     shutil.copytree(rec_dir, main_copy)
     (tmp_path / "p.json").write_text(json.dumps({"proposals": props}))
 
     def runner(args):
         assert args[:2] == ["git", "checkout"] and args[2] == "origin/main"
-        shutil.rmtree(rec_dir)
-        shutil.copytree(main_copy, rec_dir)
+        # Like git: restores the files main has and leaves files that exist only on the branch in place.
+        rec_dir.mkdir(exist_ok=True)
+        for f in main_copy.iterdir():
+            shutil.copy(f, rec_dir / f.name)
         return ""
     return rec_dir / "r.json", runner
 
@@ -56,7 +58,7 @@ def test_nightly_skips_a_synced_pull_request_after_the_merge(tmp_path):
     props = [trial("NCT05000001")]
     rec_dir = tmp_path / "records"
     rec_dir.mkdir()
-    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec_dir / "r.json")
+    shutil.copy(ROOT / "tests" / "fixtures" / "tinnitus.records.json", rec_dir / "r.json")
     (rec_dir / "applied_prs.json").write_text("[23]")
     body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved")
 
@@ -85,13 +87,27 @@ def test_append_keeps_existing_ticks_and_numbers_new_items_after_them(tmp_path):
 def test_review_sync_runs_only_for_the_owner_on_bot_proposals_from_this_repository():
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "review-sync.yml").read_text())
     on = wf.get("on", wf.get(True))
-    assert on == {"pull_request": {"types": ["edited"]}}
+    assert on == {"pull_request_target": {"types": ["edited"]}}
     cond = wf["jobs"]["sync"]["if"]
     for needle in ("github.event.sender.login == (vars.REVIEW_OWNER", "startsWith(github.event.pull_request.title, 'Nightly proposals')",
                    "head.repo.full_name == github.repository", "pull_request.user.login == (vars.REVIEW_BOT"):
         assert needle in cond
     run = wf["jobs"]["sync"]["steps"][-1]["run"]
-    assert "${{" not in run and "main" not in run.replace("origin/main", "")  # never pushes to main
+    assert "${{" not in run
+    pushes = [line.strip() for line in run.splitlines() if " push " in line]
+    assert len(pushes) == 1 and pushes[0].endswith('push -q origin "HEAD:refs/heads/$HEAD_REF"')  # never main
+
+
+def test_review_sync_runs_mains_code_and_treats_the_branch_as_data():
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "review-sync.yml").read_text())
+    steps = wf["jobs"]["sync"]["steps"]
+    co = steps[0]["with"]
+    assert co["ref"] == "${{ github.event.repository.default_branch }}" and co["persist-credentials"] is False
+    assert all(v == "read" for v in wf["permissions"].values())
+    run = steps[-1]["run"]
+    assert "python3 -I" in run and '--config "$GITHUB_WORKSPACE/main/kit.tinnitus.yaml"' in run
+    assert "grep -vE '^(reports|records)/'" in run and "core.hooksPath=/dev/null" in run
+    assert "pip install -r main/requirements.txt" in [s.get("run") for s in steps]
 
 
 def test_nightly_and_drafting_use_the_one_merge_path():
@@ -100,3 +116,19 @@ def test_nightly_and_drafting_use_the_one_merge_path():
     assert env["SYNC_ON_OPEN"] == "1"
     assert "kgkit.review sync" in (ROOT / "run_nightly.sh").read_text()
     assert "kgkit.review append" in (ROOT / "run_drafts.sh").read_text()
+
+
+def test_sync_rebuilds_the_applied_list_from_the_ticks_only(tmp_path):
+    """A planted list marking reviews as already applied must not survive the sync (it would make the nightly skip
+    them); the nightly's own state files on the branch stay, since they travel to main with the merge."""
+    props = screener.screen([trial("NCT05000001")], CFG)
+    rec, runner = setup(tmp_path, props)
+    (rec.parent / "applied_prs.json").write_text("[23, 24, 25]")
+    (rec.parent / "seen_proposals.json").write_text("[]")
+    body = tmp_path / "body.md"
+    body.write_text(proposals.to_markdown(props).replace("- [x] Approved", "- [ ] Approved"))
+    review.sync(str(ROOT / "kit.tinnitus.yaml"), str(rec), 23, str(body), str(tmp_path / "p.json"), "origin/main", runner)
+    assert not (rec.parent / "applied_prs.json").exists() and (rec.parent / "seen_proposals.json").exists()
+    body.write_text(proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved"))
+    review.sync(str(ROOT / "kit.tinnitus.yaml"), str(rec), 23, str(body), str(tmp_path / "p.json"), "origin/main", runner)
+    assert json.loads((rec.parent / "applied_prs.json").read_text()) == [23]

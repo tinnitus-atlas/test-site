@@ -28,8 +28,13 @@ def run_cmd(args: list[str]) -> str:
 
 
 def sync(config: str, records: str, pr: int, body_file: str, proposals_file: str, base: str, runner=run_cmd) -> int:
-    folder = str(Path(records).parent)
-    runner(["git", "checkout", base, "--", folder])  # start from main's records, so unticking undoes a change
+    folder = Path(records).parent
+    # Start from main's records, so unticking undoes a change. git checkout restores only the files main has, so the
+    # list of applied reviews is removed first: it must follow from the ticks (rewritten by the apply step below), never
+    # from what the branch carried. The nightly's own state files on the branch (seen proposals, decision history,
+    # parked items, queues) are kept: they travel to main with the merge.
+    (folder / "applied_prs.json").unlink(missing_ok=True)
+    runner(["git", "checkout", base, "--", str(folder)])
     return apply.main(["--config", config, "--records", records, "--body", body_file, "--proposals", proposals_file,
                        "--label", str(pr)])
 
