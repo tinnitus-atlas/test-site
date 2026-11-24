@@ -228,7 +228,7 @@
       "kind": "trial",
       "name": "Treatment Evaluation of Neuromodulation for Tinnitus (TENT-A)",
       "tldr": "Randomised, triple-blind exploratory trial in Ireland and Germany comparing three bimodal stimulation settings over 12 weeks.",
-      "asOf": "2026-10-31",
+      "asOf": "2026-11-24",
       "xrefs": [
         "CLINICALTRIALS:NCT02669069"
       ],
@@ -261,7 +261,22 @@
           "knowledgeLevel": "not_provided",
           "agentType": "automated_agent"
         }
-      ]
+      ],
+      "facts": {
+        "enrollment": {
+          "value": 326,
+          "source": "https://clinicaltrials.gov/study/NCT02669069"
+        },
+        "phase": {
+          "value": "na",
+          "source": "https://clinicaltrials.gov/study/NCT02669069"
+        },
+        "primary_completion_date": {
+          "value": "2017-07-31",
+          "source": "https://clinicaltrials.gov/study/NCT02669069"
+        }
+      },
+      "status": "completed"
     },
     {
       "id": "tin:tinnitus-handicap-inventory",
