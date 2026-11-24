@@ -40,8 +40,9 @@ Undo: uninstall the app (organisation Settings > GitHub Apps) or delete the secr
    **Generate a private key**: a `.pem` file downloads.
 7. In the left menu click **Install App**, then **Install** next to tinnitus-atlas, choose **Only select
    repositories**, pick **test-site**, and click **Install**.
-8. Open https://github.com/tinnitus-atlas/test-site/settings/environments and click **New environment**. Name it
-   `ship-it` and click **Configure environment**.
+8. Open https://github.com/tinnitus-atlas/test-site/settings/environments. If `ship-it` is already listed (GitHub
+   creates it the first time the workflow runs), click it; otherwise click **New environment**, name it `ship-it` and
+   click **Configure environment**.
    - Under **Deployment branches and tags**, choose **Selected branches and tags**, click **Add deployment branch or
      tag rule**, type `main` and click **Add rule**. (This is what stops a workflow on any other branch from reading
      the key.)
