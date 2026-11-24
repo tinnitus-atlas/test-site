@@ -7,6 +7,8 @@ lists the source in proposals.auto_apply_sources (default: none).
 """
 from __future__ import annotations
 
+import re
+
 from .common import fact_value, read_report, write_report
 
 CONFIDENCE = {"high": "high", "medium": "medium", "low": "medium"}
@@ -133,14 +135,35 @@ def to_markdown(props: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def detail_lines(p: dict) -> list[str]:
+def _text(value) -> str:
+    """Shown exactly as written: '<' would otherwise start markup that GitHub may hide."""
+    return str(value).replace("&", "&amp;").replace("<", "&lt;")
+
+
+def _code(value) -> str:
+    """An inline code span that no backtick in the value can end early."""
+    text = str(value)
+    ticks = "`" * (max((len(m) for m in re.findall(r"`+", text)), default=0) + 1)
+    pad = " " if text.startswith("`") or text.endswith("`") or ticks != "`" else ""
+    return f"{ticks}{pad}{text}{pad}{ticks}"
+
+
+def detail_lines(p: dict, legacy: bool = False) -> list[str]:
     """The item's data as the reviewer sees it. The apply step checks these lines in the reviewed text against the
-    data it is about to apply, so the data cannot differ from what was read."""
-    return [f"- **Why it surfaced:** {p['why']}",
-            f"- **Evidence:** {p['evidence']} ([source]({p['source']}))",
-            f"- **Wrong if:** {p['wrong_if']}",
-            f"- **Confidence:** {p['confidence']}",
-            f"- **To apply:** `{p['apply']}`"]
+    data it is about to apply, so the data cannot differ from what was read. The source address is shown as text,
+    not only behind a link. legacy: the layout used before 25 Nov 2026, still accepted for reviews opened then."""
+    if legacy:
+        return [f"- **Why it surfaced:** {p['why']}",
+                f"- **Evidence:** {p['evidence']} ([source]({p['source']}))",
+                f"- **Wrong if:** {p['wrong_if']}",
+                f"- **Confidence:** {p['confidence']}",
+                f"- **To apply:** `{p['apply']}`"]
+    return [f"- **Why it surfaced:** {_text(p['why'])}",
+            f"- **Evidence:** {_text(p['evidence'])}",
+            f"- **Source:** {_code(p['source'])}",
+            f"- **Wrong if:** {_text(p['wrong_if'])}",
+            f"- **Confidence:** {_text(p['confidence'])}",
+            f"- **To apply:** {_code(p['apply'])}"]
 
 
 def item_lines(i: int, p: dict) -> list[str]:

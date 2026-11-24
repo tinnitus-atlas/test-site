@@ -98,8 +98,10 @@ def shown_details(body: str, number: int) -> str | None:
 
 def shown_matches(body: str, number: int, proposal: dict) -> bool:
     from .proposals import detail_lines
+    shown = shown_details(body, number)
     try:
-        return shown_details(body, number) == _flat("\n".join(detail_lines(proposal)))
+        return shown is not None and shown in {_flat("\n".join(detail_lines(proposal))),
+                                               _flat("\n".join(detail_lines(proposal, legacy=True)))}
     except KeyError:
         return False
 
@@ -257,6 +259,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     ap.add_argument("--proposals", help="proposals.json file (manual mode)")
     ap.add_argument("--label", default="manual", help="identifier stored in applied_prs.json for manual mode")
     ap.add_argument("--notes", help="file to write one line per notice for the nightly digest")
+    ap.add_argument("--today", help="date to record (YYYY-MM-DD); default today")
     args = ap.parse_args(argv)
 
     try:
@@ -271,7 +274,10 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     seen = json.loads(seen_path.read_text()) if seen_path.exists() else []
     applied_prs = json.loads(applied_path.read_text()) if applied_path.exists() else []
     queue = json.loads(queue_path.read_text()) if queue_path.exists() else []
-    today = dt.date.today().isoformat()
+    today = args.today or dt.date.today().isoformat()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", today):
+        print("error: --today must be YYYY-MM-DD", file=sys.stderr)
+        return 2
 
     batches = []
     replaced: list[int] = []

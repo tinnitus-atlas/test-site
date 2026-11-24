@@ -107,7 +107,8 @@ def test_review_sync_runs_mains_code_and_treats_the_branch_as_data():
     run = steps[-1]["run"]
     assert "python3 -I" in run and '--config "$GITHUB_WORKSPACE/main/kit.tinnitus.yaml"' in run
     assert "grep -vE '^(reports|records)/'" in run and "core.hooksPath=/dev/null" in run
-    assert "pip install -r main/requirements.txt" in [s.get("run") for s in steps]
+    assert "pip install pyyaml==6.0.2" in [s.get("run") for s in steps]
+    assert "find records reports -type l" in run and "Records reset: the sync failed" in run
 
 
 def test_nightly_and_drafting_use_the_one_merge_path():
@@ -119,16 +120,37 @@ def test_nightly_and_drafting_use_the_one_merge_path():
 
 
 def test_sync_rebuilds_the_applied_list_from_the_ticks_only(tmp_path):
-    """A planted list marking reviews as already applied must not survive the sync (it would make the nightly skip
-    them); the nightly's own state files on the branch stay, since they travel to main with the merge."""
+    """Every file the apply step writes is rebuilt from main plus the ticks: a planted list marking reviews as
+    already applied (which would make the nightly skip them) or a planted queue never survives a sync."""
     props = screener.screen([trial("NCT05000001")], CFG)
     rec, runner = setup(tmp_path, props)
     (rec.parent / "applied_prs.json").write_text("[23, 24, 25]")
-    (rec.parent / "seen_proposals.json").write_text("[]")
+    (rec.parent / "seen_proposals.json").write_text('[{"key": "planted"}]')
+    (rec.parent / "draft_queue.json").write_text("[]")
     body = tmp_path / "body.md"
     body.write_text(proposals.to_markdown(props).replace("- [x] Approved", "- [ ] Approved"))
     review.sync(str(ROOT / "kit.tinnitus.yaml"), str(rec), 23, str(body), str(tmp_path / "p.json"), "origin/main", runner)
-    assert not (rec.parent / "applied_prs.json").exists() and (rec.parent / "seen_proposals.json").exists()
+    assert not (rec.parent / "applied_prs.json").exists()
+    assert "planted" not in (rec.parent / "seen_proposals.json").read_text() if (rec.parent / "seen_proposals.json").exists() else True
+    assert (rec.parent / "draft_queue.json").exists()               # not the apply step's file: kept
     body.write_text(proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved"))
     review.sync(str(ROOT / "kit.tinnitus.yaml"), str(rec), 23, str(body), str(tmp_path / "p.json"), "origin/main", runner)
     assert json.loads((rec.parent / "applied_prs.json").read_text()) == [23]
+
+
+def test_repeated_syncs_never_pile_up(tmp_path):
+    """Tick an item, sync, then change it to Maybe later and sync again: it must not stay approved anywhere."""
+    props = screener.screen([trial("NCT05000001")], CFG)
+    rec, runner = setup(tmp_path, props)
+    body = tmp_path / "body.md"
+    md = proposals.to_markdown(props).replace("- [x] Approved", "- [ ] Approved")
+    body.write_text(md.replace("- [ ] Approved", "- [x] Approved"))
+    review.sync(str(ROOT / "kit.tinnitus.yaml"), str(rec), 23, str(body), str(tmp_path / "p.json"), "origin/main", runner,
+                today="2026-11-25")
+    assert "tin:trial-nct05000001" in ids(rec)
+    body.write_text(md.replace("- [ ] Maybe later", "- [x] Maybe later"))
+    review.sync(str(ROOT / "kit.tinnitus.yaml"), str(rec), 23, str(body), str(tmp_path / "p.json"), "origin/main", runner,
+                today="2026-11-25")
+    assert "tin:trial-nct05000001" not in ids(rec)
+    hist = (rec.parent / "decisions.jsonl").read_text() if (rec.parent / "decisions.jsonl").exists() else ""
+    assert '"decision": "approved"' not in hist
