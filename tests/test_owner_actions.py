@@ -18,7 +18,7 @@ def test_pull_requests_waiting_on_the_owner_are_listed_with_links():
     prs = [p(30, "Nightly proposals 2026-11-30 (12)", "varioso-bot"), p(31, "Fix"), p(32, "Bot chore", "varioso-bot"),
            p(33, "Workflow change")]
     lines = oa.pr_lines(prs, {30: None, 31: None, 32: None, 33: "workflows"}, "varioso-bot")
-    assert lines[0] == "Review waiting: Nightly proposals 2026-11-30 (12) https://example.org/pull/30"
+    assert lines[0] == "Review waiting: Nightly proposals 2026-11-30 12 https://example.org/pull/30"
     assert any(x.startswith("#31 Fix: waiting for your merge or Ship it tick") for x in lines)
     assert not any("#32" in x for x in lines)
     assert any("#33" in x and "merge it yourself" in x for x in lines)
@@ -52,3 +52,8 @@ def test_nightly_adds_it_on_mondays_and_manual_runs_before_the_digest():
     names = [s.get("name") for s in wf["jobs"]["nightly"]["steps"]]
     assert names.index("Your actions (weekly, at the top of the digest)") < names.index("Post digest")
     assert wf["permissions"]["actions"] == "read"
+
+
+def test_bot_written_titles_cannot_inject_links_or_mentions():
+    line = oa.pr_lines([p(40, "[click](https://evil.example) @everyone <b>")], {40: None}, "varioso-bot")[0]
+    assert "](" not in line.split(" https://example.org")[0] and "@" not in line and "<" not in line

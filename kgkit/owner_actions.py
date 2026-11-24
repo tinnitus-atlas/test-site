@@ -1,5 +1,6 @@
 """Your actions: one short weekly list of everything waiting on the owner, put at the top of the nightly digest.
 
+The drafting computer's report lives on a branch the bot can write, so it is a reminder, not proof of readiness.
 Covers: open review pull requests; other open pull requests waiting for a merge or a Ship it tick, or where Ship it
 asked for something; the drafting computer's readiness report (missing, stale or with a "no"); and workflows whose
 latest run failed. Each line links to the page where the action happens.
@@ -52,10 +53,16 @@ def studio_lines(status: dict | None, now: dt.datetime) -> list[str]:
     return lines
 
 
+def safe(text: str, limit: int = 90) -> str:
+    """Pull request titles can be written by a bot: strip what could form links, mentions or markup in the chat."""
+    text = re.sub(r"[\[\]()<>@`*_|#~]", "", text or "").replace("://", " ")
+    return text[:limit]
+
+
 def pr_lines(prs: list[dict], notes: dict[int, str | None], bot: str) -> list[str]:
     lines = []
     for p in prs:
-        url, title, n = p["html_url"], p["title"], p["number"]
+        url, title, n = p["html_url"], safe(p["title"]), p["number"]
         if p.get("draft"):
             continue
         last = notes.get(n)
@@ -77,33 +84,44 @@ def failing_lines(runs: list[dict]) -> list[str]:
             if r.get("conclusion") == "failure"]
 
 
-def build(repo: str, bot: str, now: dt.datetime) -> list[str]:
+def gh_pages(path: str, pages: int = 5) -> list:
+    out: list = []
+    for page in range(1, pages + 1):
+        got = gh_json(f"{path}{'&' if '?' in path else '?'}per_page=100&page={page}")
+        out += got
+        if len(got) < 100:
+            break
+    return out
+
+
+def build(repo: str, bot: str, now: dt.datetime, app_login: str | None = None) -> list[str]:
     lines: list[str] = []
     try:
-        prs = gh_json(f"repos/{repo}/pulls?state=open&per_page=50")
+        prs = gh_pages(f"repos/{repo}/pulls?state=open")
         notes = {}
         for p in prs:
-            comments = gh_json(f"repos/{repo}/issues/{p['number']}/comments?per_page=100")
-            mine = [c for c in comments if c["user"]["type"] == "Bot"]
+            comments = gh_pages(f"repos/{repo}/issues/{p['number']}/comments")
+            mine = [c for c in comments if c["user"]["type"] == "Bot"
+                    and (not app_login or c["user"]["login"] == app_login)]
             approved_at = max((c.get("updated_at") or "" for c in mine if "ship-it approved=" in (c.get("body") or "")),
                               default="")
             found = [m.group(1) for c in mine if (c.get("created_at") or "") > approved_at   # notes since the last tick
                      for m in NOTE.finditer(c.get("body") or "")]
             notes[p["number"]] = found[-1] if found else None
         lines += pr_lines(prs, notes, bot)
-    except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
+    except Exception:                          # never lose the whole section to one lookup
         lines.append("Pull requests: could not be read this time.")
     try:
         f = gh_json(f"repos/{repo}/contents/status/studio.json?ref=studio-status")
         status = json.loads(base64.b64decode(f["content"]).decode())
-    except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+    except Exception:
         status = None
     lines += studio_lines(status, now)
     try:
         since = (now - dt.timedelta(days=7)).strftime("%Y-%m-%d")
         runs = gh_json(f"repos/{repo}/actions/runs?per_page=100&created=>={since}").get("workflow_runs", [])
         lines += failing_lines(runs)
-    except (subprocess.CalledProcessError, json.JSONDecodeError, AttributeError):
+    except Exception:
         lines.append("Workflow runs: could not be read this time.")
     return lines
 
@@ -120,6 +138,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--report", required=True)
     ap.add_argument("--repo", default=None)
     ap.add_argument("--bot", default="varioso-bot")
+    ap.add_argument("--app-login", default=None, help="the Ship it app's login, e.g. name[bot]: only its notes count")
     args = ap.parse_args(argv)
     repo = args.repo
     if not repo:
@@ -130,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
     path = Path(args.report)
     text = path.read_text(encoding="utf-8") if path.exists() else "Nightly run\n"
-    path.write_text(insert(text, build(repo, args.bot, dt.datetime.now(dt.timezone.utc))), encoding="utf-8")
+    path.write_text(insert(text, build(repo, args.bot, dt.datetime.now(dt.timezone.utc), args.app_login)), encoding="utf-8")
     return 0
 
 

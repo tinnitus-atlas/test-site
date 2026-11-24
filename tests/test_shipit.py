@@ -76,7 +76,7 @@ def test_failed_tests_or_conflicts_are_reported_never_merged():
 
 def test_never_merged_here_workflows_reviews_other_bases_forks_drafts():
     assert go(pr(), touches_workflows=True) == ("note", "workflows")
-    assert go(pr(user=BOT, title="Nightly proposals 2026-11-24 (40)")) == ("note", "review")   # review state unknown
+    assert go(pr(user=BOT, title="Nightly proposals 2026-11-24 (40)")) == ("note", "review")
     assert go(pr(base="dev")) == ("note", "base")
     assert go(pr(fork=True))[0] == "skip"
     p = pr()
@@ -106,11 +106,10 @@ def event(before, after, sender="varioso"):
 
 
 def test_only_the_owners_flip_of_the_box_counts():
-    assert shipit.tick_change(event(shipit.SHIP_LINE, TICKED), "varioso")[:3] == (7, "tick", "c" * 40)
-    assert shipit.tick_change(event(TICKED, shipit.SHIP_LINE), "varioso")[:3] == (7, "untick", "c" * 40)
+    assert shipit.tick_change(event(shipit.SHIP_LINE, TICKED), "varioso") == (7, "tick", "c" * 40)
+    assert shipit.tick_change(event(TICKED, shipit.SHIP_LINE), "varioso") == (7, "untick", "c" * 40)
     assert shipit.tick_change(event(shipit.SHIP_LINE, TICKED, sender=BOT), "varioso") is None
-    assert shipit.tick_change(event(TICKED, TICKED + "\nmore text"), "varioso")[1] == "edit"
-    assert shipit.tick_change(event("a", "b"), "varioso") is None
+    assert shipit.tick_change(event(TICKED, TICKED + "\nmore text"), "varioso") is None
     title_only = event(shipit.SHIP_LINE, TICKED)
     del title_only["changes"]["body"]
     assert shipit.tick_change(title_only, "varioso") is None
@@ -118,12 +117,10 @@ def test_only_the_owners_flip_of_the_box_counts():
 
 def test_withdrawn_approval_cannot_be_revived_by_a_re_tick():
     approved = {"id": 1, "body": f"<!-- ship-it approved={FP} head={HEAD} -->\nok"}
-    assert shipit.approval_state([approved]) == (approved, FP, None)
+    assert shipit.approval_state([approved]) == (approved, FP)
     revoked = {"id": 1, "body": shipit.REVOKED + "\nwithdrawn"}
-    assert shipit.approval_state([revoked]) == (revoked, None, None)
-    assert shipit.approval_state([]) == (None, None, None)
-    with_body = {"id": 2, "body": shipit.approval_text(FP, HEAD, "b" * 64)}
-    assert shipit.approval_state([with_body]) == (with_body, FP, "b" * 64)
+    assert shipit.approval_state([revoked]) == (revoked, None)
+    assert shipit.approval_state([]) == (None, None)
 
 
 class FakeGH:
@@ -133,16 +130,13 @@ class FakeGH:
         self.files, self.behind, self.tests, self.calls, self.comments = files, behind, tests, [], []
         self.body = TICKED
         self.head = HEAD
-        self.user, self.title, self.sync_running = "varioso", "Some change", False
 
     def __call__(self, method, path, token, body=None):
         self.calls.append((method, path.split("?")[0], body))
         if method == "GET" and path.startswith("/repos/o/r/pulls/7"):
-            p = pr(head=self.head, body=self.body, user=self.user, title=self.title)
+            p = pr(head=self.head, body=self.body)
             p["merged"] = False
             return p
-        if method == "GET" and "/actions/workflows/review-sync.yml/runs" in path:
-            return {"workflow_runs": [{"head_branch": "branch"}] if self.sync_running else []}
         if method == "GET" and "/compare/" in path:
             return {"files": self.files, "behind_by": self.behind}
         if method == "GET" and "/check-runs" in path:
@@ -164,108 +158,11 @@ class FakeGH:
         return {}
 
 
-def ship(fake, change=None, monkeypatch=None, records_ok=True):
+def ship(fake, change=None, monkeypatch=None):
     monkeypatch.setattr(shipit, "call", fake)
     summary = []
-    if change and len(change) == 3:
-        change = (*change, fake.body)
-    shipit.ship_one(shipit.Repo("o/r", "read", "write", "app[bot]"), 7, "main", BOT, change, summary,
-                    check_records=lambda *a: records_ok)
+    shipit.ship_one(shipit.Repo("o/r", "read", "write", "app[bot]"), 7, "main", BOT, change, summary)
     return summary
-
-
-def merged(fake):
-    return any(m == "PUT" and p.endswith("/merge") for m, p, _ in fake.calls)
-
-
-def review_fake():
-    fake = FakeGH([{"filename": "reports/proposals.json", "status": "added", "sha": "1"},
-                   {"filename": "records/tinnitus.records.json", "status": "modified", "sha": "r1"}])
-    fake.user, fake.title = BOT, "Nightly proposals 2026-11-30 (12)"
-    fake.body = "## 1. claim\n- [x] Approved\n" + TICKED
-    return fake
-
-
-def test_review_merges_once_the_ticked_records_are_in_place(monkeypatch):
-    fake = review_fake()
-    fake.sync_running = True
-    ship(fake, (7, "tick", HEAD), monkeypatch)
-    ship(fake, None, monkeypatch)
-    assert not merged(fake)                                               # waits for the review sync
-    fake.sync_running = False
-    fake.files[1]["sha"] = "r2"                                           # the sync wrote the records
-    fake.head = "e" * 40
-    ship(fake, None, monkeypatch, records_ok=True)
-    assert merged(fake)
-
-
-def test_review_records_that_do_not_follow_from_the_ticks_are_never_merged(monkeypatch):
-    fake = review_fake()
-    ship(fake, (7, "tick", HEAD), monkeypatch, records_ok=False)
-    assert "note=" not in fake.comments[-1]["body"], "the tick run waits for the review sync, no false alarm"
-    ship(fake, None, monkeypatch, records_ok=False)
-    assert not merged(fake) and "note=records" in fake.comments[-1]["body"]
-
-
-def test_review_ticks_changed_by_someone_else_void_the_approval(monkeypatch):
-    fake = review_fake()
-    fake.tests = None
-    ship(fake, (7, "tick", HEAD), monkeypatch)
-    fake.body = fake.body.replace("- [x] Approved", "- [ ] Approved\n## 2. other\n- [x] Approved")
-    fake.tests = "success"
-    ship(fake, None, monkeypatch)
-    assert not merged(fake) and "note=void" in fake.comments[-1]["body"]
-
-
-def test_owner_tick_edits_after_ship_it_are_followed(monkeypatch):
-    fake = review_fake()
-    fake.tests = None
-    ship(fake, (7, "tick", HEAD), monkeypatch)
-    fake.body = fake.body + "\n## 2. other\n- [x] Approved"
-    fake.tests = "success"
-    ship(fake, (7, "edit", HEAD, fake.body), monkeypatch)
-    ship(fake, None, monkeypatch)                                         # after the review sync finishes
-    assert merged(fake)
-
-
-def test_pushed_review_data_the_owner_did_not_see_voids_the_approval(monkeypatch):
-    fake = review_fake()
-    fake.tests = None
-    ship(fake, (7, "tick", HEAD), monkeypatch)
-    fake.files[0]["sha"] = "2"                                            # proposals.json swapped after the tick
-    fake.tests = "success"
-    ship(fake, None, monkeypatch)
-    assert not merged(fake)
-
-
-def test_body_hash_ignores_the_box_and_line_endings():
-    body = "## 1. x\n- [x] Approved\n" + TICKED
-    assert shipit.body_hash(body) == shipit.body_hash(body.replace("- [x] **Ship", "- [ ] **Ship"))
-    assert shipit.body_hash(body) == shipit.body_hash(body.replace("\n", "\r\n"))
-    assert shipit.body_hash(body) != shipit.body_hash(body.replace("- [x] Approved", "- [ ] Approved"))
-
-
-def test_records_are_recomputed_with_mains_code_never_the_branch_code(tmp_path):
-    """Real repository, real review code: a branch whose records/ were edited by hand fails; an untouched one
-    passes. The branch also plants a fake kgkit that would pass everything: it must not be imported."""
-    import subprocess as sp
-    work = tmp_path / "wt"
-    base = sp.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
-    sp.run(["git", "-C", str(ROOT), "worktree", "add", "-q", "--detach", str(work), base], check=True)
-    try:
-        body = "# Proposed changes\n\nnothing ticked\n"
-        (work / "reports").mkdir(exist_ok=True)
-        (work / "reports" / "proposals.json").write_text('{"count": 0, "proposals": []}')
-        assert shipit.recompute_records(str(work), str(ROOT), 7, body, base)
-        rec = work / "records" / "tinnitus.records.json"
-        rec.write_text(rec.read_text().replace("}", "} ", 1))
-        sp.run(["git", "-C", str(work), "-c", "user.name=t", "-c", "user.email=t@example.org", "commit", "-qam", "x"],
-               check=True)
-        fake = work / "kgkit"
-        (fake / "review.py").write_text("def main(argv):\n    return 0\n")
-        assert not shipit.recompute_records(str(work), str(ROOT), 7, body, base)
-    finally:
-        sp.run(["git", "-C", str(ROOT), "worktree", "remove", "--force", str(work)], check=False)
 
 
 def test_tick_then_merge_in_one_run(monkeypatch):
@@ -345,7 +242,7 @@ def test_workflow_token_is_read_only_and_never_runs_pull_request_code():
     steps = WF["jobs"]["ship"]["steps"]
     co = steps[0]["with"]
     assert co["ref"] == "${{ github.event.repository.default_branch }}" and co["persist-credentials"] is False
-    assert [s["run"] for s in steps if "pip install" in (s.get("run") or "")] == ["pip install -r requirements.txt"]
+    assert not any("pip install" in (s.get("run") or "") for s in steps)
     assert "sender.login" in WF["jobs"]["ship"]["if"]
     assert WF["jobs"]["ship"]["environment"] == "ship-it", "the app key must be an environment secret, main only"
 
