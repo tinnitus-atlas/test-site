@@ -83,7 +83,17 @@ def rules(p: dict, cfg: dict) -> tuple[float, str]:
     on_topic = any(t in title for t in terms_of(cfg))
     kind = bucket(p)
     if p["type"] == "update":
-        return 0.85, "registry correction to an existing entry"
+        a = p.get("apply") or {}
+        if a.get("field") == "status" and str(a.get("to") or "").lower() in STOPPED + ("withdrawn",):
+            return 0.5, f"registry says the trial is now {a.get('to')}: read closely, its summary may need redrafting"
+        if a.get("field") == "facts.enrollment":
+            try:
+                before, after = float(a.get("from")), float(a.get("to"))
+                if before and abs(after - before) / before > 0.5:
+                    return 0.5, f"participant count changes from {a.get('from')} to {a.get('to')}: read closely"
+            except (TypeError, ValueError):
+                pass
+        return 0.85, "registry update to an entry already in the graph (the registry is the source for its own trials)"
     if kind == "new_record:device":
         return 0.6, "FDA decision under a related product code"
     if p["type"] == "draft":
@@ -129,7 +139,9 @@ def learn(history: list[dict]) -> dict:
             by_word[w][1] += 1
         total[0] += hit
         total[1] += 1
-    return {"bucket": dict(by_bucket), "word": dict(by_word), "total": total}
+    notes = [{"bucket": h.get("bucket"), "words": words(h.get("title") or ""), "reason": h["reason"], "date": h.get("date") or ""}
+             for h in history if h.get("reason")]
+    return {"bucket": dict(by_bucket), "word": dict(by_word), "total": total, "notes": notes}
 
 
 def learned_part(p: dict, model: dict, base: float) -> tuple[float, str | None]:
@@ -147,6 +159,16 @@ def learned_part(p: dict, model: dict, base: float) -> tuple[float, str | None]:
     if shifts:
         s += max(-0.15, min(0.15, 0.3 * sum(shifts) / len(shifts)))
     return max(0.0, min(1.0, s)), note
+
+
+def last_note(p: dict, model: dict) -> str | None:
+    """The most recent reviewer reason on an item of the same kind, preferring one that shares title words."""
+    same = [n for n in model.get("notes") or [] if n["bucket"] == bucket(p)]
+    if not same:
+        return None
+    w = words(title_of(p))
+    best = sorted(same, key=lambda n: (len(n["words"] & w) > 0, n["date"]))[-1]
+    return clean(best["reason"], 120)
 
 
 def clean(text: str, limit: int = 160) -> str:
@@ -204,12 +226,15 @@ def screen(props: list[dict], cfg: dict, history: list[dict] | None = None, ai: 
                 reasons.append(f"AI {a:.2f}: {a_why}")
             except Exception:  # noqa: BLE001 - the AI part is optional; the rules still decide
                 reasons.append("AI not reachable, rules only")
+        note = last_note(p, model)
+        if note:
+            reasons.append(f"last time on a similar item you noted: {note}")
         rec = "tick" if final >= st["tick_at"] else "skip" if final <= st["skip_at"] else "fence"
         pre = bool(st["pre_tick"] and rec == "tick" and score >= st["pre_tick_min"]
                    and (p["type"] in ("update", "review_paper") or bucket(p) == "new_record:trial")
                    and not regulatory(p, cfg))
         p["screen"] = {"score": round(final, 2), "rules_learning": round(score, 2), "recommendation": rec,
-                       "reason": clean("; ".join(reasons), 220), "pre_ticked": pre, "bucket": bucket(p)}
+                       "reason": clean("; ".join(reasons), 320), "pre_ticked": pre, "bucket": bucket(p)}
     props.sort(key=lambda p: -p["screen"]["score"])
     return props
 

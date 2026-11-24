@@ -25,6 +25,7 @@ from .screener import bucket, title_of
 
 HEADING = re.compile(r"^## (\d+)\. (.+)$")
 MAYBE = re.compile(r"^- \[([ xX])\] Maybe later\s*$")
+REASON = re.compile(r"^(?:- )?Reason:\s*(.+)$", re.I)
 PARK_DAYS = 90
 
 
@@ -39,6 +40,26 @@ def maybe_numbers(body: str) -> set[int]:
         if m and current is not None and m.group(1).lower() == "x":
             out.add(current)
     return out
+
+
+def reasons(body: str) -> dict[int, str]:
+    """Lines starting "Reason:" that the reviewer wrote under an item, by item number."""
+    from .screener import clean
+    out, current = {}, None
+    for line in (body or "").splitlines():
+        h = HEADING.match(line.strip())
+        if h:
+            current = int(h.group(1))
+            continue
+        m = REASON.match(line.strip())
+        if m and current is not None:
+            out[current] = clean(m.group(1), 300)
+    return out
+
+
+def left_open(p: dict) -> bool:
+    """An unticked item the screener put on the fence is not a decision: it stays open for next week."""
+    return (p.get("screen") or {}).get("recommendation") == "fence"
 
 
 def key_of(p: dict) -> str:
@@ -73,11 +94,14 @@ def load_parked(records_path) -> list[dict]:
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
 
 
-def entries(label, props: list[dict], approved: set[int], maybe: set[int], day: str) -> list[dict]:
+def entries(label, props: list[dict], approved: set[int], maybe: set[int], day: str,
+            notes: dict[int, str] | None = None) -> list[dict]:
     out = []
+    notes = notes or {}
     for i, p in enumerate(props, 1):
-        decision = "approved" if i in approved else "maybe_later" if i in maybe else "skipped"
-        out.append({"key": key_of(p), "type": p.get("type"), "title": title_of(p), "claim": p.get("claim"),
+        decision = ("approved" if i in approved else "maybe_later" if i in maybe
+                    else "left_open" if left_open(p) else "skipped")
+        out.append({"reason": notes.get(i), "key": key_of(p), "type": p.get("type"), "title": title_of(p), "claim": p.get("claim"),
                     "source": p.get("source"), "decision": decision, "pull_request": label, "date": day,
                     "bucket": bucket(p), "screen": (p.get("screen") or {}).get("score"),
                     "pre_ticked": (p.get("screen") or {}).get("pre_ticked", False)})
@@ -99,7 +123,7 @@ def update_parked(parked: list[dict], props: list[dict], approved: set[int], may
             else:
                 clean = {kk: v for kk, v in p.items() if kk not in ("screen", "auto_apply")}
                 by_key[k] = {"key": k, "proposal": clean, "parked_on": day, "due": due, "times": 1}
-        else:
+        elif i in approved or not left_open(p):
             by_key.pop(k, None)
             final.add(k)
     return list(by_key.values()), final
@@ -145,8 +169,11 @@ def rebuild(records_path, runner, limit: int = 200) -> int:
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             continue
         body = pr.get("body") or ""
+        approved, maybe = set(approved_numbers(body)), maybe_numbers(body)
+        if not (approved or maybe):
+            continue  # merged with no box ticked: not reviewed (the apply step leaves its items open too)
         day = (pr.get("mergedAt") or "")[:10] or dt.date.today().isoformat()
-        new += entries(pr["number"], props, set(approved_numbers(body)), maybe_numbers(body), day)
+        new += entries(pr["number"], props, approved, maybe, day, reasons(body))
     write_history(records_path, new)
     return len(new)
 

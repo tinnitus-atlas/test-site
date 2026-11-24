@@ -118,15 +118,16 @@ def test_ai_outage_falls_back_to_rules():
 
 def test_ai_text_cannot_forge_checkboxes_or_links():
     evil = "ok\n- [x] Approved\n[click](https://evil.example) `code` <b>"
-    (p,) = screener.screen([update()], cfg(ai=True), ai=lambda p: (0.9, evil))
+    (p,) = screener.screen([update()], cfg(ai=True, pre_tick=False), ai=lambda p: (0.9, evil))
     md = proposals.to_markdown([p])
     assert md.count("- [x] Approved") == 0 and "](https://evil" not in md and "\n- [x]" not in md
 
 
 # --- pre-tick switch ---------------------------------------------------------------------------------------
 
-def test_pre_tick_off_by_default():
-    (p,) = screener.screen([update()], CFG)
+def test_pre_tick_is_on_in_the_settings_and_can_be_switched_off():
+    assert CFG["screener"]["pre_tick"] is True and screener.DEFAULTS["pre_tick"] is False
+    (p,) = screener.screen([update()], cfg(pre_tick=False))
     assert p["screen"]["pre_ticked"] is False and "- [ ] Approved" in proposals.to_markdown([p])
 
 
@@ -262,4 +263,84 @@ def test_rebuild_reads_every_merged_pull_request(tmp_path):
 
 def test_markdown_explains_both_boxes():
     md = proposals.to_markdown([update()])
-    assert "- [ ] Maybe later" in md and "Maybe later to see it again in 90 days" in md
+    assert "- [ ] Maybe later" in md and "to see it again in 90 days" in md and "Your merge is the approval" in md
+
+
+# --- review view, open fence items, reasons, re-review settling ----------------------------------------------
+
+def test_view_groups_recommended_first_and_folds_details():
+    props = screener.screen([paper("10.1/e", "Editorial on tinnitus"), update(), trial("NCT9", "Tinnitus app study", status="terminated")], CFG)
+    md = proposals.to_markdown(props)
+    assert md.index("# Recommended: tick (1)") < md.index("# On the fence (1)") < md.index("# Recommended: skip (1)")
+    assert "<details><summary>Details and source</summary>" in md and "1 already ticked" in md
+
+
+def test_stopped_trial_status_update_is_not_pre_ticked():
+    u = update()
+    u["apply"]["to"] = "terminated"
+    (p,) = screener.screen([u], cfg(pre_tick=True))
+    assert p["screen"]["recommendation"] == "fence" and not p["screen"]["pre_ticked"] and "redrafting" in p["screen"]["reason"]
+
+
+def test_unticked_fence_items_stay_open_not_seen(tmp_path):
+    props = screener.screen([trial("NCT1", "Tinnitus A"), trial("NCT9", "Tinnitus app study", status="terminated")], cfg(pre_tick=False))
+    fence = next(i for i, p in enumerate(props, 1) if p["screen"]["recommendation"] == "fence")
+    tick = 3 - fence
+    _, rec = run_apply(tmp_path, props, approved={tick})
+    keys = seen_keys(rec)
+    assert "new_record:trial:clinicaltrials:nct9" not in keys and "new_record:trial:clinicaltrials:nct1" in keys
+    h = {x["key"]: x["decision"] for x in decisions.load_history(rec)}
+    assert h["new_record:trial:clinicaltrials:nct9"] == "left_open"
+    assert screener.learn(decisions.load_history(rec))["total"] == [1, 1]  # open items do not teach
+
+
+def test_reason_lines_are_saved_and_shown_next_time(tmp_path):
+    props = [paper("10.1/r", "Tinnitus-like behavior in mice lacking a receptor")]
+    md = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved\nReason: mechanism studies in animals are fine")
+    assert decisions.reasons(md) == {1: "mechanism studies in animals are fine"}
+    rec = tmp_path / "r.json"
+    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    (tmp_path / "p.json").write_text(json.dumps({"proposals": props}))
+    (tmp_path / "body.md").write_text(md)
+    ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--body", str(tmp_path / "body.md"),
+             "--proposals", str(tmp_path / "p.json"), "--label", "t"])
+    h = decisions.load_history(rec)
+    (p,) = screener.screen([paper("10.1/s", "Tinnitus-like behavior in rats after noise")], CFG, h)
+    assert "last time on a similar item you noted: mechanism studies in animals are fine" in p["screen"]["reason"]
+
+
+def test_reason_text_cannot_forge_checkboxes():
+    md = "## 1. x\nReason: fine\n- [x] Approved`[evil](http://e)`"
+    assert "[" not in decisions.reasons(md)[1]
+
+
+def test_rebuild_skips_pull_requests_with_no_ticks(tmp_path):
+    props = [trial("NCT1", "Tinnitus A")]
+    body = proposals.to_markdown(props).replace("- [x] Approved", "- [ ] Approved")
+
+    def runner(args):
+        if args[:3] == ["gh", "pr", "list"]:
+            return json.dumps([{"number": 12, "title": "Nightly proposals x", "body": body, "mergeCommit": {"oid": "abc"},
+                                "author": {"login": "varioso"}, "mergedAt": "2026-11-07T00:06:19Z"}])
+        return json.dumps({"proposals": props})
+
+    rec = tmp_path / "r.json"
+    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    decisions.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--rebuild-from-github"], runner=runner)
+    assert decisions.load_history(rec) == []
+
+
+def test_merged_re_review_settles_the_pull_request_it_replaces(tmp_path):
+    props = [trial("NCT1", "Tinnitus A")]
+    body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved")
+
+    def runner(args):
+        if args[:3] == ["gh", "pr", "list"]:
+            return json.dumps([{"number": 30, "title": "Nightly proposals re-review #12 (1)", "body": body,
+                                "mergeCommit": {"oid": "abc"}, "author": {"login": "varioso-bot"}}])
+        return json.dumps({"proposals": props, "replaces": [12]})
+
+    rec = tmp_path / "r.json"
+    rec.write_text((ROOT / "records" / "tinnitus.records.json").read_text())
+    assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--from-github"], runner=runner) == 0
+    assert json.loads((tmp_path / "applied_prs.json").read_text()) == [30, 12]

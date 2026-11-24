@@ -1,0 +1,42 @@
+# Re-review, started by hand: sends an earlier proposals pull request through the screener again and opens a fresh
+# proposals pull request. Merging it settles the old one.
+name: Re-review
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Number of the earlier proposals pull request"
+        required: true
+      only_skipped:
+        description: "yes = only items that were skipped or never decided"
+        default: "no"
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+jobs:
+  rereview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Re-review
+        id: rereview
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_TOKEN || github.token }}
+          PR_NUMBER: ${{ inputs.pr }}
+          ONLY_SKIPPED: ${{ inputs.only_skipped }}
+        run: |
+          git config user.name "kg-nightly"
+          git config user.email "kg-nightly@users.noreply.github.com"
+          mode=""; [ "${ONLY_SKIPPED:-no}" = "yes" ] && mode="only-skipped"
+          ./run_rereview.sh "${PR_NUMBER:-}" $mode >> "$GITHUB_STEP_SUMMARY"

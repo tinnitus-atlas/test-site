@@ -120,7 +120,22 @@ EOF
 
 
 PR_LINE="No pull request (no proposals)"
-if [ "${NO_GIT:-0}" != "1" ] && [ "$COUNT" -gt 0 ]; then
+# Weekly review: with REVIEW_WEEKDAY set (for example "monday"), the proposals pull request opens only on that day
+# (or when FORCE_PROPOSALS is true, as on a manual run), and never while an earlier one is still open.
+WAIT_LINE=""
+if [ -n "${REVIEW_WEEKDAY:-}" ] && [ "${NO_GIT:-0}" != "1" ] && [ "$COUNT" -gt 0 ]; then
+  TODAY_NAME="$(date -u +%A | tr '[:upper:]' '[:lower:]')"
+  OPEN_REVIEW=""
+  command -v gh >/dev/null 2>&1 && OPEN_REVIEW="$(gh pr list --state open --search "Nightly proposals in:title" --json url -q '.[0].url' 2>/dev/null || true)"
+  if [ -n "$OPEN_REVIEW" ]; then
+    WAIT_LINE="Review pull request still open: $OPEN_REVIEW ($COUNT items collected for the next one)"
+  elif [ "${FORCE_PROPOSALS:-false}" != "true" ] && [ "$TODAY_NAME" != "$(echo "$REVIEW_WEEKDAY" | tr '[:upper:]' '[:lower:]')" ]; then
+    WAIT_LINE="$COUNT items collected; the review pull request opens on $REVIEW_WEEKDAY"
+  fi
+fi
+if [ -n "$WAIT_LINE" ]; then
+  PR_LINE="$WAIT_LINE"
+elif [ "${NO_GIT:-0}" != "1" ] && [ "$COUNT" -gt 0 ]; then
   BRANCH="proposals/$DAY"
   {
     git checkout -q -B "$BRANCH" &&
