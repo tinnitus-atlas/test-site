@@ -9,8 +9,13 @@ tests and merges it. It never merges anything the owner has not approved:
 - The pull request is merged only while its net change still has exactly that fingerprint. Bringing it up to date with
   main keeps the fingerprint; any other change (a new commit, a force push, a different base) voids the approval.
 - Unticking by the owner revokes the approval, so nobody else can re-tick it.
-- Never merged here: pull requests that change .github/, review pull requests (the owner merges those), pull requests
-  not aimed at main, from another repository, drafts, or with failing tests.
+- Review pull requests ("Nightly proposals ..."): their branch changes after the tick because the review sync writes
+  the ticked items into records/. So for them the fingerprint covers every file except records/, the approval also
+  records the ticks (a later owner edit updates them; anyone else's edit voids the approval), and before merging,
+  main's own review code recomputes records/ from the ticks in a scratch copy and must get exactly the branch's
+  records/. Pushed data the owner did not see, or records that do not follow from the ticks, are never merged.
+- Never merged here: pull requests that change .github/, pull requests not aimed at main, from another repository,
+  drafts, or with failing tests.
 - The app's keys are minted per run, last one hour, and are limited to this repository with contents and pull request
   access. The app's private key is an environment secret usable only by workflows running on main.
 
@@ -37,7 +42,7 @@ SHIP_TEXT = ("**Ship it**: tick when you are done here. The pull request is then
              "for you.")
 SHIP_LINE = f"- [ ] {SHIP_TEXT}"
 BOX = re.compile(r"^- \[([ xX])\] " + re.escape(SHIP_TEXT) + r"\s*$", re.M)
-APPROVED = re.compile(r"<!-- ship-it approved=([0-9a-f]{64}) head=([0-9a-f]{40}) -->")
+APPROVED = re.compile(r"<!-- ship-it approved=([0-9a-f]{64}) head=([0-9a-f]{40})(?: body=([0-9a-f]{64}))? -->")
 REVOKED = "<!-- ship-it revoked -->"
 NOTE = re.compile(r"<!-- ship-it note=([\w-]+) -->")
 MAX_FILES = 300          # GitHub's compare lists at most 300 files; more fails closed
@@ -59,24 +64,33 @@ def is_review_pr(pr: dict, bot: str) -> bool:
     return pr["user"]["login"] == bot and pr["title"].startswith("Nightly proposals")
 
 
-def fingerprint(base_ref: str, compare: dict) -> str | None:
+def fingerprint(base_ref: str, compare: dict, skip_records: bool = False) -> str | None:
     """Fingerprint of a pull request's net change: base branch plus every changed file's name, status and content
-    hash. None when GitHub could not list every file (fails closed)."""
+    hash (without records/ for review pull requests). None when GitHub could not list every file (fails closed)."""
     files = compare.get("files")
     if files is None or len(files) >= MAX_FILES:
         return None
-    rows = sorted((f["filename"], f.get("status"), f.get("sha"), f.get("previous_filename")) for f in files)
+    rows = sorted((f["filename"], f.get("status"), f.get("sha"), f.get("previous_filename")) for f in files
+                  if not (skip_records and f["filename"].startswith("records/")))
     return hashlib.sha256(json.dumps([base_ref, rows]).encode()).hexdigest()
 
 
+def body_hash(body: str | None) -> str:
+    """Hash of a review pull request's text with the Ship it box itself left out: it pins the owner's ticks."""
+    text = (body or "").replace("\r\n", "\n")
+    text = BOX.sub(SHIP_LINE, text).strip()
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
 def decide(pr: dict, *, default_branch: str, bot: str, approved: str | None, current: str | None, behind_by: int,
-           touches_workflows: bool, tests: str | None) -> tuple[str, str]:
+           touches_workflows: bool, tests: str | None, review: dict | None = None) -> tuple[str, str]:
     """Next step for one pull request whose box is ticked: (action, detail).
-    Actions: skip, note (detail = note key), wait, update, merge."""
+    Actions: skip, note (detail = note key), wait, update, merge.
+    review (review pull requests only): {"body_ok": bool, "sync_running": bool, "records_ok": bool | None}."""
     head = pr["head"]["sha"][:12]
     if pr.get("draft") or pr["head"]["repo"] is None or pr["head"]["repo"]["full_name"] != pr["base"]["repo"]["full_name"]:
         return "skip", "draft or from another repository"
-    if is_review_pr(pr, bot):
+    if is_review_pr(pr, bot) and review is None:
         return "note", "review"
     if pr["base"]["ref"] != default_branch:
         return "note", "base"
@@ -88,8 +102,15 @@ def decide(pr: dict, *, default_branch: str, bot: str, approved: str | None, cur
         return "note", f"toolarge-{head}"
     if current != approved:
         return "note", f"void-{head}"
+    if review is not None:
+        if not review["body_ok"]:
+            return "note", f"void-{head}"
+        if review["sync_running"]:
+            return "wait", "review sync running"
     if behind_by > 0:
         return "update", pr["head"]["sha"]
+    if review is not None and not review["records_ok"]:
+        return "note", f"records-{head}"
     if pr.get("mergeable_state") == "dirty" or pr.get("mergeable") is False:
         return "note", f"conflict-{head}"
     if tests is None or tests == "pending":
@@ -100,7 +121,9 @@ def decide(pr: dict, *, default_branch: str, bot: str, approved: str | None, cur
 
 
 NOTES = {
-    "review": "Ship it does not merge review pull requests: merge this one yourself once you have ticked the items.",
+    "review": "Ship it could not check this review pull request. Please merge it yourself.",
+    "records": "The record changes on this branch do not match the ticked items (main may have changed since). Edit "
+               "any tick (or untick and tick one) so the review sync rebuilds them; Ship it then carries on.",
     "base": "Ship it only merges pull requests aimed at main.",
     "workflows": "Ship it does not merge pull requests that change the automation workflows. Please merge this one "
                  "yourself.",
@@ -187,8 +210,9 @@ def tests_result(repo: str, sha: str, read: str) -> str | None:
     return latest.get("conclusion") or "pending"
 
 
-def tick_change(event: dict, owner: str) -> tuple[int, str, str] | None:
-    """(pull request number, "tick" or "untick", head commit at that moment) for an owner's edit that flips the box."""
+def tick_change(event: dict, owner: str) -> tuple[int, str, str, str] | None:
+    """(pull request number, kind, head commit at that moment, text) for an owner's edit: kind "tick" or "untick" when
+    it flips the box, "edit" when the box stays ticked (review pull requests use it to update the recorded ticks)."""
     if event.get("action") != "edited" or (event.get("sender") or {}).get("login") != owner:
         return None
     before = ((event.get("changes") or {}).get("body") or {}).get("from")
@@ -197,8 +221,8 @@ def tick_change(event: dict, owner: str) -> tuple[int, str, str] | None:
     pr = event["pull_request"]
     was, now = ticked(before), ticked(pr.get("body"))
     if was == now:
-        return None
-    return pr["number"], ("tick" if now else "untick"), pr["head"]["sha"]
+        return (pr["number"], "edit", pr["head"]["sha"], pr.get("body")) if now else None
+    return pr["number"], ("tick" if now else "untick"), pr["head"]["sha"], pr.get("body")
 
 
 class Repo:
@@ -219,42 +243,105 @@ class Repo:
             call("POST", f"/repos/{self.repo}/issues/{n}/comments", self.write, {"body": text})
 
 
-def approval_state(comments: list[dict]) -> tuple[dict | None, str | None]:
-    """(the approval comment, the approved fingerprint or None when never approved or revoked)."""
+def approval_state(comments: list[dict]) -> tuple[dict | None, str | None, str | None]:
+    """(the approval comment, the approved fingerprint, the approved ticks hash); None when never approved or revoked."""
     mine = [c for c in comments if APPROVED.search(c["body"] or "") or REVOKED in (c["body"] or "")]
     if not mine:
-        return None, None
+        return None, None, None
     last = mine[-1]
     m = APPROVED.search(last["body"] or "")
-    return last, (m.group(1) if m else None)
+    return (last, m.group(1), m.group(3)) if m else (last, None, None)
 
 
-def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | None, summary: list) -> None:
+def approval_text(fp: str, head: str, body: str | None) -> str:
+    extra = f" body={body}" if body else ""
+    return (f"<!-- ship-it approved={fp} head={head}{extra} -->\nShip it: approved version `{head[:7]}`. It will be "
+            "brought up to date, tested and merged without further clicks.")
+
+
+def recompute_records(work: str, main_dir: str, n: int, body: str, base: str) -> bool:
+    """In the scratch copy `work`, rebuild records/ from the ticks in `body` with main's own code (the copy's code is
+    never imported: python -I, main's folder first on the path) and report whether nothing differs."""
+    body_file = os.path.join(work, ".shipit-body.md")
+    with open(body_file, "w", encoding="utf-8") as f:
+        f.write(body)
+    code = "import sys; sys.path.insert(0, sys.argv[1]); from kgkit import review; sys.exit(review.main(sys.argv[2:]))"
+    r = subprocess.run(["python3", "-I", "-c", code, main_dir, "sync", "--config", "kit.tinnitus.yaml",
+                        "--records", "records/tinnitus.records.json", "--pr", str(n), "--body-file", body_file,
+                        "--proposals", "reports/proposals.json", "--base", base],
+                       cwd=work, capture_output=True, text=True)
+    os.remove(body_file)
+    if r.returncode != 0:
+        return False
+    diff = subprocess.run(["git", "-C", work, "status", "--porcelain", "--", "records"],
+                          capture_output=True, text=True, check=True).stdout
+    return diff.strip() == ""
+
+
+def records_match(n: int, head_sha: str, body: str, default_branch: str) -> bool:
+    """Fetch the pull request into a scratch copy (as data) and check its records/ follow from the ticks."""
+    main_dir = os.getcwd()
+    work = tempfile.mkdtemp(prefix=f"shipit-{n}-", dir=os.environ.get("RUNNER_TEMP"))
+    git = ["git", "-C", main_dir]
+    try:
+        subprocess.run(git + ["fetch", "-q", "--no-tags", "origin", f"+refs/pull/{n}/head:refs/shipit/pr-{n}",
+                              f"+refs/heads/{default_branch}:refs/remotes/origin/{default_branch}"],
+                       check=True, capture_output=True)
+        subprocess.run(git + ["worktree", "add", "-q", "--detach", work, head_sha], check=True, capture_output=True)
+        return recompute_records(work, main_dir, n, body, f"origin/{default_branch}")
+    except subprocess.CalledProcessError:
+        return False
+    finally:
+        subprocess.run(git + ["worktree", "remove", "--force", work], capture_output=True)
+
+
+def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | None, summary: list,
+             check_records=records_match) -> None:
     pr = call("GET", f"/repos/{gh.repo}/pulls/{n}", gh.read)
+    review = is_review_pr(pr, bot)
     comments = gh.app_comments(n)
-    approval_c, approved = approval_state(comments)
+    approval_c, approved, approved_body = approval_state(comments)
     if change and change[0] == n:
-        if change[1] == "untick":
+        kind, sha, text = change[1], change[2], change[3]
+        if kind == "untick":
             if approval_c:
                 gh.comment(n, f"{REVOKED}\nShip it: approval withdrawn.", approval_c)
             summary.append(f"#{n}: approval withdrawn")
             return
-        fp = fingerprint(pr["base"]["ref"], gh.compare(default_branch, change[2]))
-        if fp:
-            gh.comment(n, f"<!-- ship-it approved={fp} head={change[2]} -->\nShip it: approved version "
-                          f"`{change[2][:7]}`. It will be brought up to date, tested and merged without further "
-                          "clicks.", approval_c)
-            approved = fp
-            summary.append(f"#{n}: approved")
+        if kind == "tick":
+            fp = fingerprint(pr["base"]["ref"], gh.compare(default_branch, sha), skip_records=review)
+            if fp:
+                approved, approved_body = fp, (body_hash(text) if review else None)
+                gh.comment(n, approval_text(fp, sha, approved_body), approval_c)
+                summary.append(f"#{n}: approved")
+        elif kind == "edit" and review and approved:
+            # The owner changed ticks after Ship it: record the new ticks, keep the approved content.
+            m = APPROVED.search(approval_c["body"])
+            approved_body = body_hash(text)
+            gh.comment(n, approval_text(approved, m.group(2), approved_body), approval_c)
+            summary.append(f"#{n}: ticks updated")
+        if review:
+            return      # the review sync started by this same edit triggers the next check when it finishes
     if not ticked(pr.get("body")):
         return
     noted = {m.group(1) for c in comments for m in NOTE.finditer(c["body"] or "")}
     cur = gh.compare(default_branch, pr["head"]["sha"])
-    current = fingerprint(pr["base"]["ref"], cur)
+    current = fingerprint(pr["base"]["ref"], cur, skip_records=review)
     touches_wf = any(f["filename"].startswith(".github/") for f in cur.get("files") or [])
     tests = tests_result(gh.repo, pr["head"]["sha"], gh.read)
+    review_state = None
+    if review:
+        sync = [r for s in ("queued", "in_progress") for r in call(
+            "GET", f"/repos/{gh.repo}/actions/workflows/review-sync.yml/runs?status={s}&per_page=50", gh.read)
+            .get("workflow_runs", []) if r.get("head_branch") == pr["head"]["ref"]]
+        body_ok = bool(approved_body) and approved_body == body_hash(pr.get("body"))
+        ready = body_ok and not sync and current == approved and approved is not None
+        review_state = {"body_ok": body_ok, "sync_running": bool(sync),
+                        "records_ok": check_records(n, pr["head"]["sha"], pr.get("body") or "", default_branch)
+                        if ready else None}
     action, detail = decide(pr, default_branch=default_branch, bot=bot, approved=approved, current=current,
-                            behind_by=int(cur.get("behind_by") or 0), touches_workflows=touches_wf, tests=tests)
+                            behind_by=int(cur.get("behind_by") or 0), touches_workflows=touches_wf, tests=tests,
+                            review=review_state)
     summary.append(f"#{n}: {action} ({detail})")
     if action == "note" and detail not in noted:
         gh.comment(n, f"<!-- ship-it note={detail} -->\n{NOTES[detail.split('-')[0]]}")

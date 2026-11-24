@@ -55,7 +55,7 @@ def test_one_run_at_a_time_without_cancelling(wf):
 
 
 def test_permissions_and_timeout(wf):
-    assert wf["permissions"] == {"contents": "write", "pull-requests": "write"}
+    assert wf["permissions"] == {"contents": "write", "pull-requests": "write", "actions": "read"}  # actions: owner list
     job = next(iter(wf["jobs"].values()))
     assert isinstance(job.get("timeout-minutes"), int)
 
