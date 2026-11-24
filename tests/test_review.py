@@ -21,7 +21,7 @@ def trial(n, title="Tinnitus sound therapy trial"):
 def setup(tmp_path, props):
     rec_dir = tmp_path / "records"
     rec_dir.mkdir()
-    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec_dir / "r.json")
+    shutil.copy(ROOT / "tests" / "fixtures" / "tinnitus.records.json", rec_dir / "r.json")
     main_copy = tmp_path / "main_records"
     shutil.copytree(rec_dir, main_copy)
     (tmp_path / "p.json").write_text(json.dumps({"proposals": props}))
@@ -58,7 +58,7 @@ def test_nightly_skips_a_synced_pull_request_after_the_merge(tmp_path):
     props = [trial("NCT05000001")]
     rec_dir = tmp_path / "records"
     rec_dir.mkdir()
-    shutil.copy(ROOT / "records" / "tinnitus.records.json", rec_dir / "r.json")
+    shutil.copy(ROOT / "tests" / "fixtures" / "tinnitus.records.json", rec_dir / "r.json")
     (rec_dir / "applied_prs.json").write_text("[23]")
     body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved")
 

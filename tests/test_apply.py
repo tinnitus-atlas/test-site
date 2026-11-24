@@ -47,7 +47,7 @@ def ticked(props, numbers):
 @pytest.fixture
 def workspace(tmp_path):
     (tmp_path / "records").mkdir()
-    shutil.copy(ROOT / "records" / "tinnitus.records.json", tmp_path / "records" / "r.json")
+    shutil.copy(ROOT / "tests" / "fixtures" / "tinnitus.records.json", tmp_path / "records" / "r.json")
     (tmp_path / "p.json").write_text(json.dumps({"proposals": proposals()}))
     return tmp_path
 
@@ -209,7 +209,7 @@ def test_manual_mode_needs_inputs(workspace):
 
 # --- the reviewed text is what gets applied (hardening of 24 Nov) ---------------------------------------------------
 def _records():
-    return json.loads((ROOT / "records" / "tinnitus.records.json").read_text())["records"]
+    return json.loads((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())["records"]
 
 
 def _apply(body, props):
