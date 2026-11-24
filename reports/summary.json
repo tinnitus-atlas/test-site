@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-06T16:15:11+00:00",
+  "generated": "2026-11-24T18:00:41+00:00",
   "blocking": false,
   "held_records": [],
   "doi": {
@@ -19,10 +19,10 @@
     "critical_stale_share": 0.0,
     "breach": false
   },
-  "new_trials": 14,
-  "new_papers": 19,
-  "new_devices": 1,
-  "proposals": 38,
+  "new_trials": 15,
+  "new_papers": 26,
+  "new_devices": 0,
+  "proposals": 45,
   "already_reviewed_skipped": 0,
   "skipped_checks": [],
   "unreachable": []
