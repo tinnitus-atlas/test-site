@@ -9,7 +9,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from kgkit import shipit
+from kgkit import proposals, screener, shipit
+CFG = yaml.safe_load((Path(__file__).resolve().parents[1] / "kit.tinnitus.yaml").read_text())
 
 ROOT = Path(__file__).resolve().parents[1]
 BOT = "varioso-bot"
@@ -257,6 +258,10 @@ def test_records_are_recomputed_with_mains_code_never_the_branch_code(tmp_path):
         body = "# Proposed changes\n\nnothing ticked\n"
         (work / "reports").mkdir(exist_ok=True)
         (work / "reports" / "proposals.json").write_text('{"count": 0, "proposals": []}')
+        sp.run(["git", "-C", str(work), "add", "-f", "reports/proposals.json"], check=True)   # as on a review branch
+        sp.run(["git", "-C", str(work), "-c", "user.name=t", "-c", "user.email=t@example.org", "commit", "-qm", "p"],
+               check=True)
+        base_review = sp.run(["git", "-C", str(work), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
         assert shipit.recompute_records(str(work), str(ROOT), 7, body, base)
         rec = work / "records" / "tinnitus.records.json"
         rec.write_text(rec.read_text().replace("}", "} ", 1))
@@ -412,14 +417,72 @@ def test_records_compare_catches_added_files_and_uses_mains_settings(tmp_path):
         body = "# Proposed changes\n\nnothing ticked\n"
         (work / "reports").mkdir(exist_ok=True)
         (work / "reports" / "proposals.json").write_text('{"count": 0, "proposals": []}')
+        sp.run(["git", "-C", str(work), "add", "-f", "reports/proposals.json"], check=True)   # as on a review branch
+        sp.run(["git", "-C", str(work), "-c", "user.name=t", "-c", "user.email=t@example.org", "commit", "-qm", "p"],
+               check=True)
+        base_review = sp.run(["git", "-C", str(work), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
         assert shipit.recompute_records(str(work), str(ROOT), 7, body, base, "2026-11-25")
         (work / "records" / "applied_prs.json").write_text("[7, 8, 9]")      # planted, committed
         sp.run(["git", "-C", str(work), "add", "-A"], check=True)
         sp.run(["git", "-C", str(work), "-c", "user.name=t", "-c", "user.email=t@example.org", "commit", "-qm", "x"],
                check=True)
         assert not shipit.recompute_records(str(work), str(ROOT), 7, body, base, "2026-11-25")
-        sp.run(["git", "-C", str(work), "reset", "-q", "--hard", base], check=True)
+        sp.run(["git", "-C", str(work), "reset", "-q", "--hard", base_review], check=True)
         (work / "kit.tinnitus.yaml").write_text("broken: [")                  # the branch's settings are never used
+        sp.run(["git", "-C", str(work), "-c", "user.name=t", "-c", "user.email=t@example.org", "commit", "-qam", "y"],
+               check=True)
         assert shipit.recompute_records(str(work), str(ROOT), 7, body, base, "2026-11-25")
     finally:
         sp.run(["git", "-C", str(ROOT), "worktree", "remove", "--force", str(work)], check=False)
+
+
+
+def test_planted_gitignore_cannot_hide_record_files(tmp_path):
+    import subprocess as sp
+    work = tmp_path / "wt"
+    base = sp.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+    sp.run(["git", "-C", str(ROOT), "worktree", "add", "-q", "--detach", str(work), base], check=True)
+    try:
+        props = screener.screen([{"type": "new_record", "claim": "Add trial NCT05000001: Tinnitus trial",
+                                  "source": "https://clinicaltrials.gov/study/NCT05000001", "confidence": "medium",
+                                  "origin": "x", "why": "w", "evidence": "e", "wrong_if": "x",
+                                  "apply": {"new_record": {"kind": "trial", "name": "Tinnitus trial",
+                                                           "xrefs": ["CLINICALTRIALS:NCT05000001"]}}}], CFG)
+        (work / "reports").mkdir(exist_ok=True)
+        (work / "reports" / "proposals.json").write_text(json.dumps({"count": 1, "proposals": props}))
+        (work / "records" / ".gitignore").write_text("applied_prs.json\ndecisions.jsonl\nseen_proposals.json\n"
+                                                     "parked.json\nreview_queue.json\n")
+        sp.run(["git", "-C", str(work), "add", "-f", "-A"], check=True)
+        sp.run(["git", "-C", str(work), "-c", "user.name=t", "-c", "user.email=t@example.org", "commit", "-qm", "p"],
+               check=True)
+        body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved")
+        assert not shipit.recompute_records(str(work), str(ROOT), 7, body, base, "2026-11-25")
+    finally:
+        sp.run(["git", "-C", str(ROOT), "worktree", "remove", "--force", str(work)], check=False)
+
+
+def test_a_renamed_title_never_switches_the_mode():
+    review_mark = {"id": 1, "body": shipit.approval_text(FP, HEAD, "b" * 64)}
+    code_mark = {"id": 2, "body": shipit.approval_text(FP, HEAD, None)}
+    assert shipit.approval_state([review_mark], review=False)[1] is None
+    assert shipit.approval_state([code_mark], review=True)[1] is None
+    assert shipit.approval_state([review_mark], review=True)[1] == FP
+
+
+def test_sync_date_only_accepts_recent_real_dates():
+    import datetime as dt
+    today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+    msg = "Ticked items ready to go live with the merge ({})"
+    assert shipit.sync_date(msg.format(today)) == today
+    assert shipit.sync_date(msg.format("2001-01-01")) is None
+    assert shipit.sync_date(msg.format("2026-02-30")) is None
+    assert shipit.sync_date(msg.format("２０２６-11-25")) is None
+
+
+def test_untick_always_leaves_a_withdrawal_even_before_any_approval(monkeypatch):
+    fake = FakeGH([{"filename": "a.py", "status": "modified", "sha": "1"}])
+    ship(fake, (7, "untick", HEAD), monkeypatch)
+    assert shipit.REVOKED in fake.comments[-1]["body"]
+    fake.body = shipit.SHIP_LINE                                      # the box is unticked now
+    ship(fake, (7, "tick", HEAD), monkeypatch)                        # a slower tick run finishing afterwards
+    assert not merged(fake)

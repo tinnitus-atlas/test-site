@@ -42,7 +42,8 @@ SHIP_TEXT = ("**Ship it**: tick when you are done here. The pull request is then
              "for you.")
 SHIP_LINE = f"- [ ] {SHIP_TEXT}"
 BOX = re.compile(r"^- \[([ xX])\] " + re.escape(SHIP_TEXT) + r"\s*$", re.M)
-APPROVED = re.compile(r"<!-- ship-it approved=([0-9a-f]{64}) head=([0-9a-f]{40})(?: body=([0-9a-f]{64}))? -->")
+APPROVED = re.compile(r"<!-- ship-it approved=([0-9a-f]{64}) head=([0-9a-f]{40})(?: body=([0-9a-f]{64}))?"
+                      r"(?: mode=(review|code))? -->")
 REVOKED = "<!-- ship-it revoked -->"
 NOTE = re.compile(r"<!-- ship-it note=([\w-]+) -->")
 MAX_FILES = 300          # GitHub's compare lists at most 300 files; more fails closed
@@ -243,18 +244,24 @@ class Repo:
             call("POST", f"/repos/{self.repo}/issues/{n}/comments", self.write, {"body": text})
 
 
-def approval_state(comments: list[dict]) -> tuple[dict | None, str | None, str | None]:
-    """(the approval comment, the approved fingerprint, the approved ticks hash); None when never approved or revoked."""
+def approval_state(comments: list[dict], review: bool | None = None) -> tuple[dict | None, str | None, str | None]:
+    """(the approval comment, the approved fingerprint, the approved ticks hash); None when never approved, revoked,
+    or approved in the other mode (a renamed title must never switch a review into an ordinary merge, or back)."""
     mine = [c for c in comments if APPROVED.search(c["body"] or "") or REVOKED in (c["body"] or "")]
     if not mine:
         return None, None, None
     last = mine[-1]
     m = APPROVED.search(last["body"] or "")
-    return (last, m.group(1), m.group(3)) if m else (last, None, None)
+    if not m:
+        return last, None, None
+    mode = m.group(4) or ("review" if m.group(3) else "code")
+    if review is not None and mode != ("review" if review else "code"):
+        return last, None, None
+    return last, m.group(1), m.group(3)
 
 
 def approval_text(fp: str, head: str, body: str | None) -> str:
-    extra = f" body={body}" if body else ""
+    extra = f" body={body} mode=review" if body else " mode=code"
     return (f"<!-- ship-it approved={fp} head={head}{extra} -->\nShip it: approved version `{head[:7]}`. It will be "
             "brought up to date, tested and merged without further clicks.")
 
@@ -292,13 +299,30 @@ def recompute_records(work: str, main_dir: str, n: int, body: str, base: str, to
         os.remove(body_file)
     if r.returncode != 0:
         return False
-    diff = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-C", work, "status", "--porcelain",
-                           "--untracked-files=all", "--", "records"],
-                          capture_output=True, text=True, check=True, env=_env()).stdout
+    def status(*extra: str) -> str:
+        return subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-C", work, "status", "--porcelain",
+                               "--untracked-files=all", *extra], capture_output=True, text=True, check=True,
+                              env=_env()).stdout
+    # The whole copy must be unchanged, and inside records/ even files a .gitignore would hide must match.
+    diff = status() + status("--ignored=matching", "--", "records")
     return diff.strip() == ""
 
 
-SYNC_DATE = re.compile(r"^Ticked items ready to go live with the merge \((\d{4}-\d{2}-\d{2})\)")
+SYNC_DATE = re.compile(r"^Ticked items ready to go live with the merge \(([0-9]{4}-[0-9]{2}-[0-9]{2})\)")
+
+
+def sync_date(message: str) -> str | None:
+    """The date the review sync recorded, accepted only if it is a real date within the last two weeks."""
+    import datetime as dt
+    m = SYNC_DATE.match(message or "")
+    if not m:
+        return None
+    try:
+        day = dt.date.fromisoformat(m.group(1))
+    except ValueError:
+        return None
+    today = dt.datetime.now(dt.timezone.utc).date()
+    return m.group(1) if today - dt.timedelta(days=14) <= day <= today else None
 
 
 def records_match(n: int, head_sha: str, body: str, default_branch: str) -> bool:
@@ -313,10 +337,10 @@ def records_match(n: int, head_sha: str, body: str, default_branch: str) -> bool
                        check=True, capture_output=True, env=_env(), timeout=120)
         msg = subprocess.run(git + ["log", "-1", "--format=%s", head_sha], capture_output=True, text=True,
                              env=_env()).stdout.strip()
-        m = SYNC_DATE.match(msg)
+        day = sync_date(msg)
         subprocess.run(git + ["worktree", "add", "-q", "--detach", work, head_sha], check=True, capture_output=True,
                        env=_env(), timeout=120)
-        return recompute_records(work, main_dir, n, body, f"origin/{default_branch}", m.group(1) if m else None)
+        return recompute_records(work, main_dir, n, body, f"origin/{default_branch}", day)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
     finally:
@@ -337,16 +361,22 @@ def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | No
     pr = call("GET", f"/repos/{gh.repo}/pulls/{n}", gh.read)
     review = is_review_pr(pr, bot)
     comments = gh.app_comments(n)
-    approval_c, approved, approved_body = approval_state(comments)
+    approval_c, approved, approved_body = approval_state(comments, review)
     if change and change[0] == n:
         kind, sha, text, before = change[1], change[2], change[3], (change[4] if len(change) > 4 else None)
         if kind == "untick":
-            if approval_c:
-                gh.comment(n, f"{REVOKED}\nShip it: approval withdrawn.", approval_c)
+            # Always written, even when no approval exists yet: a tick run that finishes later sees it and stops.
+            gh.comment(n, f"{REVOKED}\nShip it: approval withdrawn.", approval_c)
             summary.append(f"#{n}: approval withdrawn")
             return
         if kind == "tick":
             fp = fingerprint(pr["base"]["ref"], gh.compare(default_branch, sha), skip_records=review)
+            latest = approval_state(gh.app_comments(n))[0]
+            if latest is not None and REVOKED in (latest.get("body") or "") and \
+                    (latest.get("updated_at") or latest.get("created_at") or "") > (pr.get("updated_at") or ""):
+                fp = None                     # unticked again after this tick: never approve
+            if not ticked(call("GET", f"/repos/{gh.repo}/pulls/{n}", gh.read).get("body")):
+                fp = None                     # the box is no longer ticked
             if fp:
                 approved, approved_body = fp, (body_hash(text) if review else None)
                 gh.comment(n, approval_text(fp, sha, approved_body), approval_c)
@@ -368,7 +398,8 @@ def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | No
     current = fingerprint(pr["base"]["ref"], cur, skip_records=review)
     touches_wf = any(f["filename"].startswith(".github/") for f in cur.get("files") or [])
     outside = review and any(not f["filename"].startswith(("reports/", "records/")) or
-                             (f.get("previous_filename") or "reports/").split("/")[0] not in ("reports", "records")
+                             (f.get("previous_filename") or "reports/").split("/")[0] not in ("reports", "records") or
+                             os.path.basename(f["filename"]) in (".gitignore", ".gitattributes", ".gitmodules")
                              for f in cur.get("files") or [])
     tests = tests_result(gh.repo, pr["head"]["sha"], gh.read)
     review_state = None
@@ -378,7 +409,7 @@ def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | No
     elif review:
         sync = [r for s in ("queued", "in_progress") for r in call(
             "GET", f"/repos/{gh.repo}/actions/workflows/review-sync.yml/runs?status={s}&per_page=50", gh.read)
-            .get("workflow_runs", []) if r.get("head_branch") == pr["head"]["ref"]]
+            .get("workflow_runs", [])]   # any running sync: its runs report main as their branch
         body_ok = bool(approved_body) and approved_body == body_hash(pr.get("body"))
         ready = body_ok and not sync and current == approved and approved is not None
         review_state = {"body_ok": body_ok, "sync_running": bool(sync),
@@ -391,7 +422,9 @@ def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | No
         action, detail = "wait", "the owner's tick may still be on its way"   # no false alarm right after a tick
     if action == "merge" and review:
         fresh = call("GET", f"/repos/{gh.repo}/pulls/{n}", gh.read)       # ticks must not have changed meanwhile
-        if fresh["head"]["sha"] != detail or body_hash(fresh.get("body")) != approved_body or not ticked(fresh.get("body")):
+        again = gh.compare(default_branch, detail)                         # nor main
+        if fresh["head"]["sha"] != detail or body_hash(fresh.get("body")) != approved_body or \
+                not ticked(fresh.get("body")) or int(again.get("behind_by") or 0) > 0:
             action, detail = "wait", "changed while checking"
     summary.append(f"#{n}: {action} ({detail})")
     if action == "note" and detail not in noted:
@@ -418,6 +451,8 @@ def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | No
                 gh.comment(n, f"<!-- ship-it note={key} -->\n{NOTES['refused']}")
             return
         gh.comment(n, f"<!-- ship-it note=merged-{detail[:12]} -->\nShip it: merged as `{res.get('sha', '')[:7]}`.")
+        if review:
+            summary.append(f"#{n}: merged review")
 
 
 def run() -> int:
@@ -439,6 +474,8 @@ def run() -> int:
     summary: list[str] = []
     failed = False
     for n in numbers:
+        if any(x.endswith(": merged review") for x in summary):
+            break                              # one review per run: the next run sees main as it is now
         try:
             ship_one(gh, n, default_branch, bot, change, summary)
         except Exception as e:                 # one pull request's error must not stop the others
