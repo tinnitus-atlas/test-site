@@ -16,7 +16,8 @@ from kgkit import draft, draft_audit  # noqa: E402
 from kgkit.common import FetchError, Http, KitError  # noqa: E402
 
 CFG = yaml.safe_load((ROOT / "kit.tinnitus.yaml").read_text())
-REAL = json.loads((ROOT / "records" / "tinnitus.records.json").read_text())["records"]
+# The real records minus any bare entries, so these tests stay independent of what the nightly has added.
+REAL = [r for r in json.loads((ROOT / "records" / "tinnitus.records.json").read_text())["records"] if not draft.is_bare(r)]
 
 SUMMARY = ("This study tests whether a sound therapy delivered through a phone app reduces how much tinnitus bothers "
            "adults who have had it for at least six months. Tinnitus means hearing a sound, such as ringing, that has "
