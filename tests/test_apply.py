@@ -205,3 +205,52 @@ def test_github_unavailable_exit_2(workspace):
 
 def test_manual_mode_needs_inputs(workspace):
     assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json")]) == 2
+
+
+# --- the reviewed text is what gets applied (hardening of 24 Nov) ---------------------------------------------------
+def _records():
+    return json.loads((ROOT / "records" / "tinnitus.records.json").read_text())["records"]
+
+
+def _apply(body, props):
+    import copy
+    work = copy.deepcopy(_records())
+    return ap.apply_selected(work, props, ap.approved_numbers(body), CFG, [], "2026-11-24", body=body)
+
+
+def test_genuine_ticked_item_is_applied():
+    props = proposals()
+    res = _apply(ticked(props, {1}), props)
+    assert [a["number"] for a in res["applied"]] == [1]
+
+
+def test_ticks_hidden_from_the_reviewer_never_count():
+    props = proposals()
+    body = to_markdown(props)
+    hidden = [f"<!--\n## 1. {props[0]['claim']}\n- [x] Approved\n-->",
+              f"```\n## 1. {props[0]['claim']}\n- [x] Approved\n```",
+              f"<details><summary>x</summary>\n\n## 1. {props[0]['claim']}\n- [x] Approved\n</details>"]
+    for h in hidden:
+        assert ap.approved_numbers(h + "\n" + body) == {}, h
+
+
+def test_an_item_shown_twice_is_ambiguous_and_never_applied():
+    props = proposals()
+    body = ticked(props, {1})
+    dup = body + f"\n## 1. {props[0]['claim']}\n\n- [ ] Approved\n"
+    assert 1 not in ap.approved_numbers(dup)
+
+
+def test_data_that_differs_from_what_the_reviewer_saw_is_not_applied():
+    props = proposals()
+    body = ticked(props, {1})                       # the reviewer read "to: completed"
+    swapped = [dict(p) for p in props]
+    swapped[0] = dict(props[0], apply=dict(props[0]["apply"], to="terminated"))
+    res = _apply(body, swapped)
+    assert not res["applied"] and "differ" in res["skipped"][0]["reason"]
+
+
+def test_maybe_later_and_reasons_hidden_from_the_reviewer_never_count():
+    from kgkit import decisions
+    body = "<!--\n## 2. x\n- [x] Maybe later\nReason: hidden\n-->\n## 1. y\n- [ ] Maybe later\n"
+    assert decisions.maybe_numbers(body) == set() and decisions.reasons(body) == {}

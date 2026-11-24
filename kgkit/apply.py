@@ -45,7 +45,7 @@ from pathlib import Path
 from typing import Callable
 
 from . import audit, decisions
-from .common import KitError, load_config, load_records
+from .common import KitError, load_config, load_records, visible
 from .proposals import SEEN_TYPES, proposal_key
 
 HEADING = re.compile(r"^## (\d+)\. (.+)$")
@@ -53,19 +53,46 @@ TICK = re.compile(r"^- \[([ xX])\] Approved\s*$")
 
 
 def approved_numbers(body: str) -> dict[int, str]:
-    """Map proposal number -> heading text for every section whose Approved box is ticked."""
+    """Map proposal number -> heading text for every section whose Approved box is ticked. Reads only the visible
+    text (see common.visible); a number whose heading appears twice is ambiguous and never counts."""
+    text = visible(body)
+    counts: dict[int, int] = {}
+    for line in text.splitlines():
+        h = HEADING.match(line.strip())
+        if h:
+            counts[int(h.group(1))] = counts.get(int(h.group(1)), 0) + 1
     out, current = {}, None
-    for line in (body or "").splitlines():
+    for line in text.splitlines():
         h = HEADING.match(line.strip())
         if h:
             current = (int(h.group(1)), h.group(2).strip())
             continue
         t = TICK.match(line.strip())
         if t and current:
-            if t.group(1).lower() == "x":
+            if t.group(1).lower() == "x" and counts.get(current[0]) == 1:
                 out[current[0]] = current[1]
             current = None
     return out
+
+
+def shown_details(body: str, number: int) -> list[str] | None:
+    """The detail lines of item `number` as the reviewer sees them, or None when the item is not shown exactly once."""
+    text = visible(body, keep_details=True)
+    starts = [i for i, line in enumerate(text.splitlines()) if (h := HEADING.match(line.strip())) and int(h.group(1)) == number]
+    if len(starts) != 1:
+        return None
+    lines = text.splitlines()[starts[0] + 1:]
+    end = next((i for i, line in enumerate(lines) if line.startswith("## ") or line.startswith("# ")), len(lines))
+    return [line.rstrip() for line in lines[:end] if line.startswith("- **")
+            and not line.startswith("- **Screener:**")]
+
+
+def shown_matches(body: str, number: int, proposal: dict) -> bool:
+    from .proposals import detail_lines
+    try:
+        return shown_details(body, number) == detail_lines(proposal)
+    except KeyError:
+        return False
 
 
 def slug(text: str) -> str:
@@ -88,7 +115,7 @@ def get_field(record: dict, field: str):
 
 
 def apply_selected(records: list[dict], proposals: list[dict], approved: dict[int, str], cfg: dict,
-                   review_queue: list[dict], today: str) -> dict:
+                   review_queue: list[dict], today: str, body: str | None = None) -> dict:
     by_id = {r["id"]: r for r in records}
     prefix = cfg["project"].get("prefix", "kg")
     condition = ((cfg.get("feeds") or {}).get("trials") or {}).get("condition_record")
@@ -100,6 +127,10 @@ def apply_selected(records: list[dict], proposals: list[dict], approved: dict[in
         p = proposals[number - 1]
         if p.get("claim", "").strip() != heading:
             result["skipped"].append({"number": number, "reason": "heading does not match the proposal; list was edited or reordered"})
+            continue
+        if body is not None and not shown_matches(body, number, p):
+            result["skipped"].append({"number": number, "reason": "the details shown in the review differ from the data "
+                                      "that would be applied; not applied"})
             continue
         a = p.get("apply") or {}
         if p["type"] == "update":
@@ -288,7 +319,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     work = copy.deepcopy(records)
     report = []
     for label, body, props in batches:
-        res = apply_selected(work, props, approved_numbers(body), cfg, queue, today)
+        res = apply_selected(work, props, approved_numbers(body), cfg, queue, today, body=body)
         report.append({"source": label, **res})
 
     with tempfile.TemporaryDirectory() as tmp:

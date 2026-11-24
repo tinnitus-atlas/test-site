@@ -204,3 +204,15 @@ def write_report(reports_dir: str | Path, name: str, payload: dict) -> Path:
 def read_report(reports_dir: str | Path, name: str) -> dict | None:
     path = Path(reports_dir) / f"{name}.json"
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def visible(body: str | None, keep_details: bool = False) -> str:
+    """The part of a pull request text a reviewer actually sees: HTML comments and code blocks removed, and (unless
+    keep_details) the folded <details> blocks too. Boxes and item headings are read only from this, so text hidden
+    from the reviewer can never tick or add an item."""
+    text = (body or "").replace("\r\n", "\n")
+    text = re.sub(r"<!--.*?(?:-->|\Z)", "", text, flags=re.S)
+    text = re.sub(r"^\s*(```|~~~).*?(?:^\s*\1|\Z)", "", text, flags=re.S | re.M)
+    if not keep_details:
+        text = re.sub(r"<details\b.*?(?:</details>|\Z)", "", text, flags=re.S | re.I)
+    return text

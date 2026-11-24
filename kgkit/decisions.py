@@ -19,7 +19,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .common import KitError, load_config, load_records
+from .common import KitError, load_config, load_records, visible
 from .proposals import proposal_key
 from .screener import bucket, title_of
 
@@ -31,7 +31,7 @@ PARK_DAYS = 90
 
 def maybe_numbers(body: str) -> set[int]:
     out, current = set(), None
-    for line in (body or "").splitlines():
+    for line in visible(body).splitlines():
         h = HEADING.match(line.strip())
         if h:
             current = int(h.group(1))
@@ -46,7 +46,7 @@ def reasons(body: str) -> dict[int, str]:
     """Lines starting "Reason:" that the reviewer wrote under an item, by item number."""
     from .screener import clean
     out, current = {}, None
-    for line in (body or "").splitlines():
+    for line in visible(body).splitlines():
         h = HEADING.match(line.strip())
         if h:
             current = int(h.group(1))
