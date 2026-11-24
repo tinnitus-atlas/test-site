@@ -286,3 +286,45 @@ def test_quote_of_a_section_label_fails():
     d = good(relations=[{"predicate": "studies_condition", "object": "tin:tinnitus", "quote": "Conditions: Tinnitus"}])
     reasons = draft.gate(d, bare_trial(), BRIEF + "\nConditions: Tinnitus", records_with(bare_trial()), CFG)
     assert any("section label" in r for r in reasons), reasons
+
+
+def test_source_text_says_whether_results_are_posted_and_that_line_is_not_quotable():
+    page = registry_page()
+    page["hasResults"] = True
+    h = Http(fetcher=lambda url: page)
+    text, _ = draft.trial_source(bare_trial(), h)
+    assert text.endswith("Results posted in the registry: yes")
+    d = good(relations=[{"predicate": "studies_condition", "object": "tin:tinnitus", "quote": "Results posted in the registry: yes"}])
+    assert any("section label" in r for r in draft.gate(d, bare_trial(), text, records_with(bare_trial()), CFG))
+
+
+def test_links_to_other_entries_are_tier_b():
+    d = good(relations=[{"predicate": "related_to", "object": "tin:tinnitus-handicap-inventory", "quote": "x"}])
+    assert draft.tier(bare_trial(), d, CFG) == "B"
+    assert draft.tier(bare_trial(), good(), CFG) == "A"
+
+
+def test_prompt_forbids_background_links_and_guessing_results():
+    text = draft.PROMPT_FILE.read_text()
+    assert "Never link from" in text and "Results posted in the registry" in text
+
+
+def test_studio_job_files_are_valid_and_generic():
+    import plistlib
+    import re
+    import subprocess
+    job = ROOT / "tools" / "studio" / "drafting-job.sh"
+    assert subprocess.run(["bash", "-n", str(job)]).returncode == 0
+    plist = plistlib.loads((ROOT / "tools" / "studio" / "drafting.plist.template").read_bytes())
+    assert plist["RunAtLoad"] is True and plist["StartCalendarInterval"] == {"Hour": 9, "Minute": 15}
+    for f in (job, ROOT / "docs" / "studio-drafting.md"):
+        assert not re.search(r"/Users/[a-z]|/home/[a-z]", f.read_text())
+
+
+def test_studio_job_stops_quietly_when_the_model_server_is_down(tmp_path):
+    import subprocess
+    env_file = tmp_path / "kg.env"
+    env_file.write_text(f"REPO_DIR={tmp_path}\nDRAFTER_BASE_URL=http://127.0.0.1:9/v1\nDRAFTER_MODEL=m\n")
+    r = subprocess.run(["bash", str(ROOT / "tools" / "studio" / "drafting-job.sh")], capture_output=True, text=True,
+                       env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), "KG_DRAFTING_ENV": str(env_file)})
+    assert r.returncode == 0 and "will try again" in r.stdout
