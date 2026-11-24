@@ -105,23 +105,44 @@ def proposal_key(p: dict) -> str | None:
     return None
 
 
+GROUPS = [("tick", "Recommended: tick", "Already ticked when the screener is sure. Scan the titles, untick any you disagree with."),
+          ("fence", "On the fence", "Open only when you have time. Items left unticked here stay open and come back next week."),
+          ("skip", "Recommended: skip", "Items left unticked here are saved in the decision history as skipped; Re-review can bring them back."),
+          (None, "Not screened", "")]
+
+
 def to_markdown(props: list[dict]) -> str:
+    """One short block per item (title, recommendation, the two boxes) with the details folded away, grouped so the
+    recommended items come first. Item headings stay "## <number>. <claim>": the apply step reads them."""
     from .screener import line as screen_line
+    counts = {g: sum(1 for p in props if (p.get("screen") or {}).get("recommendation") == g) for g, *_ in GROUPS}
+    pre = sum(1 for p in props if (p.get("screen") or {}).get("pre_ticked"))
     lines = ["# Proposed changes", "",
-             f"{len(props)} proposals. Tick Approved to add an item, or Maybe later to see it again in 90 days, then merge. "
-             "Items with neither box ticked count as reviewed and are not proposed again.", ""]
-    for i, p in enumerate(props, 1):
-        s = screen_line(p)
-        ticked = "x" if (p.get("screen") or {}).get("pre_ticked") else " "
-        lines += [f"## {i}. {p['claim']}", "",
-                  f"- **Why it surfaced:** {p['why']}",
-                  f"- **Evidence:** {p['evidence']} ([source]({p['source']}))",
-                  f"- **Wrong if:** {p['wrong_if']}",
-                  f"- **Confidence:** {p['confidence']}",
-                  *([s] if s else []),
-                  f"- **To apply:** `{p['apply']}`",
-                  f"- [{ticked}] Approved",
-                  "- [ ] Maybe later", ""]
+             f"{len(props)} items: {counts['tick']} recommended ({pre} already ticked), {counts['fence']} on the fence, "
+             f"{counts['skip']} recommended to skip.", "",
+             "How to review: tick **Approved** to add an item, **Maybe later** to see it again in 90 days, or add a line "
+             "starting `Reason:` under an item to tell the screener why. Then merge. Your merge is the approval.", ""]
+    numbered = list(enumerate(props, 1))
+    for key, title, hint in GROUPS:
+        items = [(i, p) for i, p in numbered if (p.get("screen") or {}).get("recommendation") == key]
+        if not items:
+            continue
+        if any(p.get("screen") for _, p in numbered):
+            lines += [f"# {title} ({len(items)})", "", *([f"_{hint}_", ""] if hint else [])]
+        for i, p in items:
+            s = screen_line(p)
+            ticked = "x" if (p.get("screen") or {}).get("pre_ticked") else " "
+            lines += [f"## {i}. {p['claim']}", "",
+                      *([s] if s else []),
+                      f"- [{ticked}] Approved",
+                      "- [ ] Maybe later", "",
+                      "<details><summary>Details and source</summary>", "",
+                      f"- **Why it surfaced:** {p['why']}",
+                      f"- **Evidence:** {p['evidence']} ([source]({p['source']}))",
+                      f"- **Wrong if:** {p['wrong_if']}",
+                      f"- **Confidence:** {p['confidence']}",
+                      f"- **To apply:** `{p['apply']}`", "",
+                      "</details>", ""]
     return "\n".join(lines)
 
 

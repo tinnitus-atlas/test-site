@@ -42,6 +42,26 @@ if [ "$COUNT" -eq 0 ]; then
   exit 0
 fi
 
+# One merge per review: if a review pull request is open, add the drafts to its end instead of opening another.
+OPEN="$(gh pr list --state open --search "Nightly proposals in:title" --json number,headRefName,title \
+        -q '[.[] | select(.title | startswith("Nightly proposals 2"))][0] | "\(.number) \(.headRefName)"' 2>>"$LOG" || true)"
+if [ -n "$OPEN" ] && [ "$OPEN" != "null null" ]; then
+  NUM="${OPEN%% *}"; HEAD="${OPEN#* }"
+  cp "$REPORTS/proposals.json" "$REPORTS/drafts_new.json"
+  {
+    gh pr view "$NUM" --json body -q .body > "$REPORTS/review_body.md" &&
+    git fetch -q origin "$HEAD" && git checkout -q -B "$HEAD" "origin/$HEAD" &&
+    python3 -m kgkit.review append --body-file "$REPORTS/review_body.md" --proposals "$REPORTS/proposals.json" \
+      --new "$REPORTS/drafts_new.json" --out-body "$REPORTS/review_body_new.md" &&
+    git add -f "$REPORTS/proposals.json" && git commit -q -m "Add $COUNT drafts for review" &&
+    git push -q origin "$HEAD" &&
+    gh pr edit "$NUM" --body-file "$REPORTS/review_body_new.md"
+  } >>"$LOG" 2>&1 || { echo "Pull request: could not add the drafts to #$NUM (see $LOG)"; git checkout -q main >>"$LOG" 2>&1; exit 2; }
+  echo "Pull request: $COUNT drafts added to the open review pull request #$NUM"
+  git checkout -q main >>"$LOG" 2>&1 || true
+  exit 0
+fi
+
 BRANCH="proposals/drafts-$DAY"
 TITLE="Nightly proposals drafts $DAY ($COUNT)"
 {
