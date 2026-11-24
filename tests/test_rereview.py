@@ -24,6 +24,8 @@ def runner_for(props, title="Nightly proposals 2026-11-06 (38)"):
 
     def runner(args):
         calls.append(args)
+        if args[:3] == ["gh", "pr", "list"]:
+            return "[]"
         if args[:3] == ["gh", "pr", "view"]:
             return json.dumps({"number": 12, "title": title, "state": "MERGED", "mergeCommit": {"oid": "abc"}})
         if args[:2] == ["git", "fetch"]:
@@ -85,3 +87,10 @@ def test_nightly_opens_the_review_pull_request_weekly():
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "nightly.yml").read_text())
     env = next(s for s in wf["jobs"]["nightly"]["steps"] if s.get("id") == "nightly")["env"]
     assert env["REVIEW_WEEKDAY"] == "monday" and "workflow_dispatch" in env["FORCE_PROPOSALS"]
+
+
+def test_items_in_an_open_proposals_pull_request_are_left_out(tmp_path):
+    props = feed("NCT05000001", "NCT05000002")
+    rep = rereview.build(REAL, CFG, 12, runner_for(props), tmp_path, False, [],
+                         {"new_record:trial:clinicaltrials:nct05000001"})
+    assert rep["count"] == 1 and rep["dropped"]["in_open_pull_request"] == 1

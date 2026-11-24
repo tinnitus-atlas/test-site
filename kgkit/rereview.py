@@ -2,7 +2,7 @@
 
 Use it for a pull request that was merged with nothing ticked, or to look again at items that were skipped. Items
 that are already in the graph (a trial or device with the same identifier, a registry value already applied) are
-left out. The new list carries "replaces": [<old number>], so merging it settles the old pull request for the apply
+left out, and so are items already listed in an open proposals pull request. The new list carries "replaces": [<old number>], so merging it settles the old pull request for the apply
 step. Nothing is changed until a person ticks and merges, as with every proposals pull request.
 
 Usage:
@@ -40,7 +40,8 @@ def already_in_graph(p: dict, records: list[dict]) -> bool:
     return False
 
 
-def build(records: list[dict], cfg: dict, number: int, runner, reports_dir, only_skipped: bool, history: list[dict]) -> dict:
+def build(records: list[dict], cfg: dict, number: int, runner, reports_dir, only_skipped: bool, history: list[dict],
+          open_keys: set[str] | None = None) -> dict:
     info = json.loads(runner(["gh", "pr", "view", str(number), "--json", "number,title,state,mergeCommit,headRefOid"]))
     commit = (info.get("mergeCommit") or {}).get("oid") or info.get("headRefOid")
     if not commit:
@@ -50,11 +51,14 @@ def build(records: list[dict], cfg: dict, number: int, runner, reports_dir, only
     runner(["git", "fetch", "-q", "origin", commit])
     old = report_at(runner, commit).get("proposals", [])
     decided = {h["key"]: h["decision"] for h in history if h.get("pull_request") == number}
-    keep, dropped = [], {"in_graph": 0, "not_skipped": 0}
+    keep, dropped = [], {"in_graph": 0, "not_skipped": 0, "in_open_pull_request": 0}
     for p in old:
         p = {k: v for k, v in p.items() if k not in ("screen", "auto_apply")}
         if already_in_graph(p, records):
             dropped["in_graph"] += 1
+            continue
+        if open_keys and key_of(p) in open_keys:
+            dropped["in_open_pull_request"] += 1
             continue
         if only_skipped and decided.get(key_of(p)) not in (None, "skipped"):
             dropped["not_skipped"] += 1
@@ -83,7 +87,10 @@ def main(argv: list[str] | None = None, runner=None) -> int:
     try:
         cfg = load_config(args.config)
         records = load_records(args.records)
-        res = build(records, cfg, args.pr, runner or run_cmd, args.reports, args.only_skipped, load_history(args.records))
+        from .backfill import open_proposal_keys
+        run = runner or run_cmd
+        res = build(records, cfg, args.pr, run, args.reports, args.only_skipped, load_history(args.records),
+                    open_proposal_keys(run))
     except KitError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
