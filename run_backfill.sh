@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# One-off backfill: writes the proposals and opens one pull request titled "Nightly proposals backfill <date> (<n>)".
+# Backfill: writes the proposals and opens one pull request titled
+# "Nightly proposals backfill <since>-<until> days <date> (<n>)".
 # Usage: ./run_backfill.sh [since_days] [until_days] [paper_cap]   (defaults 183 30 30)
 # Standard output: the pilot report (Markdown) plus the pull request line. Exit 0 done, 2 failed.
 set -uo pipefail
@@ -39,8 +40,8 @@ if [ "$COUNT" -eq 0 ]; then
   exit 0
 fi
 
-BRANCH="proposals/backfill-$DAY"
-TITLE="Nightly proposals backfill $DAY ($COUNT)"
+BRANCH="proposals/backfill-$SINCE-$UNTIL-$DAY"
+TITLE="Nightly proposals backfill $SINCE-$UNTIL days $DAY ($COUNT)"  # the window tag drives the staged chain (kgkit/backfill_plan.py)
 {
   git checkout -q -B "$BRANCH" &&
   git add -f "$REPORTS/proposals.json" "$REPORTS/proposals.md" "$REPORTS/feeds.json" \

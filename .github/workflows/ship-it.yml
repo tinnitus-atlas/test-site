@@ -1,0 +1,47 @@
+# Ship it: when the owner ticks "Ship it" in a pull request, this brings the pull request up to date with main, waits
+# for the tests and merges it. See docs/ship-it.md. The merge itself uses a GitHub App key minted per run (one hour,
+# this repository only); this workflow's own token can only read. Review pull requests and workflow changes are
+# always merged by the owner.
+name: Ship it
+on:
+  pull_request_target:
+    types: [edited]
+  workflow_run:
+    workflows: ["Tests", "Review sync"]
+    types: [completed]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "41 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+  actions: read
+concurrency:
+  # Each owner edit runs on its own (so a tick is never dropped); the other triggers queue as one sweep.
+  group: ship-it-${{ github.event_name == 'pull_request_target' && github.run_id || 'sweep' }}
+  cancel-in-progress: false
+jobs:
+  ship:
+    if: github.event_name != 'pull_request_target' || github.event.sender.login == (vars.REVIEW_OWNER || 'varioso')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The app key is an environment secret: the "ship-it" environment only allows main, so a workflow on any other
+    # branch cannot read it.
+    environment: ship-it
+    steps:
+      # Checks out main, never the pull request's code: nothing from a pull request runs with the app key.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Ship ticked pull requests
+        env:
+          GH_READ_TOKEN: ${{ github.token }}
+          SHIPIT_APP_ID: ${{ vars.SHIPIT_APP_ID }}
+          SHIPIT_APP_KEY: ${{ secrets.SHIPIT_APP_KEY }}
+          REVIEW_OWNER: ${{ vars.REVIEW_OWNER }}
+          REVIEW_BOT: ${{ vars.REVIEW_BOT }}
+        run: python3 -m kgkit.shipit

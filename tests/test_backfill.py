@@ -215,11 +215,47 @@ def test_run_script_rejects_non_numbers():
     assert r.returncode == 2 and "whole numbers" in r.stdout
 
 
-def test_workflow_is_manual_only_and_title_matches_the_apply_step():
+def test_workflow_starts_by_hand_or_after_a_merged_review_and_title_matches_the_apply_step():
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "backfill.yml").read_text())
     on = wf.get("on", wf.get(True))
-    assert set(on) == {"workflow_dispatch"}
+    assert set(on) == {"workflow_dispatch", "pull_request_target"}  # staged chain, approved 24 Nov
     assert wf["concurrency"]["group"] == "nightly"
     script = (ROOT / "run_backfill.sh").read_text()
     assert 'TITLE="Nightly proposals backfill' in script
     assert "reports/proposals.json" in (ROOT / "kgkit" / "apply.py").read_text()
+
+
+# --- staged chain (kgkit/backfill_plan.py) -------------------------------------------------------------------------
+def test_backfill_chain_runs_one_stage_at_a_time():
+    from kgkit.backfill_plan import next_stage, tag
+    review = {"title": "Nightly proposals 2026-11-24 (40)", "state": "MERGED"}
+    assert next_stage([review]) == (183, 30)
+    stage1 = {"title": f"Nightly proposals {tag(183, 30)} 2026-11-25 (30)", "state": "OPEN"}
+    assert next_stage([review, stage1]) == "a review is open"
+    stage1["state"] = "MERGED"
+    assert next_stage([review, stage1]) == (365, 183)
+    assert next_stage([review, stage1, {"title": "Nightly proposals 2026-11-30 (5)", "state": "OPEN"}]) \
+        == "a review is open"
+    stage2 = {"title": f"Nightly proposals {tag(365, 183)} 2026-12-01 (30)", "state": "CLOSED"}
+    assert "closed without merging" in next_stage([stage1, stage2])
+    stage2["state"] = "MERGED"
+    stage3 = {"title": f"Nightly proposals {tag(730, 365)} 2026-12-08 (30)", "state": "MERGED"}
+    assert next_stage([stage1, stage2, stage3]) == "all stages done"
+
+
+def test_backfill_title_carries_the_window_tag():
+    from kgkit.backfill_plan import tag
+    script = (ROOT / "run_backfill.sh").read_text()
+    assert 'TITLE="Nightly proposals backfill $SINCE-$UNTIL days' in script
+    assert tag(183, 30) == "backfill 183-30 days"
+
+
+def test_backfill_workflow_starts_only_after_a_merged_review_and_never_runs_pull_request_code():
+    import yaml
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "backfill.yml").read_text())
+    on = wf.get("on") or wf.get(True)
+    assert on["pull_request_target"]["types"] == ["closed"] and "pull_request" not in on
+    job = wf["jobs"]["backfill"]
+    assert "merged == true" in job["if"]
+    assert job["steps"][0]["with"]["ref"] == "${{ github.event.repository.default_branch }}"
+    assert not any("${{ inputs" in (s.get("run") or "") for s in job["steps"]), "inputs go through env, not the script"
