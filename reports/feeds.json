@@ -1,10 +1,82 @@
 {
-  "generated": "2026-11-06T16:15:03+00:00",
+  "generated": "2026-11-24T15:34:45+00:00",
   "check": "feeds",
   "trials": {
     "status": "ok",
-    "since": "2026-10-07",
+    "since": "2026-10-25",
     "candidates": [
+      {
+        "nct": "NCT07950033",
+        "title": "A Study to Evaluate the Effects of the EMF Harmony Products on Health Parameters Associated With EMF Radiation Exposure",
+        "status": "active_not_recruiting",
+        "phase": "na",
+        "sponsor": "Life Harmony Energies, Inc.",
+        "last_update": "2026-11-20",
+        "url": "https://clinicaltrials.gov/study/NCT07950033"
+      },
+      {
+        "nct": "NCT07393880",
+        "title": "Bimodal Electrical-Sound Stimulation and Auditory Training for Chronic Tonal Tinnitus",
+        "status": "recruiting",
+        "phase": "na",
+        "sponsor": "University of Dublin, Trinity College",
+        "last_update": "2026-11-19",
+        "url": "https://clinicaltrials.gov/study/NCT07393880"
+      },
+      {
+        "nct": "NCT05434637",
+        "title": "Somatosensory Tinnitus RCT",
+        "status": "recruiting",
+        "phase": "na",
+        "sponsor": "VA Office of Research and Development",
+        "last_update": "2026-11-18",
+        "url": "https://clinicaltrials.gov/study/NCT05434637"
+      },
+      {
+        "nct": "NCT03511807",
+        "title": "Acoustic and Electrical Stimulation for the Treatment of Tinnitus",
+        "status": "active_not_recruiting",
+        "phase": "na",
+        "sponsor": "University of California, Irvine",
+        "last_update": "2026-11-17",
+        "url": "https://clinicaltrials.gov/study/NCT03511807"
+      },
+      {
+        "nct": "NCT07941648",
+        "title": "Combined Treatments for Somatosensory Tinnitus",
+        "status": "recruiting",
+        "phase": "na",
+        "sponsor": "Universidade Federal de Santa Maria",
+        "last_update": "2026-11-17",
+        "url": "https://clinicaltrials.gov/study/NCT07941648"
+      },
+      {
+        "nct": "NCT05963542",
+        "title": "Efficacy of Online Acceptance and Commitment Therapy and Sound Therapy for Patients With Tinnitus and Insomnia",
+        "status": "completed",
+        "phase": "na",
+        "sponsor": "Eye & ENT Hospital of Fudan University",
+        "last_update": "2026-11-16",
+        "url": "https://clinicaltrials.gov/study/NCT05963542"
+      },
+      {
+        "nct": "NCT04172766",
+        "title": "Apple Hearing Study",
+        "status": "terminated",
+        "phase": null,
+        "sponsor": "Apple Inc.",
+        "last_update": "2026-11-16",
+        "url": "https://clinicaltrials.gov/study/NCT04172766"
+      },
+      {
+        "nct": "NCT07893860",
+        "title": "Effect of a Totally Implantable Cochlear Implant on Tinnitus Severity in Adults With Preoperative Tinnitus",
+        "status": "not_yet_recruiting",
+        "phase": "na",
+        "sponsor": "Cochlear",
+        "last_update": "2026-11-10",
+        "url": "https://clinicaltrials.gov/study/NCT07893860"
+      },
       {
         "nct": "NCT07877701",
         "title": "Acute Nicotine Gum and Auditory Brain Responses in Adults With Chronic Tinnitus",
@@ -22,15 +94,6 @@
         "sponsor": "Tortugas Neuroscience, Inc.",
         "last_update": "2026-11-04",
         "url": "https://clinicaltrials.gov/study/NCT07777549"
-      },
-      {
-        "nct": "NCT04172766",
-        "title": "Apple Hearing Study",
-        "status": "terminated",
-        "phase": null,
-        "sponsor": "Apple Inc.",
-        "last_update": "2026-11-02",
-        "url": "https://clinicaltrials.gov/study/NCT04172766"
       },
       {
         "nct": "NCT05618002",
@@ -51,15 +114,6 @@
         "url": "https://clinicaltrials.gov/study/NCT06646302"
       },
       {
-        "nct": "NCT05650645",
-        "title": "The Efficacy of Incobotulinum Toxin A Injections for Treatment of Tinnitus: a Randomized Controlled Trial",
-        "status": "completed",
-        "phase": "phase2",
-        "sponsor": "University of Minnesota",
-        "last_update": "2026-10-27",
-        "url": "https://clinicaltrials.gov/study/NCT05650645"
-      },
-      {
         "nct": "NCT06799169",
         "title": "Management of Acute Tinnitus With Migraine Medications",
         "status": "suspended",
@@ -69,13 +123,13 @@
         "url": "https://clinicaltrials.gov/study/NCT06799169"
       },
       {
-        "nct": "NCT07893860",
-        "title": "Effect of a Totally Implantable Cochlear Implant on Tinnitus Severity in Adults With Preoperative Tinnitus",
-        "status": "not_yet_recruiting",
-        "phase": "na",
-        "sponsor": "Cochlear",
-        "last_update": "2026-10-26",
-        "url": "https://clinicaltrials.gov/study/NCT07893860"
+        "nct": "NCT05650645",
+        "title": "The Efficacy of Incobotulinum Toxin A Injections for Treatment of Tinnitus: a Randomized Controlled Trial",
+        "status": "completed",
+        "phase": "phase2",
+        "sponsor": "University of Minnesota",
+        "last_update": "2026-10-27",
+        "url": "https://clinicaltrials.gov/study/NCT05650645"
       },
       {
         "nct": "NCT07895004",
@@ -85,66 +139,117 @@
         "sponsor": "University College, London",
         "last_update": "2026-10-26",
         "url": "https://clinicaltrials.gov/study/NCT07895004"
-      },
-      {
-        "nct": "NCT07887932",
-        "title": "Multidimensional Phenotyping of Patients With Tinnitus Using Electronic Health Records and a Specialty Database",
-        "status": "completed",
-        "phase": null,
-        "sponsor": "Eye & ENT Hospital of Fudan University",
-        "last_update": "2026-10-22",
-        "url": "https://clinicaltrials.gov/study/NCT07887932"
-      },
-      {
-        "nct": "NCT07211711",
-        "title": "Treatment of Temporomandibular Joint Disorders With a Stabilizing Occlusal Splint in Somatosensory Tinnitus",
-        "status": "completed",
-        "phase": "na",
-        "sponsor": "University of Sao Paulo General Hospital",
-        "last_update": "2026-10-22",
-        "url": "https://clinicaltrials.gov/study/NCT07211711"
-      },
-      {
-        "nct": "NCT07885176",
-        "title": "Deep Repetitive Transcranial Magnetic Stimulation in the Treatment of Tinnitus",
-        "status": "recruiting",
-        "phase": "na",
-        "sponsor": "University of Regensburg",
-        "last_update": "2026-10-21",
-        "url": "https://clinicaltrials.gov/study/NCT07885176"
-      },
-      {
-        "nct": "NCT04066348",
-        "title": "TNF-α Treatment of Blast-Induced Tinnitus",
-        "status": "active_not_recruiting",
-        "phase": "phase2",
-        "sponsor": "Wayne State University",
-        "last_update": "2026-10-20",
-        "url": "https://clinicaltrials.gov/study/NCT04066348"
-      },
-      {
-        "nct": "NCT07772089",
-        "title": "Acute Nicotine Gum and Tinnitus Loudness in Non-Smoking Adults",
-        "status": "completed",
-        "phase": "phase1/phase2",
-        "sponsor": "San Diego State University",
-        "last_update": "2026-10-16",
-        "url": "https://clinicaltrials.gov/study/NCT07772089"
       }
     ],
     "off_topic_skipped": []
   },
   "papers": {
     "status": "ok",
-    "since": "2026-10-07",
+    "since": "2026-10-25",
     "candidates": [
       {
-        "title": "A dual behavioral and electrophysiological evaluation of the sodium salicylate induced tinnitus model in rats: Comparing click and chirp stimuli in auditory brainstem responses",
-        "doi": "10.1016/j.bbr.2026.116529",
-        "pmid": "42860223",
-        "journal": "Behav Brain Res",
-        "published": "2026-10-11",
-        "url": "https://doi.org/10.1016/j.bbr.2026.116529"
+        "title": "Sound-evoked facial movement and tinnitus distress: an exploratory secondary analysis",
+        "doi": "10.1007/s00405-026-10848-y",
+        "pmid": "43066750",
+        "journal": "Eur Arch Otorhinolaryngol",
+        "published": "2026-11-21",
+        "url": "https://doi.org/10.1007/s00405-026-10848-y"
+      },
+      {
+        "title": "A state-of-the-art review of biosensor-based markers for tinnitus",
+        "doi": "10.1016/j.heares.2026.109847",
+        "pmid": "43050753",
+        "journal": "Hear Res",
+        "published": "2026-11-04",
+        "url": "https://doi.org/10.1016/j.heares.2026.109847"
+      },
+      {
+        "title": "Mindfulness-Based Interventions for Tinnitus Distress: A Systematic Review, Meta-Analysis, and Appraisal of Intervention Reporting",
+        "doi": "10.1044/2026_jslhr-26-00341",
+        "pmid": "43037541",
+        "journal": "J Speech Lang Hear Res",
+        "published": "2026-11-16",
+        "url": "https://doi.org/10.1044/2026_jslhr-26-00341"
+      },
+      {
+        "title": "Otological manifestations of disseminated metastatic breast cancer presenting with facial nerve palsy, tinnitus and otalgia",
+        "doi": "10.1136/bcr-2026-273676",
+        "pmid": "43020593",
+        "journal": "BMJ Case Rep",
+        "published": "2026-11-12",
+        "url": "https://doi.org/10.1136/bcr-2026-273676"
+      },
+      {
+        "title": "The Tinnitus Integrated Digital Ecosystem Model for Digital Tinnitus Rehabilitation: A Clinical Framework",
+        "doi": "10.1044/2026_aja-26-00156",
+        "pmid": "43018965",
+        "journal": "Am J Audiol",
+        "published": "2026-11-12",
+        "url": "https://doi.org/10.1044/2026_aja-26-00156"
+      },
+      {
+        "title": "Distinct Response Dynamics to Personalized Sound Therapy in Chronic Tinnitus: Sustained Clinical Benefits and a Critical Treatment Window",
+        "doi": "10.1097/aud.0000000000001910",
+        "pmid": "43018463",
+        "journal": "Ear Hear",
+        "published": "2026-11-12",
+        "url": "https://doi.org/10.1097/aud.0000000000001910"
+      },
+      {
+        "title": "Bimodal versus unimodal high-definition Transcranial random noise stimulation of auditory cortex for tinnitus: A double-blind, sham-controlled crossover trial",
+        "doi": "10.1016/j.brs.2026.103251",
+        "pmid": "43014443",
+        "journal": "Brain Stimul",
+        "published": "2026-11-11",
+        "url": "https://doi.org/10.1016/j.brs.2026.103251"
+      },
+      {
+        "title": "Sleep disturbance and anxiety in female garment workers with tinnitus: An ENT outpatient study",
+        "doi": "10.1016/j.amjoto.2026.104979",
+        "pmid": "43014072",
+        "journal": "Am J Otolaryngol",
+        "published": "2026-11-09",
+        "url": "https://doi.org/10.1016/j.amjoto.2026.104979"
+      },
+      {
+        "title": "Post-trauma acoustic environment and tinnitus susceptibility: Evidence for acoustic enrichment as a treatment strategy",
+        "doi": "10.1016/j.heares.2026.109859",
+        "pmid": "43008457",
+        "journal": "Hear Res",
+        "published": "2026-11-04",
+        "url": "https://doi.org/10.1016/j.heares.2026.109859"
+      },
+      {
+        "title": "Restoring the future: Integrating hope theory into the assessment and management of tinnitus distress",
+        "doi": "10.1177/13591053261502553",
+        "pmid": "43006214",
+        "journal": "J Health Psychol",
+        "published": "2026-11-10",
+        "url": "https://doi.org/10.1177/13591053261502553"
+      },
+      {
+        "title": "Hearing Loss, Not Tinnitus, Predicts Cognitive Performance in Hispanic/Latino Adults",
+        "doi": "10.1044/2026_aja-26-00098",
+        "pmid": "42993024",
+        "journal": "Am J Audiol",
+        "published": "2026-11-06",
+        "url": "https://doi.org/10.1044/2026_aja-26-00098"
+      },
+      {
+        "title": "Early Post-Market Surveillance of Bimodal Neuromodulation for Tinnitus",
+        "doi": "10.1002/ohn.70513",
+        "pmid": "42992588",
+        "journal": "Otolaryngol Head Neck Surg",
+        "published": "2026-11-06",
+        "url": "https://doi.org/10.1002/ohn.70513"
+      },
+      {
+        "title": "[Orofacial pain and somatosensory tinnitus: a biomechanical traction approach]",
+        "doi": "10.5177/ntvt.2026.11.25029",
+        "pmid": "42979911",
+        "journal": "Ned Tijdschr Tandheelkd",
+        "published": "2026-11-01",
+        "url": "https://doi.org/10.5177/ntvt.2026.11.25029"
       },
       {
         "title": "Pulsatile Tinnitus Alleviated by Contralateral Stent Implantation",
@@ -153,22 +258,6 @@
         "journal": "Stroke",
         "published": "2026-10-26",
         "url": "https://doi.org/10.1161/strokeaha.126.056600"
-      },
-      {
-        "title": "Eustachian Tube Dysfunction and Tinnitus: A Rapid Review of the Potential Complementary Role of Acoustic Immittance",
-        "doi": "10.65717/iao.2026.262472",
-        "pmid": "42973397",
-        "journal": "J Int Adv Otol",
-        "published": "2026-10-23",
-        "url": "https://doi.org/10.65717/iao.2026.262472"
-      },
-      {
-        "title": "Exploring tinnitus-like central hyperactivity in a large language model-based computational analog of hearing loss",
-        "doi": "10.1016/j.heares.2026.109845",
-        "pmid": "42956687",
-        "journal": "Hear Res",
-        "published": "2026-10-23",
-        "url": "https://doi.org/10.1016/j.heares.2026.109845"
       },
       {
         "title": "Establishment of an animal model of GPIAS-defined tinnitus-like behavior with normal auditory brainstem response threshold profiles",
@@ -187,128 +276,86 @@
         "url": "https://doi.org/10.1016/j.nbd.2026.107664"
       },
       {
-        "title": "Clinical practice guidance for imaging selection in pulsatile tinnitus: an evidence-based expert consensus",
-        "doi": "10.1016/j.ejrad.2026.113299",
-        "pmid": "42880154",
-        "journal": "Eur J Radiol",
-        "published": "2026-10-09",
-        "url": "https://doi.org/10.1016/j.ejrad.2026.113299"
-      },
-      {
-        "title": "Speech Perception in Noise in Individuals With Tinnitus: Top-Down and Bottom-Up Processes",
-        "doi": "10.1097/aud.0000000000001896",
-        "pmid": "42878672",
-        "journal": "Ear Hear",
-        "published": "2026-10-15",
-        "url": "https://doi.org/10.1097/aud.0000000000001896"
-      },
-      {
-        "title": "The history of tinnitus: from ancient interpretations to contemporary neuroscience and neuromodulation",
-        "doi": "10.1007/s00405-026-10711-0",
-        "pmid": "42867651",
-        "journal": "Eur Arch Otorhinolaryngol",
-        "published": "2026-10-13",
-        "url": "https://doi.org/10.1007/s00405-026-10711-0"
-      },
-      {
-        "title": "Effect of the vagus nerve stimulation combined with sound therapy for tinnitus treatment: a systematic review and meta-analysis",
-        "doi": "10.1007/s00405-026-10713-y",
-        "pmid": "42867641",
-        "journal": "Eur Arch Otorhinolaryngol",
-        "published": "2026-10-13",
-        "url": "https://doi.org/10.1007/s00405-026-10713-y"
-      },
-      {
-        "title": "Multidomain Auditory Differences in Tinnitus With a Clinically Normal Audiogram: Accounting for Extended High-Frequency Hearing",
-        "doi": "10.1044/2026_jslhr-26-00071",
-        "pmid": "42862891",
-        "journal": "J Speech Lang Hear Res",
-        "published": "2026-10-12",
-        "url": "https://doi.org/10.1044/2026_jslhr-26-00071"
-      },
-      {
-        "title": "Tinnitus and inhibitory control in adults with bilateral hearing loss: A Stroop study in hearing aid users",
-        "doi": "10.1080/23279095.2026.2747122",
-        "pmid": "42860782",
-        "journal": "Appl Neuropsychol Adult",
-        "published": "2026-10-11",
-        "url": "https://doi.org/10.1080/23279095.2026.2747122"
-      },
-      {
-        "title": "Learning Perspectives in the Management of Sigmoid Sinus Diverticulum in the Absence of Pulsatile Tinnitus",
-        "doi": "10.1177/01455613261480423",
-        "pmid": "42854672",
-        "journal": "Ear Nose Throat J",
-        "published": "2026-10-09",
-        "url": "https://doi.org/10.1177/01455613261480423"
-      },
-      {
-        "title": "Editorial: Tinnitus in relation to auditory processing: unravelling complex relationships",
-        "doi": "10.3389/fnins.2026.1814945",
-        "pmid": "42973638",
-        "journal": "Front Neurosci",
-        "published": "2026-10-19",
-        "url": "https://doi.org/10.3389/fnins.2026.1814945"
-      },
-      {
-        "title": "Embolization of jugular bulb diverticula in the management of pulsatile tinnitus",
-        "doi": "10.3389/fneur.2026.1951324",
-        "pmid": "42922877",
+        "title": "Is routine serum TSH testing useful in the evaluation of primary subjective tinnitus? A case-control study",
+        "doi": "10.3389/fneur.2026.1973811",
+        "pmid": "43005404",
         "journal": "Front Neurol",
-        "published": "2026-10-08",
-        "url": "https://doi.org/10.3389/fneur.2026.1951324"
+        "published": "2026-10-26",
+        "url": "https://doi.org/10.3389/fneur.2026.1973811"
       },
       {
-        "title": "Everolimus for Tinnitus: A Questionable Causal Chain [Letter]",
-        "doi": "10.2147/dddt.s659416",
-        "pmid": "42903802",
-        "journal": "Drug Des Devel Ther",
-        "published": "2026-10-16",
-        "url": "https://doi.org/10.2147/dddt.s659416"
+        "title": "Neuromodulatory effects of audio-proprio-phonatory reinforcement training on subjective tinnitus, a HD-EEG study protocol",
+        "doi": "10.1371/journal.pone.0357455",
+        "pmid": "42993801",
+        "journal": "PLoS One",
+        "published": "2026-11-06",
+        "url": "https://doi.org/10.1371/journal.pone.0357455"
       },
       {
-        "title": "Phenylacetylglutamine and memory B cells as mediators of the migraine–tinnitus relationship: a multi-omics two-step Mendelian randomization study",
-        "doi": "10.21203/rs.3.rs-11247243/v1",
+        "title": "Frontoparietal Hyperconnectivity as a Single-Subject Neural Signature of Chronic Tinnitus",
+        "doi": "10.64898/2026.11.20.26368561",
         "pmid": null,
         "journal": null,
-        "published": "2026-10-20",
-        "url": "https://doi.org/10.21203/rs.3.rs-11247243/v1"
+        "published": "2026-11-23",
+        "url": "https://doi.org/10.64898/2026.11.20.26368561"
       },
       {
-        "title": "Pulsatile Tinnitus: A Multimodality Imaging Review of Etiology and Diagnostic Evaluation",
-        "doi": "10.21203/rs.3.rs-10916152/v1",
+        "title": "Harmonizing resting-state functional MRI data to increase sample size and to classify tinnitus brain connectivity",
+        "doi": "10.64898/2026.11.19.767894",
         "pmid": null,
         "journal": null,
-        "published": "2026-10-16",
-        "url": "https://doi.org/10.21203/rs.3.rs-10916152/v1"
+        "published": "2026-11-20",
+        "url": "https://doi.org/10.64898/2026.11.19.767894"
       },
       {
-        "title": "Objective markers of altered neural gain dissociate tinnitus and self-reported listening problems in individuals with exceptional hearing thresholds",
-        "doi": "10.64898/2026.10.01.755864",
+        "title": "Mitragynine reduces symptoms of alcohol use disorder (and tinnitus) in a self-medication of rodents",
+        "doi": "10.64898/2026.11.19.767795",
         "pmid": null,
         "journal": null,
-        "published": "2026-10-08",
-        "url": "https://doi.org/10.64898/2026.10.01.755864"
+        "published": "2026-11-19",
+        "url": "https://doi.org/10.64898/2026.11.19.767795"
+      },
+      {
+        "title": "Impaired cortical gap-mediated inhibition in chronic tinnitus but with limited individual diagnostic accuracy",
+        "doi": "10.64898/2026.11.11.26367707",
+        "pmid": null,
+        "journal": null,
+        "published": "2026-11-13",
+        "url": "https://doi.org/10.64898/2026.11.11.26367707"
+      },
+      {
+        "title": "Tinnitus Activities Treatment Update: Managing Attention and Auditory Attention",
+        "doi": "10.20944/preprints202611.0967.v1",
+        "pmid": null,
+        "journal": null,
+        "published": "2026-11-10",
+        "url": "https://doi.org/10.20944/preprints202611.0967.v1"
+      },
+      {
+        "title": "The Three Levels of Tinnitus Chronification",
+        "doi": "10.20944/preprints202611.1025.v1",
+        "pmid": null,
+        "journal": null,
+        "published": "2026-11-10",
+        "url": "https://doi.org/10.20944/preprints202611.1025.v1"
+      },
+      {
+        "title": "Pulsatile Tinnitus, Dizziness, and Venous Outflow Physiology: A Retrospective Cohort with Nested Vestibular Phenotyping and a Proposed Otology-Led Diagnostic Pathway",
+        "doi": "10.20944/preprints202611.0914.v1",
+        "pmid": null,
+        "journal": null,
+        "published": "2026-11-09",
+        "url": "https://doi.org/10.20944/preprints202611.0914.v1"
       }
     ]
   },
   "devices": {
     "status": "ok",
-    "since": "2026-08-08",
+    "since": "2026-08-26",
     "product_codes": [
       "KLW",
       "QVN"
     ],
-    "candidates": [
-      {
-        "number": "K260413",
-        "device_name": "Levo Gen 2 Tinnitus Therapy System",
-        "applicant": "Levo Medical Corporation",
-        "decision_date": "2026-08-13",
-        "decision": "Substantially Equivalent",
-        "product_code": "KLW",
-        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK260413"
-      }
-    ]
+    "candidates": []
   }
 }

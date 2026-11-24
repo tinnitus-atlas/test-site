@@ -1,8 +1,9 @@
 {
-  "generated": "2026-11-06T16:15:11+00:00",
+  "generated": "2026-11-24T15:38:06+00:00",
   "check": "doi",
   "counts": {
-    "confirmed": 13,
+    "unreachable": 2,
+    "confirmed": 11,
     "quote_unverifiable": 3,
     "quote_ok": 5
   },
@@ -13,15 +14,11 @@
       "where": "source",
       "id": "pmid:25273878",
       "label": "Clinical practice guideline: Tinnitus (Tunkel et al., 2014)",
-      "class": "confirmed",
-      "shared_words": [
-        "guideline",
-        "practice",
-        "tinnitu"
-      ],
-      "indexed_title": "Clinical practice guideline: tinnitus",
-      "indexed_year": 2014,
-      "indexed_journal": "Otolaryngology--head and neck surgery : official journal of American Academy of Otolaryngology-Head and Neck Surgery"
+      "class": "unreachable",
+      "shared_words": [],
+      "indexed_title": null,
+      "indexed_year": null,
+      "indexed_journal": null
     },
     {
       "record": "tin:cbt",
@@ -216,15 +213,11 @@
       "where": "source",
       "id": "pmid:25273878",
       "label": "Clinical practice guideline: Tinnitus (Tunkel et al., 2014)",
-      "class": "confirmed",
-      "shared_words": [
-        "guideline",
-        "practice",
-        "tinnitu"
-      ],
-      "indexed_title": "Clinical practice guideline: tinnitus",
-      "indexed_year": 2014,
-      "indexed_journal": "Otolaryngology--head and neck surgery : official journal of American Academy of Otolaryngology-Head and Neck Surgery"
+      "class": "unreachable",
+      "shared_words": [],
+      "indexed_title": null,
+      "indexed_year": null,
+      "indexed_journal": null
     }
   ],
   "quotes": [

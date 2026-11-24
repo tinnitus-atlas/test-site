@@ -1,0 +1,13 @@
+{
+  "generated": "2026-11-24T15:38:08+00:00",
+  "check": "retractions",
+  "papers": 4,
+  "held_records": [],
+  "counts": {
+    "retracted": 0,
+    "flagged": 0,
+    "unreachable": 0
+  },
+  "found": [],
+  "unreachable": []
+}
