@@ -12,16 +12,17 @@ import json
 import sys
 from pathlib import Path
 
-from . import audit, doi_check, factcheck, feeds, freshness, proposals
+from . import audit, doi_check, factcheck, feeds, freshness, proposals, retractions
 from .common import Http, KitError, load_config, load_records, write_report
 
-ORDER = ["feeds", "factcheck", "doi", "audit", "freshness", "proposals"]
-NETWORK = {"feeds", "factcheck", "doi"}
+ORDER = ["feeds", "factcheck", "doi", "retractions", "audit", "freshness", "proposals"]
+NETWORK = {"feeds", "factcheck", "doi", "retractions"}
 
 
 def summarise(results: dict) -> tuple[dict, str]:
     held = sorted(set((results.get("doi") or {}).get("held_records", [])) |
-                  set((results.get("audit") or {}).get("held_records", [])))
+                  set((results.get("audit") or {}).get("held_records", [])) |
+                  set((results.get("retractions") or {}).get("held_records", [])))
     fr = results.get("freshness") or {}
     blocking = bool(held) or bool(fr.get("breach"))
     s = {
@@ -49,11 +50,21 @@ def summarise(results: dict) -> tuple[dict, str]:
     for feed in ("trials", "papers", "devices"):
         if (((results.get("feeds") or {}).get(feed)) or {}).get("status") == "unreachable":
             unreachable.append(f"{feed} feed")
+    n = ((results.get("retractions") or {}).get("counts") or {}).get("unreachable", 0)
+    if n:
+        unreachable.append(f"Crossref ({n} papers not checked for retraction)")
     s["unreachable"] = unreachable
     status = "BLOCKING ISSUES" if blocking else ("INCOMPLETE (services unreachable)" if unreachable else "all clear")
     lines = [f"Status: {status}"]
     if unreachable:
         lines.append("Could not reach: " + "; ".join(unreachable))
+    rt = results.get("retractions") or {}
+    if rt:
+        c = rt.get("counts") or {}
+        line = f"Retraction check: {rt.get('papers', 0)} cited papers, {c.get('retracted', 0)} retracted, {c.get('flagged', 0)} flagged"
+        for f in (rt.get("found") or [])[:5]:
+            line += f"; {f['doi']} ({f['notice'].replace('_', ' ')}, cited by {', '.join(f['records'])})"
+        lines.append(line)
     if held:
         lines.append(f"Held back from publishing ({len(held)}): " + ", ".join(held[:10]) + (" ..." if len(held) > 10 else ""))
     if fr:
@@ -104,6 +115,8 @@ def main(argv: list[str] | None = None) -> int:
             results[check] = feeds.run(records, cfg, http, reports)
         elif check == "factcheck":
             results[check] = factcheck.run(records, cfg, http, reports)
+        elif check == "retractions":
+            results[check] = retractions.run(records, http, reports)
         elif check == "doi":
             results[check] = doi_check.run(records, http, reports)
         elif check == "audit":
