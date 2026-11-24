@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Scheduled job for macOS (launchd). Replace JOB_SCRIPT and LOG_FILE with absolute paths, save as
+     ~/Library/LaunchAgents/org.kg.drafting.plist, then load it with: launchctl load -w <that file>
+     Runs daily at 09:15 local time and at login; a run missed while the computer slept happens on wake. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>org.kg.drafting</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string><string>JOB_SCRIPT</string></array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>15</integer></dict>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>LOG_FILE</string>
+  <key>StandardErrorPath</key><string>LOG_FILE</string>
+</dict>
+</plist>

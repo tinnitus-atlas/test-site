@@ -11,6 +11,10 @@ Rules:
 - relations: 1 to 3 links to records in the RECORDS list. Each has a predicate from ALLOWED PREDICATES, the object
   record id, and a quote of fewer than 15 words copied word for word from the SOURCE TEXT that supports the link.
   Quote the source's own sentences; never quote a line label such as "Conditions:" or "Intervention:".
+- Links come only from what this study itself does: its purpose, its interventions and its outcomes. Never link from
+  a background sentence about other studies, other treatments or how common the condition is. Use related_to only
+  when the linked record is the very thing this study uses or measures.
+- Say whether results exist only from the line "Results posted in the registry"; otherwise do not mention results.
 
 Answer with JSON only, in this shape:
 {"tldr": "...", "summary": "...", "relations": [{"predicate": "...", "object": "...", "quote": "..."}]}

@@ -43,7 +43,7 @@ from .common import FetchError, Http, KitError, load_config, load_records, norma
 
 PLACEHOLDER = "Draft record from a registry feed; summary still to be written."
 # Section labels the source text builder adds; a quote must come from the source's own sentences, not these.
-LABEL = re.compile(r"^(conditions|intervention|primary outcome|device|applicant|decision|decision date|product code|summary)\s*:", re.I)
+LABEL = re.compile(r"^(conditions|intervention|primary outcome|results posted in the registry|device|applicant|decision|decision date|product code|summary)\s*:", re.I)
 PROMPT_FILE = Path(__file__).resolve().parents[1] / "prompts" / "draft_v1.md"
 PROMPT_VERSION = "draft_v1"
 DEFAULTS = {
@@ -87,7 +87,8 @@ def trial_source(r: dict, http: Http) -> tuple[str, str] | None:
     parts = [ident.get("briefTitle"), ident.get("officialTitle"), desc.get("briefSummary"),
              "Conditions: " + ", ".join(conds) if conds else None,
              *[f"Intervention: {a.get('name')}. {a.get('description') or ''}" for a in arms],
-             *[f"Primary outcome: {o.get('measure')}. {o.get('description') or ''}" for o in outcomes]]
+             *[f"Primary outcome: {o.get('measure')}. {o.get('description') or ''}" for o in outcomes],
+             "Results posted in the registry: " + ("yes" if data.get("hasResults") else "no")]
     text = "\n".join(x.strip() for x in parts if x and x.strip())
     return (text, f"https://clinicaltrials.gov/study/{nct}") if text else None
 
@@ -231,7 +232,14 @@ def tier(record: dict, d: dict, cfg: dict) -> str:
         return "B"
     if any((r or {}).get("predicate") in st["claim_predicates"] for r in d.get("relations") or []):
         return "B"
+    if any((r or {}).get("object") not in condition_ids(cfg) for r in d.get("relations") or []):
+        return "B"  # a link to another treatment, device or measure is a claim: read it closely
     return "A"
+
+
+def condition_ids(cfg: dict) -> set[str]:
+    trials = ((cfg.get("feeds") or {}).get("trials") or {})
+    return {trials["condition_record"]} if trials.get("condition_record") else set()
 
 
 # --- run ----------------------------------------------------------------------------------------------------
