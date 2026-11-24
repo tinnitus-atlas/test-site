@@ -22,8 +22,10 @@ def tag(since: int, until: int) -> str:
     return f"backfill {since}-{until} days"
 
 
-def next_stage(prs: list[dict]) -> tuple[int, int] | str:
-    """prs: [{"title", "state" (OPEN/CLOSED/MERGED)}]. Returns (since, until) or the reason nothing runs."""
+def next_stage(prs: list[dict], just_merged: int | None = None) -> tuple[int, int] | str:
+    """prs: [{"number", "title", "state" (OPEN/CLOSED/MERGED)}]. just_merged: the pull request whose merge started
+    this run (search results can still show it as open). Returns (since, until) or the reason nothing runs."""
+    prs = [dict(p, state="MERGED") if just_merged is not None and p.get("number") == just_merged else p for p in prs]
     if any(p["state"] == "OPEN" and p["title"].startswith("Nightly proposals") for p in prs):
         return "a review is open"
     for since, until in STAGES:
@@ -40,10 +42,27 @@ def main() -> int:
     if (os.environ.get("BACKFILL_AUTO") or "").lower() == "off":
         print("none=switched off")
         return 0
-    out = subprocess.run(["gh", "pr", "list", "--state", "all", "--search", "Nightly proposals in:title",
-                          "--limit", "200", "--json", "title,state"], capture_output=True, text=True, check=True)
-    result = next_stage(json.loads(out.stdout or "[]"))
-    print(f"since={result[0]}\nuntil={result[1]}" if isinstance(result, tuple) else f"none={result}")
+    def gh_list(*args: str) -> list[dict]:
+        out = subprocess.run(["gh", "pr", "list", *args, "--limit", "200", "--json", "number,title,state"],
+                             capture_output=True, text=True, check=True)
+        return json.loads(out.stdout or "[]")
+    # Open pull requests without the search index (it can lag); closed and merged ones through search.
+    prs = {p["number"]: p for p in gh_list("--state", "all", "--search", "Nightly proposals in:title")}
+    for p in prs.values():
+        if p["state"] == "OPEN":
+            p["state"] = "CLOSED_OR_OPEN"      # recheck below
+    for p in gh_list("--state", "open"):
+        prs[p["number"]] = p
+    for p in prs.values():
+        if p["state"] == "CLOSED_OR_OPEN":
+            p["state"] = "CLOSED"
+    just = os.environ.get("PR_NUMBER")
+    result = next_stage(list(prs.values()), int(just) if just and just.isdigit() else None)
+    line = f"since={result[0]}\nuntil={result[1]}" if isinstance(result, tuple) else f"none={result}"
+    print(line)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+            f.write(f"Backfill stage: {line.replace(chr(10), ', ')}\n\n")
     return 0
 
 

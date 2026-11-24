@@ -1,6 +1,7 @@
 # Ship it: when the owner ticks "Ship it" in a pull request, this brings the pull request up to date with main, waits
 # for the tests and merges it. See docs/ship-it.md. The merge itself uses a GitHub App key minted per run (one hour,
-# this repository only); this workflow's own token can only read.
+# this repository only); this workflow's own token can only read. Review pull requests and workflow changes are
+# always merged by the owner.
 name: Ship it
 on:
   pull_request_target:
@@ -27,6 +28,9 @@ jobs:
     if: github.event_name != 'pull_request_target' || github.event.sender.login == (vars.REVIEW_OWNER || 'varioso')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # The app key is an environment secret: the "ship-it" environment only allows main, so a workflow on any other
+    # branch cannot read it.
+    environment: ship-it
     steps:
       # Checks out main, never the pull request's code: nothing from a pull request runs with the app key.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262

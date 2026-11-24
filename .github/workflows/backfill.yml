@@ -48,6 +48,7 @@ jobs:
           GH_TOKEN: ${{ secrets.NIGHTLY_TOKEN || github.token }}
           BACKFILL_AUTO: ${{ vars.BACKFILL_AUTO }}
           EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           SINCE_IN: ${{ inputs.since_days }}
           UNTIL_IN: ${{ inputs.until_days }}
         run: |
