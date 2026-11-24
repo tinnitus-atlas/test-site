@@ -1,0 +1,53 @@
+# One merge per review: when the owner edits the ticks in an open proposals pull request, the record changes for the
+# ticked items are rebuilt on that pull request's branch, so merging it is what puts them live.
+# Runs only for the owner's own edits (repository variable REVIEW_OWNER, default the owner account), only on proposals
+# pull requests opened by the trusted bot (REVIEW_BOT) from this repository. It never touches main: the owner's merge does.
+name: Review sync
+on:
+  pull_request:
+    types: [edited]
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: review-sync-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  sync:
+    if: >-
+      github.event.sender.login == (vars.REVIEW_OWNER || 'varioso') &&
+      startsWith(github.event.pull_request.title, 'Nightly proposals') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == (vars.REVIEW_BOT || 'varioso-bot')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.NIGHTLY_TOKEN }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Sync ticked items
+        id: sync
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "kg-nightly"
+          git config user.email "kg-nightly@users.noreply.github.com"
+          gh pr view "$PR_NUMBER" --json body -q .body > /tmp/body.md
+          python3 -m kgkit.review sync --config kit.tinnitus.yaml --records records/tinnitus.records.json \
+            --pr "$PR_NUMBER" --body-file /tmp/body.md --proposals reports/proposals.json --base origin/main
+          if [ -n "$(git status --porcelain -- records)" ]; then
+            git add -- records
+            git commit -q -m "Ticked items ready to go live with the merge"
+            git push -q origin "HEAD:$HEAD_REF"
+            echo "Record changes updated for the ticked items." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No change: the ticked items were already in place." >> "$GITHUB_STEP_SUMMARY"
+          fi

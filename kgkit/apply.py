@@ -254,6 +254,8 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
         if not (args.body and args.proposals):
             print("error: give --from-github, or both --body and --proposals", file=sys.stderr)
             return 2
+        if args.label.isdigit():
+            args.label = int(args.label)  # a pull request number, as the GitHub mode stores it
         if args.label in applied_prs:
             print(f"Already applied: {args.label}")
             return 0

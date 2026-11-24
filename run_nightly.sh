@@ -148,6 +148,19 @@ elif [ "${NO_GIT:-0}" != "1" ] && [ "$COUNT" -gt 0 ]; then
       URL="$(gh pr view "$BRANCH" --json url -q .url 2>/dev/null || gh pr create --head "$BRANCH" --base main \
              --title "Nightly proposals $DAY ($COUNT)" --body-file "$REPORTS/proposals.md" 2>>"$LOG" | tail -n 1)"
       PR_LINE="Pull request: ${URL:-could not be created (see reports/nightly.log)}"
+      # One merge per review: put the record changes for pre-ticked items on the branch, so merging is going live.
+      if [ "${SYNC_ON_OPEN:-0}" = "1" ] && [ -n "$URL" ]; then
+        NUMBER="${URL##*/}"
+        if python3 -m kgkit.review sync --config "$CONFIG" --records "$RECORDS" --pr "$NUMBER" \
+             --body-file "$REPORTS/proposals.md" --proposals "$REPORTS/proposals.json" --base origin/main >>"$LOG" 2>&1; then
+          if [ -n "$(git status --porcelain -- "$(dirname "$RECORDS")")" ]; then
+            { git add -- "$(dirname "$RECORDS")" && git commit -q -m "Ticked items ready to go live with the merge" &&
+              git push -q origin "$BRANCH"; } >>"$LOG" 2>&1 || PR_LINE="$PR_LINE (could not add the ticked items; they apply after the merge instead)"
+          fi
+        else
+          PR_LINE="$PR_LINE (could not add the ticked items; they apply after the merge instead)"
+        fi
+      fi
     else
       PR_LINE="Pull request: branch $BRANCH pushed; GitHub CLI not installed, open the pull request by hand"
     fi
