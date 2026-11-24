@@ -200,7 +200,11 @@ def merged_proposal_prs(runner: Runner, limit: int = 30) -> list[dict]:
 
 
 def proposals_at(runner: Runner, commit: str) -> list[dict]:
-    return json.loads(runner(["git", "show", f"{commit}:reports/proposals.json"])).get("proposals", [])
+    return report_at(runner, commit).get("proposals", [])
+
+
+def report_at(runner: Runner, commit: str) -> dict:
+    return json.loads(runner(["git", "show", f"{commit}:reports/proposals.json"]))
 
 
 # ---------------------------------------------------------------------------
@@ -231,6 +235,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     today = dt.date.today().isoformat()
 
     batches = []
+    replaced: list[int] = []
     if args.from_github:
         try:
             for pr in merged_proposal_prs(runner):
@@ -239,7 +244,9 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
                 commit = (pr.get("mergeCommit") or {}).get("oid")
                 if not commit:
                     continue
-                batches.append((pr["number"], pr.get("body") or "", proposals_at(runner, commit)))
+                rep = report_at(runner, commit)
+                batches.append((pr["number"], pr.get("body") or "", rep.get("proposals", [])))
+                replaced += [n for n in rep.get("replaces") or [] if isinstance(n, int)]
         except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError) as exc:
             print(f"error: could not read merged pull requests: {exc}", file=sys.stderr)
             return 2
@@ -247,6 +254,8 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
         if not (args.body and args.proposals):
             print("error: give --from-github, or both --body and --proposals", file=sys.stderr)
             return 2
+        if args.label.isdigit():
+            args.label = int(args.label)  # a pull request number, as the GitHub mode stores it
         if args.label in applied_prs:
             print(f"Already applied: {args.label}")
             return 0
@@ -304,7 +313,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     for label, body, props in batches:
         approved, maybe = set(approved_numbers(body)), decisions.maybe_numbers(body)
         parked, final = decisions.update_parked(parked, props, approved, maybe, today)
-        history += decisions.entries(label, props, approved, maybe, today)
+        history += decisions.entries(label, props, approved, maybe, today, decisions.reasons(body))
         for pr_ in props:
             k = proposal_key(pr_) if pr_.get("type") in SEEN_TYPES else None
             if k and k not in known and decisions.key_of(pr_) in final:
@@ -313,7 +322,9 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
     seen_path.write_text(json.dumps(seen, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     decisions.write_parked(args.records, parked)
     decisions.write_history(args.records, history)
-    applied_path.write_text(json.dumps(applied_prs + [b[0] for b in batches], indent=2) + "\n", encoding="utf-8")
+    done = applied_prs + [b[0] for b in batches]
+    done += [n for n in replaced if n not in done]  # a re-review settles the pull request it replaces
+    applied_path.write_text(json.dumps(done, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
     return 0
 
