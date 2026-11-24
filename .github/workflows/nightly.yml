@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: read
 concurrency:
   group: nightly
   cancel-in-progress: false
@@ -51,6 +52,18 @@ jobs:
           chmod +x run_nightly.sh run_validation.sh
           code=0; ./run_nightly.sh || code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
+      - name: Your actions (weekly, at the top of the digest)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REVIEW_BOT: ${{ vars.REVIEW_BOT }}
+          SHIPIT_APP_LOGIN: ${{ vars.SHIPIT_APP_LOGIN }}
+        run: |
+          if [ "$(date -u +%A)" = "Monday" ] || [ "$EVENT" = "workflow_dispatch" ]; then
+            python3 -m kgkit.owner_actions --report reports/nightly.md --bot "${REVIEW_BOT:-varioso-bot}" \
+              ${SHIPIT_APP_LOGIN:+--app-login "$SHIPIT_APP_LOGIN"} || echo "Your actions: could not be built" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Post digest
         id: digest
         if: always()
