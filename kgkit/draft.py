@@ -42,6 +42,8 @@ from . import audit, feeds, proposals
 from .common import FetchError, Http, KitError, load_config, load_records, normalise, qs, write_report
 
 PLACEHOLDER = "Draft record from a registry feed; summary still to be written."
+# Section labels the source text builder adds; a quote must come from the source's own sentences, not these.
+LABEL = re.compile(r"^(conditions|intervention|primary outcome|device|applicant|decision|decision date|product code|summary)\s*:", re.I)
 PROMPT_FILE = Path(__file__).resolve().parents[1] / "prompts" / "draft_v1.md"
 PROMPT_VERSION = "draft_v1"
 DEFAULTS = {
@@ -186,6 +188,8 @@ def gate(d: dict, record: dict, text: str, records: list[dict], cfg: dict) -> li
             reasons.append(f"relation {i + 1}: quote is missing")
         elif words(q) >= 15:
             reasons.append(f"relation {i + 1}: quote has {words(q)} words; fewer than 15")
+        elif LABEL.match(q.strip()):
+            reasons.append(f"relation {i + 1}: quote copies a section label (for example 'Conditions:'), not the source's own words")
         elif normalise(q).strip(" .\"'") not in source:
             reasons.append(f"relation {i + 1}: quote is not word for word in the source text")
     if not reasons:

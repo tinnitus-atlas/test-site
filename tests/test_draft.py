@@ -16,7 +16,8 @@ from kgkit import draft, draft_audit  # noqa: E402
 from kgkit.common import FetchError, Http, KitError  # noqa: E402
 
 CFG = yaml.safe_load((ROOT / "kit.tinnitus.yaml").read_text())
-REAL = json.loads((ROOT / "records" / "tinnitus.records.json").read_text())["records"]
+# The real records minus any bare entries, so these tests stay independent of what the nightly has added.
+REAL = [r for r in json.loads((ROOT / "records" / "tinnitus.records.json").read_text())["records"] if not draft.is_bare(r)]
 
 SUMMARY = ("This study tests whether a sound therapy delivered through a phone app reduces how much tinnitus bothers "
            "adults who have had it for at least six months. Tinnitus means hearing a sound, such as ringing, that has "
@@ -279,3 +280,9 @@ def test_drafting_workflow_is_manual_and_keeps_secrets_in_env():
     assert set(on) == {"workflow_dispatch"}
     run = wf["jobs"]["drafting"]["steps"][-1]["run"]
     assert "${{" not in run  # inputs and secrets reach the shell only through env
+
+
+def test_quote_of_a_section_label_fails():
+    d = good(relations=[{"predicate": "studies_condition", "object": "tin:tinnitus", "quote": "Conditions: Tinnitus"}])
+    reasons = draft.gate(d, bare_trial(), BRIEF + "\nConditions: Tinnitus", records_with(bare_trial()), CFG)
+    assert any("section label" in r for r in reasons), reasons

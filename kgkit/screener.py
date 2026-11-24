@@ -87,7 +87,7 @@ def rules(p: dict, cfg: dict) -> tuple[float, str]:
     if kind == "new_record:device":
         return 0.6, "FDA decision under a related product code"
     if p["type"] == "draft":
-        return (0.5, "drafted entry, read it closely (tier B)") if p.get("tier") == "B" else (0.6, "drafted entry that passed the automatic checks")
+        return (0.5, "drafted entry, read it closely (tier B)") if p.get("tier") == "B" else (0.7, "drafted entry that passed the automatic checks")
     if kind.startswith("new_record"):
         s, why = 0.6, ["registered trial"]
         if on_topic:
