@@ -23,20 +23,25 @@ from pathlib import Path
 from . import apply, proposals
 
 
+APPLY_FILES = ("applied_prs.json", "seen_proposals.json", "decisions.jsonl", "parked.json", "review_queue.json")
+
+
 def run_cmd(args: list[str]) -> str:
     return subprocess.run(args, check=True, capture_output=True, text=True).stdout
 
 
-def sync(config: str, records: str, pr: int, body_file: str, proposals_file: str, base: str, runner=run_cmd) -> int:
+def sync(config: str, records: str, pr: int, body_file: str, proposals_file: str, base: str, runner=run_cmd,
+         today: str | None = None) -> int:
     folder = Path(records).parent
-    # Start from main's records, so unticking undoes a change. git checkout restores only the files main has, so the
-    # list of applied reviews is removed first: it must follow from the ticks (rewritten by the apply step below), never
-    # from what the branch carried. The nightly's own state files on the branch (seen proposals, decision history,
-    # parked items, queues) are kept: they travel to main with the merge.
-    (folder / "applied_prs.json").unlink(missing_ok=True)
+    # Start from main's records, so the branch's record changes always follow from the ticks alone: unticking undoes
+    # a change, and earlier syncs never pile up. git checkout restores only the files main has, so every file the apply
+    # step writes is removed first and rebuilt below from main's copy plus the ticks. History the nightly keeps
+    # elsewhere is rebuilt from GitHub, so nothing is lost. The drafting queue is not the apply step's and stays.
+    for name in APPLY_FILES:
+        (folder / name).unlink(missing_ok=True)
     runner(["git", "checkout", base, "--", str(folder)])
     return apply.main(["--config", config, "--records", records, "--body", body_file, "--proposals", proposals_file,
-                       "--label", str(pr)])
+                       "--label", str(pr), *(["--today", today] if today else [])])
 
 
 def append(body: str, report: dict, new: list[dict]) -> tuple[str, dict]:
@@ -68,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--body-file", required=True)
     s.add_argument("--proposals", default="reports/proposals.json")
     s.add_argument("--base", default="origin/main")
+    s.add_argument("--today", help="date to record (YYYY-MM-DD); default today")
     a = sub.add_parser("append")
     a.add_argument("--body-file", required=True)
     a.add_argument("--proposals", required=True)
@@ -76,7 +82,8 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     if args.cmd == "sync":
         try:
-            return sync(args.config, args.records, args.pr, args.body_file, args.proposals, args.base)
+            return sync(args.config, args.records, args.pr, args.body_file, args.proposals, args.base,
+                        today=args.today)
         except subprocess.CalledProcessError as exc:
             print(f"error: could not reset the records to {args.base}: {exc}", file=sys.stderr)
             return 2
