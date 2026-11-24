@@ -42,6 +42,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.NIGHTLY_TOKEN || github.token }}
           BIOLINK_DIR: /tmp/biolink-model
+          REVIEW_WEEKDAY: monday
+          FORCE_PROPOSALS: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           git config user.name "kg-nightly"
           git config user.email "kg-nightly@users.noreply.github.com"
