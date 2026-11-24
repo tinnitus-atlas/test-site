@@ -27,6 +27,16 @@ readable only by its user (chmod 600); the model server listens on localhost onl
    JOB_SCRIPT with the absolute path of `drafting-job.sh` and LOG_FILE with a log path, then
    `launchctl load -w ~/Library/LaunchAgents/org.kg.drafting.plist`. Check: `launchctl list | grep org.kg.drafting`.
 6. Report back: the model id, the test output, and the line from step 5.
+7. Readiness check (added 24 Nov): pull the latest main in the clone, then run
+   `bash <clone>/tools/studio/doctor.sh --publish`. It checks the settings file, the model server, the API key (when
+   LM Studio's **Require Authentication** is on, put one of its keys in the settings file as DRAFTER_API_KEY), whether
+   the model is loaded and whether the server listens only on this computer, and saves the yes/no answers to the
+   `studio-status` branch, where the maintainers read them. Fix any "no" you can; report the rest.
+8. Model loading and server start: the daily job now starts the model server and loads the model itself (with a
+   fixed context length, DRAFTER_CONTEXT, default 16384) when LM Studio's command-line tool `lms` is installed, so
+   LM Studio's own "start on login" setting is not needed. If `lms` is not found, install it from LM Studio's
+   **Developer** settings or note it in the report. Each run publishes the readiness check again, so this report is
+   never relayed by hand.
 
 ## Done when
 The test run finishes without error, the scheduled job is listed, and the next day's log shows a run.

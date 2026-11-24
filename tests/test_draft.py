@@ -328,3 +328,44 @@ def test_studio_job_stops_quietly_when_the_model_server_is_down(tmp_path):
     r = subprocess.run(["bash", str(ROOT / "tools" / "studio" / "drafting-job.sh")], capture_output=True, text=True,
                        env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), "KG_DRAFTING_ENV": str(env_file)})
     assert r.returncode == 0 and "will try again" in r.stdout
+
+
+def test_studio_doctor_reports_only_yes_no_answers(tmp_path):
+    import re
+    import subprocess
+    doctor = ROOT / "tools" / "studio" / "doctor.sh"
+    assert subprocess.run(["bash", "-n", str(doctor)]).returncode == 0
+    env_file = tmp_path / "kg.env"
+    env_file.write_text(f"REPO_DIR={tmp_path}\nDRAFTER_BASE_URL=http://127.0.0.1:9/v1\nDRAFTER_MODEL=secret-model-id\n")
+    r = subprocess.run(["bash", str(doctor)], capture_output=True, text=True,
+                       env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), "KG_DRAFTING_ENV": str(env_file)})
+    assert r.returncode == 0 and "Model server answering: no" in r.stdout
+    assert str(tmp_path) not in r.stdout and "secret-model-id" not in r.stdout
+    assert not re.search(r"/Users/[a-z]|/home/[a-z]", doctor.read_text())
+
+
+def test_studio_job_asks_for_the_key_when_the_server_requires_one(tmp_path):
+    import http.server
+    import subprocess
+    import threading
+
+    class Locked(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(401)
+            self.end_headers()
+
+        def log_message(self, *a):
+            pass
+
+    srv = http.server.HTTPServer(("127.0.0.1", 0), Locked)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        env_file = tmp_path / "kg.env"
+        env_file.write_text(f"REPO_DIR={tmp_path}\nDRAFTER_BASE_URL=http://127.0.0.1:{srv.server_port}/v1\n"
+                            "DRAFTER_MODEL=m\n")
+        r = subprocess.run(["bash", str(ROOT / "tools" / "studio" / "drafting-job.sh")], capture_output=True,
+                           text=True, env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path),
+                                           "KG_DRAFTING_ENV": str(env_file)})
+        assert r.returncode == 2 and "DRAFTER_API_KEY" in r.stdout
+    finally:
+        srv.shutdown()

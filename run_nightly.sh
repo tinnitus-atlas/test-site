@@ -137,6 +137,12 @@ if [ -n "$WAIT_LINE" ]; then
   PR_LINE="$WAIT_LINE"
 elif [ "${NO_GIT:-0}" != "1" ] && [ "$COUNT" -gt 0 ]; then
   BRANCH="proposals/$DAY"
+  # A review closed earlier the same day keeps its branch name: open the new one on a fresh branch, or GitHub would
+  # point at the closed pull request and no new review would open.
+  if command -v gh >/dev/null 2>&1; then
+    OLD_STATE="$(gh pr view "$BRANCH" --json state -q .state 2>/dev/null || true)"
+    if [ -n "$OLD_STATE" ] && [ "$OLD_STATE" != "OPEN" ]; then BRANCH="proposals/$DAY-$(date -u +%H%M)"; fi
+  fi
   {
     git checkout -q -B "$BRANCH" &&
     git add -f "$REPORTS"/*.json "$REPORTS"/proposals.md &&  # reports/ is ignored; kgkit.apply reads reports/proposals.json from the merged pull request

@@ -8,6 +8,7 @@ lists the source in proposals.auto_apply_sources (default: none).
 from __future__ import annotations
 
 from .common import fact_value, read_report, write_report
+from .shipit import SHIP_LINE  # stdlib only, so the Ship it workflow needs no installs
 
 CONFIDENCE = {"high": "high", "medium": "medium", "low": "medium"}
 
@@ -121,7 +122,8 @@ def to_markdown(props: list[dict]) -> str:
              f"{len(props)} items: {counts['tick']} recommended ({pre} already ticked), {counts['fence']} on the fence, "
              f"{counts['skip']} recommended to skip.", "",
              "How to review: tick **Approved** to add an item, **Maybe later** to see it again in 90 days, or add a line "
-             "starting `Reason:` under an item to tell the screener why. Then merge. Your merge is the approval.", ""]
+             "starting `Reason:` under an item to tell the screener why. Then merge, or tick Ship it below to have it merged "
+             "for you. Your merge or your Ship it tick is the approval.", "", SHIP_LINE, ""]
     numbered = list(enumerate(props, 1))
     for key, title, hint in GROUPS:
         items = [(i, p) for i, p in numbered if (p.get("screen") or {}).get("recommendation") == key]
