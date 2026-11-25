@@ -66,6 +66,9 @@ def script_json(obj) -> str:
             .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"))
 
 
+TREATMENT_KINDS = {"intervention", "drug", "device", "app"}
+
+
 def resolver(curie: str) -> str | None:
     prefix, _, local = curie.partition(":")
     if not local:
@@ -175,6 +178,7 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
         parts.append(f'<p class="meta">Last checked {e(r.get("asOf"))}'
                      + (f' · Status: {e(str(r["status"]).replace("_", " "))}' if r.get("status") else "") + "</p>")
         parts.append(self.banner())
+        parts.append(self.trust_panel(r))
         facts = r.get("facts") or {}
         if facts:
             rows = []
@@ -212,6 +216,34 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
                          f'<a href="/api/v1/records/{e(self.slugs[r["id"]])}.json">This record as JSON</a></p>')
         return self.page(r["name"], "\n".join(parts), r.get("tldr", ""), self.jsonld(r), self.url(r))
 
+    def trust_panel(self, r: dict) -> str:
+        """How this page was made, in plain words: who wrote the summary, how many sources, what is checked, and
+        whether a clinician has reviewed it. Never names tools, models or people behind the scenes."""
+        srcs = [s for s in r.get("sources") or [] if s.get("url")]
+        quotes = sum(1 for rel in r.get("relations") or [] if rel.get("quote"))
+        prov = r.get("provenance") or {}
+        if prov.get("drafted_by"):
+            summary = ("Draft summary written by an AI model from the registry entry, checked automatically against "
+                       "the source and approved by the site's editor")
+        else:
+            summary = "Summary written from the sources listed below"
+        reviewer = r.get("reviewedBy")
+        review = (f'<span class="badge ok">Reviewed by {e(reviewer)}</span>' if reviewer
+                  else '<span class="badge warn">Not yet reviewed by a clinician</span>')
+        checks = [f"{len(srcs)} primary source{'s' if len(srcs) != 1 else ''}"]
+        if quotes:
+            checks.append(f"{quotes} quote{'s' if quotes != 1 else ''} checked against the source every night")
+        if r.get("kind") == "trial":
+            checks.append("status compared with the trial registry every night")
+        return ('<aside class="trust" aria-label="How this page was made"><h2>How this page was made</h2><ul class="plain">'
+                f"<li>{e(summary)}.</li><li>{e(', '.join(checks))}.</li><li>{review}</li></ul></aside>")
+
+    def evidence_counts(self, r: dict) -> tuple:
+        """(linked trials, sources) for a treatment-like record."""
+        trials = {rel["object"] for rel in r.get("relations") or [] if (self.by_id.get(rel.get("object")) or {}).get("kind") == "trial"}
+        trials |= {src["id"] for src, _ in self.incoming.get(r["id"]) or [] if src.get("kind") == "trial"}
+        return len(trials), len([s for s in r.get("sources") or [] if s.get("url")])
+
     def rel_block(self, subject: dict, rel: dict, other: dict, reverse: bool) -> str:
         if reverse:
             stmt = f'<a href="{e(self.url(other))}">{e(other["name"])}</a> {e(self.phrase(rel["predicate"]))} this'
@@ -248,12 +280,21 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
     def kind_index(self, kind: str, recs: list[dict]) -> str:
         km = self.kind_meta(kind)
         show_status = any(r.get("status") for r in recs)
-        head = "<tr><th>Name</th><th>Summary</th><th>Last checked</th>" + ("<th>Status</th>" if show_status else "") + "</tr>"
+        treatment = kind in TREATMENT_KINDS
+        head = ("<tr><th>Name</th><th>What the evidence says</th>" + ("<th>Trials linked</th><th>Sources</th>" if treatment else "")
+                + "<th>Last checked</th>" + ("<th>Status</th>" if show_status else "") + "</tr>")
         rows = []
         for r in sorted(recs, key=lambda x: x["name"].lower()):
             status = f"<td>{e(str(r.get('status') or '').replace('_', ' '))}</td>" if show_status else ""
-            rows.append(f'<tr><td><a href="{e(self.url(r))}">{e(r["name"])}</a></td><td>{e(r.get("tldr"))}</td><td>{e(r.get("asOf"))}</td>{status}</tr>')
-        body = (f"<h1>{e(km['plural'])}</h1><p class=\"lede\">{len(recs)} records. Every row links to a page with its sources.</p>"
+            counts = ""
+            if treatment:
+                t, n = self.evidence_counts(r)
+                counts = f"<td>{t}</td><td>{n}</td>"
+            rows.append(f'<tr><td><a href="{e(self.url(r))}">{e(r["name"])}</a></td><td>{e(r.get("tldr"))}</td>{counts}<td>{e(r.get("asOf"))}</td>{status}</tr>')
+        intro = (" Each summary says what the best available evidence found, including when it found little or no effect."
+                 " This is a map of published evidence, not a recommendation: talk to a clinician before trying anything."
+                 if treatment else "")
+        body = (f"<h1>{e(km['plural'])}</h1><p class=\"lede\">{len(recs)} records. Every row links to a page with its sources.{e(intro)}</p>"
                 f'<label for="flt" class="meta">Filter this list</label><input id="flt" type="search" data-filter-table="#tbl" placeholder="Type to filter">'
                 f'<div class="table-scroll"><table id="tbl"><thead>{head}</thead><tbody>{"".join(rows)}</tbody></table></div>')
         return self.page(km["plural"], body, f"{km['plural']} in the {self.s.get('title', '')}", path=f"/{km['path']}/")

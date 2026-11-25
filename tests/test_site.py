@@ -145,3 +145,37 @@ def test_launch_mode_is_indexable(tmp_path):
     assert build_site.main(["--config", str(cfg_path), "--records", str(REC_PATH), "--out", str(out), "--exports", str(tmp_path / "x")]) == 0
     assert "Allow: /" in (out / "robots.txt").read_text()
     assert "noindex" not in (out / "index.html").read_text()
+
+
+def test_every_record_page_says_how_it_was_made_without_naming_tools(tmp_path):
+    import re
+    out = tmp_path / "out"
+    r = subprocess.run([sys.executable, str(ROOT / "site" / "build_site.py"), "--config", str(ROOT / "kit.tinnitus.yaml"),
+                        "--records", str(ROOT / "tests" / "fixtures" / "tinnitus.records.json"), "--out", str(out)],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    pages = [p for p in out.rglob("index.html") if p.parent.parent.name in ("treatments", "trials", "devices", "conditions")]
+    assert pages
+    for p in pages:
+        html = p.read_text()
+        assert "How this page was made" in html and "Not yet reviewed by a clinician" in html
+        assert not re.search(r"qwen|deepseek|sonnet|llama|lm studio", html, re.I)
+    treatments = (out / "treatments" / "index.html").read_text()
+    assert "Trials linked" in treatments and "not a recommendation" in treatments
+
+
+def test_drafted_summaries_are_labelled_as_drafts(tmp_path):
+    import json as _json
+    data = _json.loads((ROOT / "tests" / "fixtures" / "tinnitus.records.json").read_text())
+    rec = next(x for x in data["records"] if x["kind"] == "intervention")
+    rec["provenance"] = {"drafted_by": "some-local-model-7b", "drafted_on": "2026-11-24"}
+    f = tmp_path / "r.json"
+    f.write_text(_json.dumps(data))
+    out = tmp_path / "out"
+    r = subprocess.run([sys.executable, str(ROOT / "site" / "build_site.py"), "--config", str(ROOT / "kit.tinnitus.yaml"),
+                        "--records", str(f), "--out", str(out)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    import html as _html
+    own = f"<h1>{_html.escape(rec['name'])}</h1>"
+    html = next(p for p in out.rglob("index.html") if own in p.read_text()).read_text()
+    assert "Draft summary written by an AI model" in html and "some-local-model-7b" not in html
