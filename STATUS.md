@@ -1,16 +1,19 @@
 # Tinnitus Atlas: status (updated every working turn; newest first in the log)
 
+New chat: read this file first; it overrides the Now and Next sections of the claude.ai status doc. Replies follow the 8-line format (Security, Did, Progress, Broke, Fix, Need from you, Next, stamp); details go here, not in chat.
+
 ## Now (25 Nov 2026)
 - Site: launch-ready in test mode (pilot banner, disclaimer, privacy and corrections pages, CC BY-NC 4.0, launch check: 2 blockers left: test mode, corrections address).
 - Summary check: built; runs locally on the drafting computer (second local model) once the local job is live; GitHub nightly is the fallback.
 - Records: 10 (target about 150). Content is blocked on the owner's review of #30 (45 proposals), whose merge also starts the 6-month backfill.
 
 ## Next (roadmap, in order)
-1. Local jobs on the drafting computer: drafting (Qwen) + summary check (Gemma). Brief sent 25 Nov 15:45 (agent-loop approved-brief-tinnitus-local-1545).
-2. Owner reviews #30 -> backfill chain (6, 12, 24 months) -> more proposals -> local drafts in each Monday review.
-3. Re-plan gate G1 (about 150 verified records) from the first week of local drafting throughput.
-4. Studio domain (owner, later) -> corrections address -> test mode off -> public pilot.
-5. Security audit before the public pilot (owner switched the scheduled audit off until then).
+1. Local jobs on the drafting computer: drafting (Qwen) + summary check (Gemma 4 26B A4B, owner downloading it). Live job: agent-loop approvals/approved-brief-tinnitus-local-1550.md (hard stop 17:15 Sofia). The new chat checks agent-loop reports/tinnitus-local-1550*.md and the studio-status branch; no sign of progress within the first check = alert the owner.
+2. Owner reviews #30 now -> its merge starts the backfill chain (6, 12, 24 months back) -> more proposals -> local drafts in each Monday review. Claude watches the backfill pull requests.
+3. Site look: owner finds it dated ("90s vibe"). Make a simple logo and a modern restyle in the owner's brand direction (minimal, light grey background, dark Prussian blue accent #003153, clean sans-serif type), show it before building; then one pull request.
+4. Re-plan gate G1 (about 150 verified records) from the first week of local drafting throughput.
+5. Studio domain (owner, later) -> corrections address -> test mode off -> public pilot.
+6. Security audit before the public pilot (owner switched the scheduled audit off until then).
 
 ## Open loops (nothing leaves this list without a decision)
 | Item | Waiting on | Since |
@@ -26,5 +29,6 @@
 | Roadmap doc (claude.ai) is stale since 5 Nov; this file replaces its Now/Next | Claude | 25 Nov |
 
 ## Log
+- 25 Nov 15:50: brief re-sent as tinnitus-local-1550 after the owner restarted Claude Code and the kit; earlier one superseded. Handoff to a new chat in the same project.
 - 25 Nov 15:45: summary check cost cap (#41, merged); local-setup brief sent; this status file created. Why/details: PR descriptions and docs/summary-check.md.
 - 25 Nov 15:10: #39 (launch readiness, summary check, licence) and #40 merged.
