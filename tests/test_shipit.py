@@ -135,6 +135,7 @@ class FakeGH:
         self.body = TICKED
         self.head = HEAD
         self.user, self.title, self.sync_running = "varioso", "Some change", False
+        self.main_files = [{"filename": "z.py", "status": "modified", "sha": "9"}]
 
     def __call__(self, method, path, token, body=None):
         self.calls.append((method, path.split("?")[0], body))
@@ -144,8 +145,12 @@ class FakeGH:
             return p
         if method == "GET" and "/actions/workflows/review-sync.yml/runs" in path:
             return {"workflow_runs": [{"head_branch": "branch"}] if self.sync_running else []}
+        if method == "GET" and "/compare/" in path and path.split("?")[0].endswith("...main"):
+            return {"files": self.main_files, "commits": [{"sha": "m" * 40}]}
         if method == "GET" and "/compare/" in path:
             return {"files": self.files, "behind_by": self.behind}
+        if method == "GET" and path.startswith("/repos/o/r/branches/"):
+            return {"commit": {"sha": "m" * 40}}
         if method == "GET" and "/check-runs" in path:
             return {"check_runs": [{"app": {"slug": "github-actions"}, "conclusion": self.tests,
                                     "started_at": "1"}]}
@@ -294,6 +299,7 @@ def test_a_push_after_the_tick_is_never_merged(monkeypatch):
 def test_update_from_main_keeps_the_approval_and_untick_withdraws_it(monkeypatch):
     files = [{"filename": "a.py", "status": "modified", "sha": "1"}]
     fake = FakeGH(files, behind=2, tests=None)
+    fake.main_files = [{"filename": "a.py", "status": "modified", "sha": "8"}]   # main touched the same file
     ship(fake, (7, "tick", HEAD), monkeypatch)
     assert any(p.endswith("/update-branch") for _, p, _ in fake.calls)
     fake.behind, fake.tests, fake.head = 0, "success", "e" * 40          # same content, now up to date
@@ -486,3 +492,17 @@ def test_untick_always_leaves_a_withdrawal_even_before_any_approval(monkeypatch)
     fake.body = shipit.SHIP_LINE                                      # the box is unticked now
     ship(fake, (7, "tick", HEAD), monkeypatch)                        # a slower tick run finishing afterwards
     assert not merged(fake)
+
+
+
+def test_behind_main_but_untouched_files_merges_without_an_update(monkeypatch):
+    fake = FakeGH([{"filename": "a.py", "status": "modified", "sha": "1"}], behind=3)
+    ship(fake, (7, "tick", HEAD), monkeypatch)
+    assert merged(fake) and not any(p.endswith("/update-branch") for _, p, _ in fake.calls)
+
+
+def test_behind_main_on_the_same_files_is_updated_first(monkeypatch):
+    fake = FakeGH([{"filename": "a.py", "status": "modified", "sha": "1"}], behind=3)
+    fake.main_files = [{"filename": "a.py", "status": "modified", "sha": "8"}]
+    ship(fake, (7, "tick", HEAD), monkeypatch)
+    assert not merged(fake) and any(p.endswith("/update-branch") for _, p, _ in fake.calls)

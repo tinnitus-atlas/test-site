@@ -415,16 +415,28 @@ def ship_one(gh: Repo, n: int, default_branch: str, bot: str, change: tuple | No
         review_state = {"body_ok": body_ok, "sync_running": bool(sync),
                         "records_ok": check_records(n, pr["head"]["sha"], pr.get("body") or "", default_branch)
                         if ready else None}
+    behind = int(cur.get("behind_by") or 0)
+    main_sha = None
+    if behind:
+        # Main moved on. If nothing main changed touches this pull request's files, merge as it is: bringing it up to
+        # date would need the app to rewrite automation files main changed, a power it deliberately lacks.
+        since = call("GET", f"/repos/{gh.repo}/compare/{pr['head']['sha']}...{default_branch}?per_page=100", gh.read)
+        theirs = {f["filename"] for f in since.get("files") or []}
+        ours = {f["filename"] for f in cur.get("files") or []}
+        if since.get("files") is not None and len(since["files"]) < MAX_FILES and not (theirs & ours):
+            behind = 0
+            main_sha = (since.get("commits") or [{}])[-1].get("sha")
     action, detail = decide(pr, default_branch=default_branch, bot=bot, approved=approved, current=current,
-                            behind_by=int(cur.get("behind_by") or 0), touches_workflows=touches_wf, tests=tests,
-                            review=review_state)
+                            behind_by=behind, touches_workflows=touches_wf, tests=tests, review=review_state)
     if action == "note" and detail.startswith("unapproved") and change is None and _recent(pr.get("updated_at")):
         action, detail = "wait", "the owner's tick may still be on its way"   # no false alarm right after a tick
     if action == "merge" and review:
         fresh = call("GET", f"/repos/{gh.repo}/pulls/{n}", gh.read)       # ticks must not have changed meanwhile
         again = gh.compare(default_branch, detail)                         # nor main
+        moved = int(again.get("behind_by") or 0) > 0 and \
+            call("GET", f"/repos/{gh.repo}/branches/{default_branch}", gh.read).get("commit", {}).get("sha") != main_sha
         if fresh["head"]["sha"] != detail or body_hash(fresh.get("body")) != approved_body or \
-                not ticked(fresh.get("body")) or int(again.get("behind_by") or 0) > 0:
+                not ticked(fresh.get("body")) or moved:
             action, detail = "wait", "changed while checking"
     summary.append(f"#{n}: {action} ({detail})")
     if action == "note" and detail not in noted:
