@@ -1,6 +1,6 @@
 # Tinnitus Atlas: status (updated every working turn; newest first in the log)
 
-New chat: read this file first; it overrides the Now and Next sections of the claude.ai status doc. Reply format: DRAFT, owner reviewing (25 Nov 20:40; the 8 headings were his examples, not a spec). Details go here, not in chat.
+New chat: read this file first; it overrides the Now and Next sections of the claude.ai status doc. Reply format (owner, 25 Nov 20:41): the short lines he named (what was done, progress, what worked, what broke, the fix, what is needed from him, next); extra sections only when he asks. Details go here, not in chat.
 
 ## Now (25 Nov 2026)
 - Site: launch-ready in test mode (pilot banner, disclaimer, privacy and corrections pages, CC BY-NC 4.0, launch check: 2 blockers left: test mode, corrections address).
@@ -20,10 +20,9 @@ New chat: read this file first; it overrides the Now and Next sections of the cl
 | Item | Waiting on | Since |
 | --- | --- | --- |
 | Review #30 (merge starts the backfill) | owner | 24 Nov |
-| Approve PyYAML vetting card (Registry tab), then Claude re-sends the job | owner | 25 Nov 20:40 |
-| Gemma 4 26B A4B QAT not listed in LM Studio: download or check it finished | owner | 25 Nov 20:40 |
-| Accept this chat on the kit page (switch/chat-2026-11-25-2035.md, verified) | owner | 25 Nov 20:40 |
-| Approve the reply format (proposed in chat 20:40) | owner | 25 Nov 20:40 |
+| Click Approve on tinnitus-local-2045 (PyYAML approved 20:41) | owner | 25 Nov 20:45 |
+| Gemma 4 26B A4B QAT still downloading; then set CHECKER_MODEL | owner, then Claude | 25 Nov 20:41 |
+| Kit Accept button stays clicked, nothing happens (20:40); read-only diagnosis in tinnitus-local-2045 step 6 | Claude Code | 25 Nov 20:41 |
 | Confirm LM Studio is not reachable from the Wi-Fi ("Serve on Local Network" off): answered by the job's readiness check | tinnitus-local-2027 | 25 Nov |
 | Loop: reports from Claude Code do not reach GitHub from its sandbox (since 22 Nov); kit page has no switch button | loop fix job (not yet planned) | 22 Nov |
 | Ship it: retry with a rebase when an update conflicts | Claude | 25 Nov |
@@ -34,6 +33,7 @@ New chat: read this file first; it overrides the Now and Next sections of the cl
 | Roadmap doc (claude.ai) is stale since 5 Nov; this file replaces its Now/Next | Claude | 25 Nov |
 
 ## Log
+- 25 Nov 20:45: owner approved PyYAML (Registry card adopted); brief tinnitus-local-2045 sent (signed, verified): installs it in the job's own environment, runs the job, and reads the kit log for the stuck Accept click. Reply format settled (owner's short lines only).
 - 25 Nov 20:40: tinnitus-local-2027 ran: key OK, schedule installed, stopped on missing PyYAML; no checker model listed. Switch request for this chat saved (signed, verified). Planning check 16 added. Friction row logged.
 - 25 Nov 20:27: new chat took over (start point: this file). Owner chose to keep LM Studio's key check on and reuse the existing key (credential register row 3); brief tinnitus-local-2027 sent (signed, verified), 1550 superseded. Planning check 15 added: look for existing keys before asking the owner. Project doc carry-on.md now points only here. Friction row logged.
 - 25 Nov 20:15: tinnitus-local-1550 ran and reported (the loop delivers reports again). Nothing set up yet on the drafting computer: no settings file, no scheduled job; LM Studio requires an API token, so models could not be listed. Owner decision: switch off LM Studio "Require Authentication" (server is local only) or provide a token. Gemma 4 26B A4B QAT (google/) chosen as checker.
