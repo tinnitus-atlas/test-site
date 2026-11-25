@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup wizard</title>
+<style>
+  :root { color-scheme: light dark; --bg:#fafaf9; --fg:#1c1917; --muted:#78716c; --line:#e7e5e4; --ok:#15803d; --bad:#b91c1c; --accent:#1d4ed8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1c1917; --fg:#f5f5f4; --muted:#a8a29e; --line:#44403c; --ok:#4ade80; --bad:#f87171; --accent:#93c5fd; } }
+  body { font: 15px/1.5 -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--fg); max-width: 720px; margin: 40px auto; padding: 0 20px; }
+  h1 { font-size: 22px; margin: 0 0 4px; } .sub { color: var(--muted); margin: 0 0 28px; }
+  .step { border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 0 0 14px; }
+  .step h2 { font-size: 16px; margin: 0 0 6px; } .step p { margin: 4px 0 10px; color: var(--muted); }
+  .done h2::after { content: " ✓"; color: var(--ok); }
+  button, .btn { font: inherit; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
+  button.secondary { background: transparent; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  input { font: inherit; width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--fg); margin: 6px 0; }
+  .err { color: var(--bad); white-space: pre-wrap; } .okline { color: var(--ok); } .badline { color: var(--bad); }
+  ul { padding-left: 18px; margin: 6px 0; } details { color: var(--muted); margin-top: 18px; }
+</style>
+<body>
+<h1>Set up Ship it</h1>
+<p class="sub" id="repo"></p>
+<div id="app"></div>
+<details><summary>Log</summary><pre id="log"></pre></details>
+<script>
+const T = "__LAUNCH__";
+let S = null, error = "", typed = "";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function load() { const r = await fetch(`/api/status?t=${T}`); S = await r.json(); render(); }
+async function post(path, body) {
+  error = ""; render();
+  const r = await fetch(`${path}?t=${T}`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body || {})});
+  const d = await r.json(); if (!r.ok) error = d.error || "Something went wrong"; else S = d; render();
+}
+function render() {
+  if (!S) return;
+  if (document.activeElement && document.activeElement.id === "key") return;  // never re-render while typing
+  document.getElementById("repo").textContent = `Repository: ${S.repo}`;
+  const s1 = S.connected, s2 = !!S.app, s3 = S.installed, s4 = S.done;
+  document.getElementById("app").innerHTML = `
+  <div class="step ${s1 ? "done" : ""}"><h2>1. Connect GitHub</h2>
+    <p>Opens GitHub with a one-day setup key already filled in. Under <b>Repository access</b> choose <b>Only select repositories</b> and pick this repository, click <b>Generate token</b>, copy it and paste it here. It stays in this window's memory and is dropped when setup finishes.</p>
+    ${s1 ? `<p class="okline">Connected as ${esc(S.login)}</p>` : `
+    <a class="btn" href="${esc(S.key_url)}" target="_blank" rel="noopener">Open GitHub</a>
+    <input id="key" type="password" placeholder="Paste the key here" value="${esc(typed)}" oninput="typed=this.value" autocomplete="off">
+    <button onclick="post('/api/connect',{key:typed}).then(()=>{typed=''})">Check</button>`}
+  </div>
+  <div class="step ${s2 ? "done" : ""}"><h2>2. Create the app</h2>
+    <p>Opens GitHub's <b>Create GitHub App</b> page with everything filled in. Click <b>Create GitHub App</b>; you come back here by yourself.</p>
+    ${s2 ? `<p class="okline">Created: ${esc(S.app.slug)}</p>` : `<a class="btn" href="/create?t=${T}" target="_blank" rel="noopener" ${s1 ? "" : 'style="pointer-events:none;opacity:.5"'}>Create the app</a>`}
+  </div>
+  <div class="step ${s3 ? "done" : ""}"><h2>3. Install it</h2>
+    <p>Pick <b>Only select repositories</b>, choose this repository, click <b>Install</b>.</p>
+    ${s3 ? `<p class="okline">Installed</p>` : (s2 ? `<a class="btn" href="${esc(S.install_url)}" target="_blank" rel="noopener">Install</a>` : `<button disabled>Install</button>`)}
+  </div>
+  <div class="step ${s4 ? "done" : ""}"><h2>4. Finish</h2>
+    <p>Sets up the protected environment, stores the app's key encrypted, adds the app to the merge rule's bypass list and checks the app can act on the repository.</p>
+    <button ${s1 && s2 && !S.busy ? "" : "disabled"} onclick="post('/api/finish')">${S.busy ? "Working…" : (S.results.length ? "Run again" : "Finish setup")}</button>
+    ${S.results.length ? `<ul>${S.results.map(r => `<li class="${r.ok ? "okline" : "badline"}">${esc(r.step)}: ${esc(r.detail)}</li>`).join("")}</ul>` : ""}
+    ${s4 ? `<p class="okline">All set. Delete the setup key on GitHub now (Settings, Developer settings, Fine-grained tokens), or leave it to expire tomorrow.</p>` : ""}
+  </div>
+  ${error ? `<p class="err">${esc(error)}</p>` : ""}`;
+  document.getElementById("log").textContent = (S.log || []).join("\n");
+}
+load(); setInterval(load, 3000);
+</script>
+</body>
+</html>
