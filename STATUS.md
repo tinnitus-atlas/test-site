@@ -29,6 +29,7 @@ New chat: read this file first; it overrides the Now and Next sections of the cl
 | Roadmap doc (claude.ai) is stale since 5 Nov; this file replaces its Now/Next | Claude | 25 Nov |
 
 ## Log
+- 25 Nov 15:59: check-in: tinnitus-local-1550 not yet forwarded by the kit (no "forwarded" mark, no progress, no studio-status branch). Waiting on the owner's Approve click; if approved and still unmarked, the kit or watcher is down.
 - 25 Nov 15:50: brief re-sent as tinnitus-local-1550 after the owner restarted Claude Code and the kit; earlier one superseded. Handoff to a new chat in the same project.
 - 25 Nov 15:45: summary check cost cap (#41, merged); local-setup brief sent; this status file created. Why/details: PR descriptions and docs/summary-check.md.
 - 25 Nov 15:10: #39 (launch readiness, summary check, licence) and #40 merged.
