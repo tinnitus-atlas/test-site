@@ -1,7 +1,6 @@
 # Ship it: when the owner ticks "Ship it" in a pull request, this brings the pull request up to date with main, waits
 # for the tests and merges it. See docs/ship-it.md. The merge itself uses a GitHub App key minted per run (one hour,
-# this repository only); this workflow's own token can only read. Review pull requests and workflow changes are
-# always merged by the owner.
+# this repository only); this workflow's own token can only read. Workflow changes are always merged by the owner.
 name: Ship it
 on:
   pull_request_target:
@@ -37,6 +36,11 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
+      # Review pull requests: main's own review code recomputes the record changes from the ticks (kgkit/shipit.py).
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml==6.0.2
       - name: Ship ticked pull requests
         env:
           GH_READ_TOKEN: ${{ github.token }}

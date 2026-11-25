@@ -13,8 +13,14 @@ an environment secret that only workflows running on main can read. The workflow
 - Only the content the owner approved: the approval records a fingerprint of every changed file at the moment of the
   tick. Bringing the branch up to date with main keeps it; any other change voids the approval and the pull request
   says so.
-- Never a pull request that changes `.github/` (workflows), a review pull request ("Nightly proposals ..."), or one
-  not aimed at main: those need the owner's manual merge.
+- Review pull requests ("Nightly proposals ..."): tick your items and Ship it, in one go or in any order. Ship it
+  waits for the review sync to write your ticked items, then rebuilds the record changes from your ticks with main's
+  own code and settings in a scratch copy and merges only if the branch holds exactly that, nothing else changed
+  since your tick, and the review touches only its data folders (reports/ and records/). Your own later tick edits
+  are followed; an edit by anyone else (including new items added later, such as drafts) voids the approval: read
+  them, then untick and tick Ship it again.
+- Never a pull request that changes `.github/` (workflows) or one not aimed at main: those need the owner's manual
+  merge.
 - Never with failing tests or conflicts: it comments once and waits for a fix and a new tick.
 - Known limit: an AI agent working through the owner's own GitHub account could tick the box as the owner. Agents are
   instructed never to tick Ship it; giving agents their own account removes the limit.
