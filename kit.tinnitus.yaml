@@ -118,9 +118,22 @@ site:
   tagline: An open, cited map of what is known about tinnitus, checked every night.
   base_url: https://tinnitus-atlas-test.pages.dev  # the Cloudflare Pages address; change when a domain is chosen
   repo_url: https://github.com/tinnitus-atlas/test-site
-  licence_data: CC BY 4.0                 # undecided (CC BY vs CC BY-NC plus paid access); test_site overrides it
+  licence_data: CC BY-NC 4.0              # owner, 25 Nov: free for the public, paid licence for commercial use; test_site overrides it
+  licence_data_url: https://creativecommons.org/licenses/by-nc/4.0/
+  licence_commercial: Commercial use (for example in a product or a paid service) needs a separate licence. Ask at
   test_site: true                         # hides the site from search engines and labels it unreviewed; set false at launch
   licence_code: MIT
+  licence_decided: true                   # chosen 25 Nov (launch check blocks while false)
+  subject: tinnitus and related conditions
+  clinical_review: false                  # true once a named clinician reviews records; until then the launched site says "Pilot"
+  contact_email: ""                       # role address for corrections, e.g. corrections@<domain>; launch check blocks until set
+  analytics_token: ""                     # Cloudflare Web Analytics site token; empty means no analytics (test sites never load it)
+  launch_target_records: 150              # launch check warns below this; a smaller pilot is allowed
+  urgent_care: >-
+    Go to an emergency department or call an ambulance if you have tinnitus after a head injury, or tinnitus with sudden hearing
+    loss, weakness in the muscles of your face, or a spinning feeling (vertigo). Ask for an urgent appointment with a doctor if
+    your tinnitus beats in time with your heartbeat.
+  urgent_care_source: https://www.nhs.uk/conditions/tinnitus/
   kinds:                                  # order and labels on the site
     condition: { label: Condition, plural: Conditions, path: conditions, schema: MedicalCondition }
     related_condition: { label: Related condition, plural: Related conditions, path: related-conditions, schema: MedicalCondition }

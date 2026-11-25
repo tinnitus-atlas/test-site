@@ -158,7 +158,7 @@ def test_every_record_page_says_how_it_was_made_without_naming_tools(tmp_path):
     assert pages
     for p in pages:
         html = p.read_text()
-        assert "How this page was made" in html and "Not yet reviewed by a clinician" in html
+        assert "How this page was made" in html and "Summary not yet checked by a clinician" in html
         assert not re.search(r"qwen|deepseek|sonnet|llama|lm studio", html, re.I)
     treatments = (out / "treatments" / "index.html").read_text()
     assert "Trials linked" in treatments and "not a recommendation" in treatments
@@ -179,3 +179,99 @@ def test_drafted_summaries_are_labelled_as_drafts(tmp_path):
     own = f"<h1>{_html.escape(rec['name'])}</h1>"
     html = next(p for p in out.rglob("index.html") if own in p.read_text()).read_text()
     assert "Draft summary written by an AI model" in html and "some-local-model-7b" not in html
+
+
+def launched(tmp_path, **site):
+    cfg = yaml.safe_load(CFG_PATH.read_text())
+    cfg["site"].update({"test_site": False, **site})
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    cfg_path = tmp_path / "kit.yaml"
+    cfg_path.write_text(yaml.safe_dump(cfg))
+    out = tmp_path / "public"
+    assert build_site.main(["--config", str(cfg_path), "--records", str(REC_PATH), "--out", str(out), "--exports", str(tmp_path / "x")]) == 0
+    return out
+
+
+def test_launch_pages_exist_and_are_linked_from_every_page(tmp_path):
+    out = launched(tmp_path, contact_email="corrections@example.org")
+    for p in ("disclaimer", "privacy", "corrections"):
+        assert (out / p / "index.html").exists()
+        assert f"/{p}/" in (out / "sitemap.xml").read_text()
+    home = (out / "index.html").read_text()
+    for href in ('href="/disclaimer/"', 'href="/privacy/"', 'href="/corrections/"'):
+        assert href in home
+    assert 'mailto:corrections@example.org' in (out / "corrections/index.html").read_text()
+    dis = (out / "disclaimer/index.html").read_text()
+    assert "head injury" in dis and "https://www.nhs.uk/conditions/tinnitus/" in dis
+
+
+def test_bad_contact_address_is_not_printed(tmp_path):
+    out = launched(tmp_path, contact_email='x" onmouseover="alert(1)@a.org')
+    page = (out / "corrections/index.html").read_text()
+    assert "mailto:" not in page and "onmouseover" not in page
+    assert "will be published here before launch" in page
+
+
+def test_launched_site_without_clinician_says_pilot(tmp_path):
+    out = launched(tmp_path)
+    page = (out / "treatments/cbt/index.html").read_text()
+    assert "Pilot. Not medical advice." in page and "no clinician has checked them yet" in page
+    assert "not about the trials, papers or products themselves" in page
+    out2 = launched(tmp_path / "b", clinical_review=True)
+    assert "Pilot." not in (out2 / "treatments/cbt/index.html").read_text()
+
+
+def test_analytics_only_on_launched_site_with_valid_token(tmp_path):
+    token = "a" * 32
+    out = launched(tmp_path, analytics_token=token)
+    assert f'"token": "{token}"' in (out / "index.html").read_text()
+    headers = (out / "_headers").read_text()
+    assert "script-src 'self' https://static.cloudflareinsights.com" in headers
+    assert "connect-src 'self' https://cloudflareinsights.com" in headers
+    assert "cookies" in (out / "privacy/index.html").read_text()
+    bad = launched(tmp_path / "bad", analytics_token='x"><script>alert(1)</script>')
+    assert "cloudflareinsights" not in (bad / "index.html").read_text()
+    assert "cloudflareinsights" not in (bad / "_headers").read_text()
+    # The shipped config is a test site: never loads analytics even with a token.
+    cfg = yaml.safe_load(CFG_PATH.read_text())
+    cfg["site"]["analytics_token"] = token
+    (tmp_path / "t.yaml").write_text(yaml.safe_dump(cfg))
+    test_out = tmp_path / "test-public"
+    build_site.main(["--config", str(tmp_path / "t.yaml"), "--records", str(REC_PATH), "--out", str(test_out), "--exports", str(tmp_path / "x")])
+    assert "cloudflareinsights" not in (test_out / "index.html").read_text()
+    assert "does not use analytics" in (test_out / "privacy/index.html").read_text()
+
+
+def test_pages_carry_link_preview_tags(tmp_path):
+    _, out = build(tmp_path)
+    page = (out / "treatments/cbt/index.html").read_text()
+    for tag in ('property="og:title"', 'property="og:description"', 'property="og:url"', 'name="twitter:card"'):
+        assert tag in page
+
+
+def test_summary_check_results_show_only_for_the_summary_they_checked(tmp_path):
+    from kgkit.common import summary_hash
+    recs = copy.deepcopy(REAL["records"])
+    cbt = next(r for r in recs if r["id"] == "tin:cbt")
+    sound = next(r for r in recs if r["id"] == "tin:sound-therapy-devices")
+    rec = tmp_path / "recs" / "r.json"
+    rec.parent.mkdir(parents=True)
+    rec.write_text(json.dumps({"records": recs}))
+    (rec.parent / "summary_checks.json").write_text(json.dumps({"records": {
+        "tin:cbt": {"status": "flagged", "summary_hash": summary_hash(cbt), "checked_on": "2026-11-25"},
+        "tin:sound-therapy-devices": {"status": "ok", "summary_hash": summary_hash(sound), "checked_on": "2026-11-25"},
+        "tin:bimodal-neuromodulation": {"status": "flagged", "summary_hash": "stale", "checked_on": "2026-11-01"}}}))
+    out = tmp_path / "public"
+    assert build_site.main(["--config", str(CFG_PATH), "--records", str(rec), "--out", str(out), "--exports", str(tmp_path / "x")]) == 0
+    assert "Summary under review" in (out / "treatments/cbt/index.html").read_text()
+    assert "independent automated check on 2026-11-25" in (out / "treatments/sound-therapy-devices/index.html").read_text()
+    assert "Summary under review" not in (out / "treatments/bimodal-neuromodulation/index.html").read_text()
+    assert "Nightly summary check" in (out / "about/index.html").read_text()
+    _, plain = build(tmp_path / "plain")
+    assert "Nightly summary check" not in (plain / "about/index.html").read_text()
+
+
+def test_launched_about_page_links_the_licence_and_commercial_terms(tmp_path):
+    out = launched(tmp_path, contact_email="corrections@example.org")
+    about = (out / "about/index.html").read_text()
+    assert 'href="https://creativecommons.org/licenses/by-nc/4.0/"' in about and "separate licence" in about

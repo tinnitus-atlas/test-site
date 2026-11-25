@@ -222,3 +222,11 @@ def visible(body: str | None, keep_details: bool = False) -> str:
     if not keep_details:
         text = re.sub(r"^[ \t]*<details\b.*?</details>", "", text, flags=re.S | re.M | re.I)
     return text
+
+
+def summary_hash(record: dict) -> str:
+    """Fingerprint of a record's own summary text (short summary plus longer summary), shared by the summary check
+    and the website so a check result is shown only while the summary it checked is unchanged."""
+    import hashlib
+    text = (record.get("tldr") or "").strip() + "\n" + (record.get("summary") or "").strip()
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
