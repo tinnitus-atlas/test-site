@@ -33,6 +33,7 @@ New chat: read this file first; it overrides the Now and Next sections of the cl
 | Roadmap doc (claude.ai) is stale since 5 Nov; this file replaces its Now/Next | Claude | 25 Nov |
 
 ## Log
+- 25 Nov 21:06: loop-doorbell-2052 finished on the Studio (owner) but its report never reached GitHub; flush-2102 (21:02) not picked up after 4 min, while earlier briefs today were picked up within 1-2 min: the watcher has most likely stopped, probably because loop-doorbell-2052 changes the loop's settings (not verified). Owner rule 20:59: routine yeses are the planning chat's (planning check 17). Cost: this chat read the 140k-character Friction tracker whole once; from now on only targeted reads.
 - 25 Nov 20:55: tinnitus-local-2045: local drafting works (Qwen, exit 0) but drafted 0: nothing approved to draft until #30 is reviewed. Kit logged nothing for the Accept click; doorbell still targets an old chat (set 15:39). Brief loop-doorbell-2052 sent (signed, verified). Planning check 17: restore what used to work without asking.
 - 25 Nov 20:45: owner approved PyYAML (Registry card adopted); brief tinnitus-local-2045 sent (signed, verified): installs it in the job's own environment, runs the job, and reads the kit log for the stuck Accept click. Reply format settled (owner's short lines only).
 - 25 Nov 20:40: tinnitus-local-2027 ran: key OK, schedule installed, stopped on missing PyYAML; no checker model listed. Switch request for this chat saved (signed, verified). Planning check 16 added. Friction row logged.
