@@ -87,13 +87,23 @@ def resolver(curie: str) -> str | None:
 
 
 # Static site, no logins or forms: these headers stop the pages being framed, sniffed or made to run outside scripts.
-SECURITY_HEADERS = ("/*\n"
-                    "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-                    "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'\n"
-                    "  X-Content-Type-Options: nosniff\n"
-                    "  Referrer-Policy: strict-origin-when-cross-origin\n"
-                    "  Permissions-Policy: camera=(), microphone=(), geolocation=()\n"
-                    "  Strict-Transport-Security: max-age=31536000\n")
+ANALYTICS_SCRIPT = "https://static.cloudflareinsights.com"
+ANALYTICS_CONNECT = "https://cloudflareinsights.com"
+
+
+def security_headers(analytics: bool = False) -> str:
+    script = "'self'" + (f" {ANALYTICS_SCRIPT}" if analytics else "")
+    connect = "'self'" + (f" {ANALYTICS_CONNECT}" if analytics else "")
+    return ("/*\n"
+            f"  Content-Security-Policy: default-src 'self'; script-src {script}; style-src 'self'; img-src 'self' data:; "
+            f"connect-src {connect}; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; object-src 'none'\n"
+            "  X-Content-Type-Options: nosniff\n"
+            "  Referrer-Policy: strict-origin-when-cross-origin\n"
+            "  Permissions-Policy: camera=(), microphone=(), geolocation=()\n"
+            "  Strict-Transport-Security: max-age=31536000\n")
+
+
+SECURITY_HEADERS = security_headers()
 CORS = "/api/*\n  Access-Control-Allow-Origin: *\n/context/*\n  Access-Control-Allow-Origin: *\n"
 
 
@@ -108,6 +118,13 @@ class Site:
         self.test = bool(self.s.get("test_site"))
         if self.test:
             self.s = {**self.s, "licence_data": "not yet licensed (test site)"}
+        token = str(self.s.get("analytics_token") or "").strip()
+        # Analytics only on the launched site, and only with a well-formed token (it is printed into every page).
+        self.analytics = token if (not self.test and re.fullmatch(r"[A-Za-z0-9]{16,64}", token)) else ""
+        self.pilot = not self.test and not self.s.get("clinical_review")
+        self.contact = str(self.s.get("contact_email") or "").strip()
+        if self.contact and not re.fullmatch(r"[^@\s<>\"']+@[^@\s<>\"']+\.[A-Za-z]{2,}", self.contact):
+            self.contact = ""
         self.held = held
         self.records = [r for r in records if r.get("id") not in held]
         self.by_id = {r["id"]: r for r in self.records}
@@ -147,26 +164,43 @@ class Site:
         t = self.s.get("title", "Knowledge graph")
         ld = f'<script type="application/ld+json">{script_json(jsonld)}</script>' if jsonld else ""
         canon = f'<link rel="canonical" href="{e(self.base + path)}">' if self.base else ""
+        desc = description or self.s.get("tagline", "")
+        social = (f'<meta property="og:site_name" content="{e(t)}"><meta property="og:title" content="{e(title)}">'
+                  f'<meta property="og:description" content="{e(desc)}"><meta property="og:type" content="website">'
+                  + (f'<meta property="og:url" content="{e(self.base + path)}">' if self.base else "")
+                  + '<meta name="twitter:card" content="summary">')
+        beacon = (f'<script defer src="{ANALYTICS_SCRIPT}/beacon.min.js" data-cf-beacon=\'{{"token": "{e(self.analytics)}"}}\'></script>'
+                  if self.analytics else "")
         return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{e(title)}{' · ' + e(t) if title != t else ''}</title><meta name="description" content="{e(description or self.s.get('tagline', ''))}">
-{canon}{'<meta name="robots" content="noindex, nofollow">' if self.test else ''}<link rel="stylesheet" href="/assets/style.css">{ld}</head>
+<title>{e(title)}{' · ' + e(t) if title != t else ''}</title><meta name="description" content="{e(desc)}">
+{social}{canon}{'<meta name="robots" content="noindex, nofollow">' if self.test else ''}<link rel="stylesheet" href="/assets/style.css">{ld}</head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="site"><div class="wrap"><a class="brand" href="/">{e(t)}</a>
 <nav class="top" aria-label="Main"><a href="/treatments/">Treatments</a><a href="/trials/">Trials</a><a href="/graph/">Graph</a><a href="/about/">About</a></nav></div></header>
 <main id="main"><div class="wrap">{body}</div></main>
 <footer class="site"><div class="wrap">Not medical advice. Every statement links to its source; check anything that matters there.
 Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', ''))} · built {e(self.today)} ·
+<a href="/disclaimer/">Disclaimer</a> · <a href="/privacy/">Privacy</a> · <a href="/corrections/">Report an error</a> ·
 <a href="/api/v1/index.json">API</a> · <a href="/llms.txt">llms.txt</a></div></footer>
-<script src="/assets/app.js" defer></script></body></html>
+<script src="/assets/app.js" defer></script>{beacon}</body></html>
 """
 
     def banner(self) -> str:
+        what = ("This site gathers published research and writes short plain-English summaries of it. "
+                "The banner is about this site's summaries and choices, not about the trials, papers or products themselves.")
         if self.test:
-            return ('<p class="banner"><strong>Test version. Not medical advice.</strong> Built by automated tools to test the '
-                    'process; not yet reviewed by a clinician. Do not rely on anything here.</p>')
-        return ('<p class="banner"><strong>Not medical advice.</strong> This is a map of published evidence, built and '
-                'checked nightly by automated tools with human review. Talk to a clinician about your own situation.</p>')
+            return ('<p class="banner"><strong>Test version. Not medical advice.</strong> ' + what +
+                    ' The summaries here were written by automated tools to test the process and nobody has checked them yet. '
+                    'Do not rely on anything here.</p>')
+        if self.pilot:
+            return ('<p class="banner"><strong>Pilot. Not medical advice.</strong> ' + what +
+                    ' Automated tools write and check the summaries and a person approves every change, but no clinician has '
+                    'checked them yet, so a summary can miss or misstate what its source says. Always read the linked source. '
+                    '<a href="/disclaimer/">Read the disclaimer</a>.</p>')
+        return ('<p class="banner"><strong>Not medical advice.</strong> ' + what +
+                ' Summaries are checked nightly by automated tools and reviewed by a clinician. '
+                'Talk to a clinician about your own situation.</p>')
 
     # ---- pages -----------------------------------------------------------------
     def record_page(self, r: dict) -> str:
@@ -336,6 +370,54 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
                 + (" · <a href=\"/api/v1/kgx/\">Biolink KGX files</a>" if self._kgx_present else "") + "</p>")
         return self.page("About", body, "Method, checks and licence", path="/about/")
 
+    def _contact_line(self, what: str) -> str:
+        if self.contact:
+            return f'<p>Email <a href="mailto:{e(self.contact)}">{e(self.contact)}</a> {e(what)}</p>'
+        return "<p>A contact address will be published here before launch.</p>"
+
+    def disclaimer(self) -> str:
+        review = ("The summaries on this site are written by automated tools. A person approves every change and automated checks "
+                  "run every night, but no clinician has checked the summaries yet, so one can miss or misstate what its source says."
+                  if self.pilot or self.test else
+                  "Summaries are checked by automated tools every night, changes are approved by a person, and a clinician reviews them.")
+        body = ("<h1>Disclaimer</h1>" + self.banner() +
+                f"<h2>What this site is</h2><p>A map of published evidence about {e(self.s.get('subject', 'this condition'))}: what has been studied, "
+                "what the studies found, and where to read them. It is not medical advice, a diagnosis or a treatment recommendation.</p>"
+                f"<h2>How far to trust it</h2><p>{e(review)} Summaries can be incomplete or out of date, and a study finding an effect "
+                "does not mean a treatment will work for you. Including a trial, paper or product says it is relevant, not that it is good: "
+                "this site does not rate the quality of the research itself. Every statement links to its source: check the source before relying on anything.</p>"
+                "<h2>Your own health</h2><p>Talk to a qualified clinician about your own situation.</p>"
+                + (f"<p>{e(self.s['urgent_care'])}" + (f' <a href="{ext(self.s["urgent_care_source"])}" rel="nofollow noopener">Source</a>'
+                   if self.s.get("urgent_care_source") else "") + "</p>" if self.s.get("urgent_care") else
+                   "<p>Seek urgent care if your symptoms change suddenly or come with other new symptoms.</p>") +
+                "<h2>No endorsements</h2><p>Listing a product, device, app or organisation is not an endorsement. The site carries no adverts "
+                "and receives no payment from anything it lists.</p>")
+        return self.page("Disclaimer", body, "What this site is and is not", path="/disclaimer/")
+
+    def privacy(self) -> str:
+        stats = ("<p>The site counts visits with Cloudflare Web Analytics, which records page views and page speed without cookies "
+                 "or local storage, according to Cloudflare. The counts are used only to see which pages people use.</p>"
+                 if self.analytics else "<p>The site does not use analytics, cookies or tracking scripts.</p>")
+        body = ("<h1>Privacy</h1><p class=\"lede\">This site has no accounts, no forms, no adverts and no cookies.</p>"
+                "<h2>Visit statistics</h2>" + stats +
+                "<h2>Hosting</h2><p>The site is hosted on Cloudflare Pages. Like any web host, Cloudflare processes your IP address "
+                "to deliver pages and protect the site; see <a href=\"https://www.cloudflare.com/privacypolicy/\" rel=\"nofollow noopener\">"
+                "Cloudflare's privacy policy</a>.</p>"
+                "<h2>If you email us</h2><p>Your message and address are used only to answer you and fix the record you reported. "
+                "They are not published, shared or used for marketing, and are deleted once the correction is closed. "
+                "Please do not send details about your own health.</p>"
+                "<h2>Searching</h2><p>Search on this site runs in your browser; what you type is not sent anywhere.</p>")
+        return self.page("Privacy", body, "What this site collects: almost nothing", path="/privacy/")
+
+    def corrections(self) -> str:
+        body = ("<h1>Report an error</h1><p class=\"lede\">Found a wrong claim, a broken source or something missing? Tell us.</p>"
+                + self._contact_line("with the page address and what is wrong. A source link helps most.") +
+                "<h2>What happens next</h2><ol><li>The report is checked against the cited source.</li>"
+                "<li>A fix is proposed and approved by a person before it goes live.</li>"
+                "<li>The record's \"Last checked\" date changes when the fix is published.</li></ol>"
+                "<p>Please do not send details about your own health; we cannot give personal advice.</p>")
+        return self.page("Report an error", body, "How to report an error and what happens next", path="/corrections/")
+
     def graph_page(self) -> str:
         body = ('<h1>Graph</h1><p class="lede">Every record is a dot; every line is a sourced or linked relationship. '
                 'Drag to rearrange, click a dot to open its page.</p><div id="graph-legend" class="legend"></div>'
@@ -386,7 +468,7 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
             recs = [r for r in self.records if r["kind"] == k]
             if recs:
                 groups[k] = recs
-        urls = ["/", "/about/", "/graph/"]
+        urls = ["/", "/about/", "/graph/", "/disclaimer/", "/privacy/", "/corrections/"]
         for k, recs in groups.items():
             d = out / self.kind_meta(k)["path"]
             d.mkdir(parents=True, exist_ok=True)
@@ -398,7 +480,8 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
                 (p / "index.html").write_text(self.record_page(r), encoding="utf-8")
                 urls.append(self.url(r))
         (out / "index.html").write_text(self.home(groups), encoding="utf-8")
-        for name, content in (("about", self.about()), ("graph", self.graph_page())):
+        for name, content in (("about", self.about()), ("graph", self.graph_page()), ("disclaimer", self.disclaimer()),
+                              ("privacy", self.privacy()), ("corrections", self.corrections())):
             (out / name).mkdir(exist_ok=True)
             (out / name / "index.html").write_text(content, encoding="utf-8")
         (out / "404.html").write_text(self.page("Not found", "<h1>Page not found</h1><p><a href=\"/\">Back to the start</a></p>"), encoding="utf-8")
@@ -446,7 +529,7 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
             (out / "_headers").write_text(SECURITY_HEADERS.replace("/*\n", "/*\n  X-Robots-Tag: noindex, nofollow\n", 1) + CORS, encoding="utf-8")
         else:
             (out / "robots.txt").write_text("User-agent: *\nAllow: /\n" + (f"Sitemap: {self.base}/sitemap.xml\n" if self.base else ""), encoding="utf-8")
-            (out / "_headers").write_text(SECURITY_HEADERS + CORS, encoding="utf-8")
+            (out / "_headers").write_text(security_headers(bool(self.analytics)) + CORS, encoding="utf-8")
         return {"pages": len(urls), "records": len(self.records), "withheld": sorted(self.held)}
 
 
