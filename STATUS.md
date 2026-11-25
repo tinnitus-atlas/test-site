@@ -1,12 +1,12 @@
 # Tinnitus Atlas: status (updated every working turn; newest first in the log)
 
-New chat: read this file first; it overrides the Now and Next sections of the claude.ai status doc. Replies follow the 8-line format (Security, Did, Progress, Broke, Fix, Need from you, Next, stamp); details go here, not in chat.
+New chat: read this file first; it overrides the Now and Next sections of the claude.ai status doc. Reply format: DRAFT, owner reviewing (25 Nov 20:40; the 8 headings were his examples, not a spec). Details go here, not in chat.
 
 ## Now (25 Nov 2026)
 - Site: launch-ready in test mode (pilot banner, disclaimer, privacy and corrections pages, CC BY-NC 4.0, launch check: 2 blockers left: test mode, corrections address).
 - Summary check: built; runs locally on the drafting computer (second local model) once the local job is live; GitHub nightly is the fallback.
 - Records: 10 (target about 150). Content is blocked on the owner's review of #30 (45 proposals; 5 of 90 boxes ticked, gh api pulls/30 at 20:27), whose merge also starts the 6-month backfill.
-- Local job: re-sent as tinnitus-local-2027 with the existing LM Studio key (owner yes 20:25); waits on the owner's Approve click on the kit page.
+- Local job (tinnitus-local-2027, report 20:31): key works, drafting model qwen3.6-35b-a3b-mlx found, job clone and daily schedule installed. Stopped: the job's Python lacks PyYAML (vetting card proposed in the Registry tab); no Gemma checker model listed in LM Studio yet.
 
 ## Next (roadmap, in order)
 1. Local jobs on the drafting computer: drafting (Qwen) + summary check (Gemma 4 26B A4B QAT). Live job: agent-loop approvals/approved-brief-tinnitus-local-2027.md (hard stop 21:30 Sofia; reuses the LM Studio key OpenCode already uses; reports whether LM Studio listens only on this computer). The chat checks agent-loop reports/tinnitus-local-2027*.md and the studio-status branch; no progress at the first check = alert the owner.
@@ -20,7 +20,10 @@ New chat: read this file first; it overrides the Now and Next sections of the cl
 | Item | Waiting on | Since |
 | --- | --- | --- |
 | Review #30 (merge starts the backfill) | owner | 24 Nov |
-| Click Approve on tinnitus-local-2027 on the kit page | owner | 25 Nov 20:27 |
+| Approve PyYAML vetting card (Registry tab), then Claude re-sends the job | owner | 25 Nov 20:40 |
+| Gemma 4 26B A4B QAT not listed in LM Studio: download or check it finished | owner | 25 Nov 20:40 |
+| Accept this chat on the kit page (switch/chat-2026-11-25-2035.md, verified) | owner | 25 Nov 20:40 |
+| Approve the reply format (proposed in chat 20:40) | owner | 25 Nov 20:40 |
 | Confirm LM Studio is not reachable from the Wi-Fi ("Serve on Local Network" off): answered by the job's readiness check | tinnitus-local-2027 | 25 Nov |
 | Loop: reports from Claude Code do not reach GitHub from its sandbox (since 22 Nov); kit page has no switch button | loop fix job (not yet planned) | 22 Nov |
 | Ship it: retry with a rebase when an update conflicts | Claude | 25 Nov |
@@ -31,6 +34,7 @@ New chat: read this file first; it overrides the Now and Next sections of the cl
 | Roadmap doc (claude.ai) is stale since 5 Nov; this file replaces its Now/Next | Claude | 25 Nov |
 
 ## Log
+- 25 Nov 20:40: tinnitus-local-2027 ran: key OK, schedule installed, stopped on missing PyYAML; no checker model listed. Switch request for this chat saved (signed, verified). Planning check 16 added. Friction row logged.
 - 25 Nov 20:27: new chat took over (start point: this file). Owner chose to keep LM Studio's key check on and reuse the existing key (credential register row 3); brief tinnitus-local-2027 sent (signed, verified), 1550 superseded. Planning check 15 added: look for existing keys before asking the owner. Project doc carry-on.md now points only here. Friction row logged.
 - 25 Nov 20:15: tinnitus-local-1550 ran and reported (the loop delivers reports again). Nothing set up yet on the drafting computer: no settings file, no scheduled job; LM Studio requires an API token, so models could not be listed. Owner decision: switch off LM Studio "Require Authentication" (server is local only) or provide a token. Gemma 4 26B A4B QAT (google/) chosen as checker.
 - 25 Nov 15:59: check-in: tinnitus-local-1550 not yet forwarded by the kit (no "forwarded" mark, no progress, no studio-status branch). Waiting on the owner's Approve click; if approved and still unmarked, the kit or watcher is down.
