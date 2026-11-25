@@ -46,6 +46,10 @@ jobs:
           REVIEW_WEEKDAY: monday
           SYNC_ON_OPEN: "1"
           FORCE_PROPOSALS: ${{ github.event_name == 'workflow_dispatch' }}
+          # Summary check (kgkit/summary_check.py): an independent model; inactive while these are empty.
+          CHECKER_BASE_URL: ${{ vars.CHECKER_BASE_URL }}
+          CHECKER_MODEL: ${{ vars.CHECKER_MODEL }}
+          CHECKER_API_KEY: ${{ secrets.CHECKER_API_KEY }}
         run: |
           git config user.name "kg-nightly"
           git config user.email "kg-nightly@users.noreply.github.com"
