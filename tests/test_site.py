@@ -158,7 +158,7 @@ def test_every_record_page_says_how_it_was_made_without_naming_tools(tmp_path):
     assert pages
     for p in pages:
         html = p.read_text()
-        assert "How this page was made" in html and "Not yet reviewed by a clinician" in html
+        assert "How this page was made" in html and "Summary not yet checked by a clinician" in html
         assert not re.search(r"qwen|deepseek|sonnet|llama|lm studio", html, re.I)
     treatments = (out / "treatments" / "index.html").read_text()
     assert "Trials linked" in treatments and "not a recommendation" in treatments

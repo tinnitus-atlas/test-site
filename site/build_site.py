@@ -263,7 +263,7 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
             summary = "Summary written from the sources listed below"
         reviewer = r.get("reviewedBy")
         review = (f'<span class="badge ok">Reviewed by {e(reviewer)}</span>' if reviewer
-                  else '<span class="badge warn">Not yet reviewed by a clinician</span>')
+                  else '<span class="badge warn">Summary not yet checked by a clinician</span>')
         checks = [f"{len(srcs)} primary source{'s' if len(srcs) != 1 else ''}"]
         if quotes:
             checks.append(f"{quotes} quote{'s' if quotes != 1 else ''} checked against the source every night")
