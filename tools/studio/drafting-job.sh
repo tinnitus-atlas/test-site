@@ -7,6 +7,8 @@
 #   REPO_DIR=/absolute/path/to/a/clone/of/the/repository
 #   DRAFTER_BASE_URL=http://localhost:1234/v1      # LM Studio's local server
 #   DRAFTER_MODEL=<model id exactly as GET $DRAFTER_BASE_URL/models lists it>
+# Optional, for the summary check with a second local model from a different family (see kgkit/summary_check.py):
+#   CHECKER_MODEL=<model id of the checking model>    CHECKER_BASE_URL (default: DRAFTER_BASE_URL)
 # The clone must be able to push branches and use the GitHub CLI (gh) as the trusted bot account.
 set -uo pipefail
 
@@ -55,6 +57,28 @@ log "drafting with $DRAFTER_MODEL"
 ./run_drafts.sh
 code=$?
 log "finished with exit code $code"
+
+# Summary check with the second local model, when one is set. Results go to main through their own pull request.
+if [ -n "${CHECKER_MODEL:-}" ]; then
+  export CHECKER_BASE_URL="${CHECKER_BASE_URL:-$DRAFTER_BASE_URL}" CHECKER_MODEL
+  [ -n "${CHECKER_API_KEY:-${DRAFTER_API_KEY:-}}" ] && export CHECKER_API_KEY="${CHECKER_API_KEY:-$DRAFTER_API_KEY}"
+  if [ -n "$LMS" ] && ! "$LMS" ps 2>/dev/null | grep -qF "$CHECKER_MODEL"; then
+    log "loading the checking model"
+    "$LMS" load "$CHECKER_MODEL" --context-length "${CHECKER_CONTEXT:-16384}" -y >/dev/null 2>&1 \
+      || log "could not load the checking model with fixed settings; the server will load it on the first request"
+  fi
+  if git checkout -q main >/dev/null 2>&1 && git pull -q --ff-only origin main >/dev/null 2>&1; then
+    SC="records/summary_checks.json"
+    log "summary check: $(python3 -m kgkit.summary_check --config kit.tinnitus.yaml --records records/tinnitus.records.json \
+      --state "$SC" --reports reports 2>/dev/null | tail -n 1)"
+    if [ -n "$(git status --porcelain -- "$SC")" ]; then
+      tools/publish_via_pr.sh "studio/summary-checks-$(date -u +%Y-%m-%d)" "Update summary checks $(date -u +%Y-%m-%d)" "$SC" >/dev/null 2>&1 \
+        && log "summary check results sent for merging" || log "could not publish the summary check results"
+    fi
+  else
+    log "summary check skipped: could not update the clone"
+  fi
+fi
 # Publish a privacy-safe readiness report (no paths, names or model ids) so nobody has to relay it by hand.
 bash "$REPO_DIR/tools/studio/doctor.sh" --publish --last-exit "$code" >/dev/null 2>&1 || true
 exit $code

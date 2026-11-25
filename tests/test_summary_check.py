@@ -125,3 +125,35 @@ def test_cli_without_checker_writes_nothing(tmp_path, monkeypatch):
     code = sc.main(["--config", str(root / "kit.tinnitus.yaml"), "--records", str(root / "records/tinnitus.records.json"),
                     "--state", str(state), "--reports", str(tmp_path)], http=Web())
     assert code == 0 and not state.exists()
+
+
+def test_cost_cap_turns_the_run_into_a_rolling_spot_check(tmp_path):
+    m = model({"claims": [{"claim": "x", "verdict": "supported"}]})
+    m.last_cost = 0.08
+    recs = [rec(id=f"t:{i}") for i in range(5)]
+    report, state = run(recs, m, tmp=tmp_path, cfg={"summary_check": {"max_cost_per_run": 0.2}})
+    assert len(m.calls) == 3  # 0.08, 0.16, 0.24: stops after the cap is passed
+    assert report["capped"] and report["cost_usd"] == 0.24
+    assert "cost cap reached" in sc.digest_line(report)
+    # next night: the two never-checked records go first
+    m.calls.clear()
+    report, state = run(recs, m, state, tmp=tmp_path, today=TODAY + dt.timedelta(days=31), cfg={"summary_check": {"max_cost_per_run": 0.1}})
+    assert len(m.calls) == 2 and sorted(report["checked"][i]["id"] for i in range(2)) == ["t:3", "t:4"]
+
+
+def test_openrouter_cost_is_read_from_the_response(monkeypatch):
+    class Resp:
+        def __init__(self, body):
+            self.body = body
+        def read(self):
+            return self.body
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+    body = json.dumps({"choices": [{"message": {"content": "{}"}}], "usage": {"cost": 0.0012}}).encode()
+    monkeypatch.setenv("CHECKER_BASE_URL", "https://example.org/v1")
+    monkeypatch.setenv("CHECKER_MODEL", "openai/gpt-6-luna")
+    monkeypatch.setattr(sc.urllib.request, "urlopen", lambda req, timeout: Resp(body))
+    call = sc.openai_compatible()
+    assert call([{"role": "user", "content": "x"}]) == "{}" and call.last_cost == 0.0012

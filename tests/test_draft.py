@@ -369,3 +369,9 @@ def test_studio_job_asks_for_the_key_when_the_server_requires_one(tmp_path):
         assert r.returncode == 2 and "DRAFTER_API_KEY" in r.stdout
     finally:
         srv.shutdown()
+
+
+def test_studio_job_runs_the_summary_check_only_when_a_checker_is_set():
+    job = (ROOT / "tools" / "studio" / "drafting-job.sh").read_text()
+    assert 'if [ -n "${CHECKER_MODEL:-}" ]; then' in job and "kgkit.summary_check" in job
+    assert "publish_via_pr.sh" in job

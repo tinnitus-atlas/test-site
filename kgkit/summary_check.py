@@ -17,7 +17,10 @@ every DOI or PMID cited, and the record's quotes (each already checked word for 
 
 Results are kept in records/summary_checks.json keyed by record id, with a fingerprint of the summary they checked;
 the website shows a result only while the summary still matches it. A record is checked again when its summary or
-its source text changes, or after `recheck_days`. At most `max_per_night` records are sent to the model per run.
+its source text changes, or after `recheck_days`. At most `max_per_night` records are sent to the model per run, and
+the run stops sending once its cost reaches `max_cost_per_run` (US dollars, default 0.20, as reported by the provider;
+a local model costs nothing). Records never checked go first, then the longest unchecked, so a capped run becomes a
+rolling spot check that reaches every record over the following nights.
 
 Checker settings (environment): CHECKER_BASE_URL (an OpenAI-compatible endpoint), CHECKER_MODEL, CHECKER_API_KEY
 (optional for local servers). Never stored in the repository.
@@ -43,7 +46,7 @@ from . import doi_check, draft
 from .common import FetchError, Http, KitError, load_config, load_records, normalise, summary_hash, write_report
 
 Checker = Callable[[list[dict]], str]
-DEFAULTS = {"max_per_night": 20, "recheck_days": 30, "max_source_chars": 12000}
+DEFAULTS = {"max_per_night": 20, "recheck_days": 30, "max_source_chars": 12000, "max_cost_per_run": 0.20}
 VERDICTS = {"supported", "contradicted", "not_found"}
 FAMILIES = [  # name fragments -> family; the first match wins
     ("claude", "anthropic"), ("anthropic", "anthropic"), ("gpt", "openai"), ("openai", "openai"), ("o1", "openai"),
@@ -136,8 +139,12 @@ def openai_compatible() -> Checker | None:
         headers = {"Content-Type": "application/json", **({"Authorization": f"Bearer {key}"} if key else {})}
         req = urllib.request.Request(base.rstrip("/") + "/chat/completions", data=body, headers=headers)
         with urllib.request.urlopen(req, timeout=120) as resp:
-            return json.loads(resp.read().decode())["choices"][0]["message"]["content"]
+            data = json.loads(resp.read().decode())
+        cost = (data.get("usage") or {}).get("cost")  # reported by OpenRouter on every response; absent locally
+        call.last_cost = float(cost) if isinstance(cost, (int, float)) else 0.0  # type: ignore[attr-defined]
+        return data["choices"][0]["message"]["content"]
     call.model = model  # type: ignore[attr-defined]
+    call.last_cost = 0.0  # type: ignore[attr-defined]
     return call
 
 
@@ -198,6 +205,9 @@ def run(records: list[dict], cfg: dict, http: Http, checker: Checker | None, mod
     for gone in [k for k in state if k not in ids]:
         del state[gone]
     budget = int(st["max_per_night"])
+    cap, spent = float(st["max_cost_per_run"]), 0.0
+    # Never checked first, then the longest since their last check: a capped run works through every record in turn.
+    records = sorted(records, key=lambda r: (state.get(r["id"]) or {}).get("checked_on", ""))
     for r in records:
         text = summary_text(r)
         if not text:
@@ -215,15 +225,19 @@ def run(records: list[dict], cfg: dict, http: Http, checker: Checker | None, mod
             state[r["id"]] = {**entry, "status": "no_source", "claims": []}
             report["checked"].append({"id": r["id"], "status": "no_source"})
             continue
-        if budget <= 0:
-            report["skipped"].append({"id": r["id"], "reason": "nightly limit reached; next run"})
+        if budget <= 0 or spent >= cap:
+            why = "nightly limit reached" if budget <= 0 else f"cost cap of ${cap:.2f} reached"
+            report["skipped"].append({"id": r["id"], "reason": f"{why}; next run"})
             continue
         budget -= 1
         messages = [{"role": "system", "content": SYSTEM},
                     {"role": "user", "content": json.dumps({"summary": text, "source_text": source}, ensure_ascii=False)}]
         try:
-            claims = parse(checker(messages), source)
+            raw = checker(messages)
+            spent += float(getattr(checker, "last_cost", 0.0) or 0.0)
+            claims = parse(raw, source)
         except Exception as exc:  # a failed call or unreadable answer leaves the old result in place
+            spent += float(getattr(checker, "last_cost", 0.0) or 0.0)
             report["skipped"].append({"id": r["id"], "reason": f"checker failed: {type(exc).__name__}"})
             continue
         state[r["id"]] = {**entry, "status": status_of(claims), "claims": claims}
@@ -232,6 +246,8 @@ def run(records: list[dict], cfg: dict, http: Http, checker: Checker | None, mod
     for v in state.values():
         counts[v.get("status")] = counts.get(v.get("status"), 0) + 1
     report["counts"] = counts
+    report["cost_usd"] = round(spent, 4)
+    report["capped"] = any("cost cap" in x["reason"] for x in report["skipped"])
     report["flagged"] = [{"id": k, "claims": [c for c in v.get("claims") or [] if c["verdict"] == "contradicted"]}
                          for k, v in sorted(state.items()) if v.get("status") == "flagged"]
     report["unclear"] = sorted(k for k, v in state.items() if v.get("status") == "unclear")
@@ -245,7 +261,8 @@ def digest_line(report: dict) -> str:
     c = report.get("counts") or {}
     line = (f"Summary check: {len(report.get('checked') or [])} checked tonight; totals {c.get('ok', 0)} supported, "
             f"{c.get('flagged', 0)} under review, {c.get('unclear', 0)} partly not found in the source text, "
-            f"{c.get('no_source', 0)} without readable sources")
+            f"{c.get('no_source', 0)} without readable sources; cost ${report.get('cost_usd', 0):.4f}"
+            + (" (cost cap reached: the rest follow on the next nights)" if report.get("capped") else ""))
     for f in (report.get("flagged") or [])[:5]:
         first = (f.get("claims") or [{}])[0]
         line += f"; {f['id']}: \"{first.get('claim', '')[:100]}\" vs source \"{first.get('evidence', '')[:100]}\""
