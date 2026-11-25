@@ -176,6 +176,10 @@ def test_open_proposal_keys_reads_the_open_pull_request_branches():
     calls = []
 
     def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:  # edit time: not edited after the merge
+            return '{"data": {"repository": {"pullRequest": {"lastEditedAt": null}}}}'
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
         calls.append(args)
         if args[:3] == ["gh", "pr", "list"]:
             return json.dumps([{"number": 20, "headRefName": "proposals/2026-12-01"}])

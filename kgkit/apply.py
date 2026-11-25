@@ -240,6 +240,27 @@ def merged_proposal_prs(runner: Runner, limit: int = 30) -> list[dict]:
     return sorted(prs, key=lambda p: p["number"])
 
 
+EDIT_QUERY = ("query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name)"
+              "{pullRequest(number:$number){lastEditedAt mergedAt}}}")
+
+
+def edited_after_merge(runner: Runner, number: int, merged_at: str | None) -> bool | None:
+    """True when the pull request's text was edited after it was merged (then it is no longer what was approved),
+    False when not, None when GitHub could not say. Reads GitHub's own edit time, which nobody can set."""
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    try:
+        if "/" not in repo:
+            repo = runner(["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"]).strip()
+        owner, name = repo.split("/", 1)
+        out = runner(["gh", "api", "graphql", "-f", f"query={EDIT_QUERY}", "-f", f"owner={owner}", "-f",
+                      f"name={name}", "-F", f"number={number}"])
+        pr = json.loads(out)["data"]["repository"]["pullRequest"]
+    except Exception:  # noqa: BLE001 - an unknown answer is reported, never guessed
+        return None
+    edited, merged = pr.get("lastEditedAt"), pr.get("mergedAt") or merged_at
+    return bool(edited and merged and edited > merged)
+
+
 def proposals_at(runner: Runner, commit: str) -> list[dict]:
     return report_at(runner, commit).get("proposals", [])
 
@@ -281,6 +302,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
 
     batches = []
     replaced: list[int] = []
+    held_notes: list[str] = []
     if args.from_github:
         try:
             for pr in merged_proposal_prs(runner):
@@ -288,6 +310,14 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
                     continue
                 commit = (pr.get("mergeCommit") or {}).get("oid")
                 if not commit:
+                    continue
+                edited = edited_after_merge(runner, pr["number"], pr.get("mergedAt"))
+                if edited is not False:
+                    why = ("its text was edited after the merge, so it is no longer what was approved"
+                           if edited else "GitHub could not say whether its text was edited after the merge")
+                    msg = f"pull request #{pr['number']} not applied: {why}; use Re-review to bring its items back"
+                    print(f"Skipped: {msg}")
+                    held_notes.append(msg)
                     continue
                 rep = report_at(runner, commit)
                 batches.append((pr["number"], pr.get("body") or "", rep.get("proposals", [])))
@@ -312,7 +342,7 @@ def main(argv: list[str] | None = None, runner: Runner = run_cmd) -> int:
             return 2
         batches.append((args.label, body, props))
 
-    notes = []
+    notes = list(held_notes)
     kept = []
     for label, body, props in batches:
         if approved_numbers(body) or decisions.maybe_numbers(body):

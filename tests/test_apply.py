@@ -148,6 +148,10 @@ def test_unticked_merged_pull_request_is_skipped_and_reported(workspace):
     ticked_body = ticked(proposals(), {1})
 
     def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:  # edit time: not edited after the merge
+            return '{"data": {"repository": {"pullRequest": {"lastEditedAt": null}}}}'
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
         if args[:3] == ["gh", "pr", "list"]:
             return json.dumps([
                 {"number": 12, "title": "Nightly proposals", "body": ticked(proposals(), set()), "mergeCommit": {"oid": "abc"}, "author": {"login": "varioso-bot"}},
@@ -179,6 +183,10 @@ def test_from_github_with_standin(workspace):
     calls = []
 
     def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:  # edit time: not edited after the merge
+            return '{"data": {"repository": {"pullRequest": {"lastEditedAt": null}}}}'
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
         calls.append(args)
         if args[:3] == ["gh", "pr", "list"]:
             return json.dumps([{"number": 12, "title": "Nightly proposals", "body": body, "mergeCommit": {"oid": "abc"}, "author": {"login": "varioso-bot"}},
@@ -197,6 +205,10 @@ def test_from_github_with_standin(workspace):
 
 def test_github_unavailable_exit_2(workspace):
     def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:  # edit time: not edited after the merge
+            return '{"data": {"repository": {"pullRequest": {"lastEditedAt": null}}}}'
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
         raise FileNotFoundError("gh")
     code = ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json"),
                     "--from-github"], runner=runner)
@@ -291,3 +303,37 @@ def test_multi_line_details_still_match(workspace):
     body = ticked(props, {1})
     assert ap.shown_matches(body, 1, props[0])
     assert ap.shown_matches(body.replace("\n", "\r\n"), 1, props[0])
+
+
+def _github_runner(body, edited, merged="2026-11-30T10:00:00Z", fail=False):
+    def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:
+            if fail:
+                raise RuntimeError("GraphQL unavailable")
+            return json.dumps({"data": {"repository": {"pullRequest": {"lastEditedAt": edited, "mergedAt": merged}}}})
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
+        if args[:3] == ["gh", "pr", "list"]:
+            return json.dumps([{"number": 12, "title": "Nightly proposals", "body": body, "mergeCommit": {"oid": "abc"},
+                                "author": {"login": "varioso-bot"}, "mergedAt": merged}])
+        if args[:2] == ["git", "show"]:
+            return json.dumps({"proposals": proposals()})
+        raise AssertionError(args)
+    return runner
+
+
+def test_a_review_edited_after_its_merge_is_never_applied(workspace, capsys):
+    runner = _github_runner(ticked(proposals(), {1}), edited="2026-11-30T11:00:00Z")
+    assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json"),
+                    "--from-github"], runner=runner) == 0
+    assert "status" not in load(workspace)["tin:trial-tent-a"] or load(workspace)["tin:trial-tent-a"]["status"] != "completed"
+    assert "edited after the merge" in capsys.readouterr().out
+    assert not (workspace / "records" / "applied_prs.json").exists()
+
+
+def test_edits_before_the_merge_are_fine_and_unknown_edit_times_hold_the_review(workspace, capsys):
+    ok = _github_runner(ticked(proposals(), {1}), edited="2026-11-30T09:00:00Z")
+    assert ap.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(workspace / "records" / "r.json"),
+                    "--from-github"], runner=ok) == 0
+    assert load(workspace)["tin:trial-tent-a"]["status"] == "completed"
+    assert ap.edited_after_merge(_github_runner("", None, fail=True), 12, "x") is None

@@ -244,6 +244,10 @@ def test_rebuild_reads_every_merged_pull_request(tmp_path):
     body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved", 1)
 
     def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:  # edit time: not edited after the merge
+            return '{"data": {"repository": {"pullRequest": {"lastEditedAt": null}}}}'
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
         if args[:3] == ["gh", "pr", "list"]:
             assert args[args.index("--limit") + 1] == "200"
             return json.dumps([{"number": 12, "title": "Nightly proposals x", "body": body, "mergeCommit": {"oid": "abc"},
@@ -319,6 +323,10 @@ def test_rebuild_skips_pull_requests_with_no_ticks(tmp_path):
     body = proposals.to_markdown(props).replace("- [x] Approved", "- [ ] Approved")
 
     def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:  # edit time: not edited after the merge
+            return '{"data": {"repository": {"pullRequest": {"lastEditedAt": null}}}}'
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
         if args[:3] == ["gh", "pr", "list"]:
             return json.dumps([{"number": 12, "title": "Nightly proposals x", "body": body, "mergeCommit": {"oid": "abc"},
                                 "author": {"login": "varioso"}, "mergedAt": "2026-11-07T00:06:19Z"}])
@@ -335,6 +343,10 @@ def test_merged_re_review_settles_the_pull_request_it_replaces(tmp_path):
     body = proposals.to_markdown(props).replace("- [ ] Approved", "- [x] Approved")
 
     def runner(args):
+        if args[:3] == ["gh", "api", "graphql"]:  # edit time: not edited after the merge
+            return '{"data": {"repository": {"pullRequest": {"lastEditedAt": null}}}}'
+        if args[:3] == ["gh", "repo", "view"]:
+            return "o/r"
         if args[:3] == ["gh", "pr", "list"]:
             return json.dumps([{"number": 30, "title": "Nightly proposals re-review #12 (1)", "body": body,
                                 "mergeCommit": {"oid": "abc"}, "author": {"login": "varioso-bot"}}])
