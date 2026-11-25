@@ -87,6 +87,21 @@ if [ "${NO_GIT:-0}" != "1" ] && [ -n "$(git status --porcelain -- "$HELD_DEST")"
   esac
 fi
 
+# Summary check: an independent model compares each summary with its sources (only when a checker is configured).
+SUMMARY_LINE="Summary check: not configured"
+if [ -n "${CHECKER_BASE_URL:-}" ] && [ -n "${CHECKER_MODEL:-}" ]; then
+  SC_DEST="$(dirname "$RECORDS")/summary_checks.json"
+  SUMMARY_LINE="$(python3 -m kgkit.summary_check --config "$CONFIG" --records "$RECORDS" --state "$SC_DEST" --reports "$REPORTS" 2>>"$LOG" | tail -n 1)"
+  [ -n "$SUMMARY_LINE" ] || SUMMARY_LINE="Summary check: failed to run (see reports/nightly.log)"
+  if [ "${NO_GIT:-0}" != "1" ] && [ -n "$(git status --porcelain -- "$SC_DEST")" ]; then
+    URL="$(tools/publish_via_pr.sh "nightly/summary-checks-$DAY" "Update summary checks $DAY" "$SC_DEST" 2>>"$LOG")"
+    case $? in
+      0|3) SUMMARY_LINE="$SUMMARY_LINE (website update: $URL)";;
+      *) SUMMARY_LINE="$SUMMARY_LINE (could not publish the results, see reports/nightly.log)";;
+    esac
+  fi
+fi
+
 OUT="exports" ./run_validation.sh "$RECORDS" >>"$LOG" 2>&1
 EXPORT=$?
 case "$EXPORT" in
@@ -103,6 +118,7 @@ COUNT="$(python3 -c "import json;print(json.load(open('$REPORTS/proposals.json')
   else sed 's/^Status: all clear$/Status: Biolink export problems (checks otherwise clear)/' "$REPORTS/summary.md"; fi
   echo "$APPLY_LINE"
   echo "$HELD_LINE"
+  echo "$SUMMARY_LINE"
   echo "$EXPORT_LINE"
   echo
   echo "Top proposals:"

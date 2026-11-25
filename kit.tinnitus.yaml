@@ -118,10 +118,12 @@ site:
   tagline: An open, cited map of what is known about tinnitus, checked every night.
   base_url: https://tinnitus-atlas-test.pages.dev  # the Cloudflare Pages address; change when a domain is chosen
   repo_url: https://github.com/tinnitus-atlas/test-site
-  licence_data: CC BY 4.0                 # undecided (CC BY vs CC BY-NC plus paid access); test_site overrides it
+  licence_data: CC BY-NC 4.0              # owner, 25 Nov: free for the public, paid licence for commercial use; test_site overrides it
+  licence_data_url: https://creativecommons.org/licenses/by-nc/4.0/
+  licence_commercial: Commercial use (for example in a product or a paid service) needs a separate licence. Ask at
   test_site: true                         # hides the site from search engines and labels it unreviewed; set false at launch
   licence_code: MIT
-  licence_decided: false                  # set true once the data licence is chosen (launch check blocks until then)
+  licence_decided: true                   # chosen 25 Nov (launch check blocks while false)
   subject: tinnitus and related conditions
   clinical_review: false                  # true once a named clinician reviews records; until then the launched site says "Pilot"
   contact_email: ""                       # role address for corrections, e.g. corrections@<domain>; launch check blocks until set

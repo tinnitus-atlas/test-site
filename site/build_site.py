@@ -29,7 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from kgkit import audit  # noqa: E402
-from kgkit.common import KitError, load_config, load_records  # noqa: E402
+from kgkit.common import KitError, load_config, load_records, summary_hash  # noqa: E402
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 AGENT_LABEL = {
@@ -108,8 +108,9 @@ CORS = "/api/*\n  Access-Control-Allow-Origin: *\n/context/*\n  Access-Control-A
 
 
 class Site:
-    def __init__(self, cfg: dict, records: list[dict], held: set[str], today: str):
+    def __init__(self, cfg: dict, records: list[dict], held: set[str], today: str, summary_checks: dict | None = None):
         self.cfg, self.today = cfg, today
+        self.summary_checks = summary_checks or {}
         self.s = cfg.get("site") or {}
         self.kinds = self.s.get("kinds") or {}
         self.labels = self.s.get("predicate_labels") or {}
@@ -264,13 +265,24 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
         reviewer = r.get("reviewedBy")
         review = (f'<span class="badge ok">Reviewed by {e(reviewer)}</span>' if reviewer
                   else '<span class="badge warn">Summary not yet checked by a clinician</span>')
+        sc = self.summary_check(r)
+        if sc and sc.get("status") == "flagged":
+            review = ('<span class="badge warn">Summary under review: an automated check found a point its sources may '
+                      'not support. Read the sources before relying on it.</span> ' + review)
         checks = [f"{len(srcs)} primary source{'s' if len(srcs) != 1 else ''}"]
         if quotes:
             checks.append(f"{quotes} quote{'s' if quotes != 1 else ''} checked against the source every night")
         if r.get("kind") == "trial":
             checks.append("status compared with the trial registry every night")
+        if sc and sc.get("status") == "ok":
+            checks.append(f"summary compared with its sources by an independent automated check on {sc.get('checked_on', '')}")
         return ('<aside class="trust" aria-label="How this page was made"><h2>How this page was made</h2><ul class="plain">'
                 f"<li>{e(summary)}.</li><li>{e(', '.join(checks))}.</li><li>{review}</li></ul></aside>")
+
+    def summary_check(self, r: dict) -> dict | None:
+        """The latest summary check for this record, only if it checked the summary as it reads now."""
+        sc = self.summary_checks.get(r["id"])
+        return sc if isinstance(sc, dict) and sc.get("summary_hash") == summary_hash(r) else None
 
     def evidence_counts(self, r: dict) -> tuple:
         """(linked trials, sources) for a treatment-like record."""
@@ -349,7 +361,7 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
     def dataset_ld(self) -> dict:
         ld = {"@context": "https://schema.org", "@type": "Dataset", "name": self.s.get("title", ""),
               "description": f"{self.s.get('tagline', '')} Open, cited records on conditions, treatments, trials, devices and papers, with every statement linked to its source.",
-              "license": self.s.get("licence_data"), "dateModified": self.today, "isAccessibleForFree": True}
+              "license": (self.s.get("licence_data_url") if not self.test else None) or self.s.get("licence_data"), "dateModified": self.today, "isAccessibleForFree": True}
         if self.base:
             ld["url"] = self.base + "/"
             ld["distribution"] = [{"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": self.base + "/api/v1/records.json"}]
@@ -364,11 +376,21 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
                 "<li>Quotes must appear word for word in the cited abstract.</li><li>Trial details are compared with ClinicalTrials.gov.</li>"
                 "<li>Regulatory claims must cite the regulator, not only the manufacturer.</li><li>Records older than their freshness limit are flagged.</li>"
                 "<li>Records failing a blocking check are withheld until fixed.</li></ul>"
-                f"<h2>Licence</h2><p>Data: {e(self.s.get('licence_data', ''))}. Code: {e(self.s.get('licence_code', ''))}. Quotes remain the work of their authors.</p>"
-                "<h2>For developers and AI agents</h2><p><a href=\"/api/v1/index.json\">JSON index</a> · <a href=\"/api/v1/records.json\">all records</a> · "
+                f"<h2>Licence</h2><p>Data: {self.licence_link()}. Code: {e(self.s.get('licence_code', ''))}. Quotes remain the work of their authors, "
+                "and facts copied from public registries stay as free as their source.</p>"
+                + (f"<p>{e(self.s['licence_commercial'])} " + (f'<a href="mailto:{e(self.contact)}">{e(self.contact)}</a>' if self.contact
+                   else "A contact address will be published here before launch.") + "</p>" if self.s.get("licence_commercial") and not self.test else "")
+                + ("<h2>Nightly summary check</h2><p>An AI model from a different family from the one that wrote a summary compares it with "
+                "the source text every night. A summary it finds at odds with its source is marked \"Summary under review\" until a person fixes it.</p>" if self.summary_checks else "")
+                + "<h2>For developers and AI agents</h2><p><a href=\"/api/v1/index.json\">JSON index</a> · <a href=\"/api/v1/records.json\">all records</a> · "
                 "<a href=\"/api/v1/graph.json\">graph</a> · <a href=\"/llms.txt\">llms.txt</a>"
                 + (" · <a href=\"/api/v1/kgx/\">Biolink KGX files</a>" if self._kgx_present else "") + "</p>")
         return self.page("About", body, "Method, checks and licence", path="/about/")
+
+    def licence_link(self) -> str:
+        url = self.s.get("licence_data_url")
+        name = e(self.s.get("licence_data", ""))
+        return f'<a href="{ext(url)}" rel="license noopener">{name}</a>' if url and not self.test else name
 
     def _contact_line(self, what: str) -> str:
         if self.contact:
@@ -557,7 +579,14 @@ def main(argv=None) -> int:
         return 2
     held_file = Path(args.held) if args.held else Path(args.records).parent / "held_records.json"
     held = held_records(records, cfg, held_file)
-    site = Site(cfg, records, held, dt.date.today().isoformat())
+    checks_file = Path(args.records).parent / "summary_checks.json"
+    summary_checks = {}
+    if checks_file.exists():
+        try:
+            summary_checks = json.loads(checks_file.read_text(encoding="utf-8")).get("records") or {}
+        except (ValueError, AttributeError):
+            summary_checks = {}
+    site = Site(cfg, records, held, dt.date.today().isoformat(), summary_checks)
     result = site.build(Path(args.out), Path(args.exports) if args.exports else None)
     print(f"Built {result['pages']} pages from {result['records']} records into {args.out}"
           + (f"; withheld {len(result['withheld'])}: {', '.join(result['withheld'])}" if result["withheld"] else ""))

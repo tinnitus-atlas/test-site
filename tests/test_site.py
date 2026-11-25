@@ -247,3 +247,31 @@ def test_pages_carry_link_preview_tags(tmp_path):
     page = (out / "treatments/cbt/index.html").read_text()
     for tag in ('property="og:title"', 'property="og:description"', 'property="og:url"', 'name="twitter:card"'):
         assert tag in page
+
+
+def test_summary_check_results_show_only_for_the_summary_they_checked(tmp_path):
+    from kgkit.common import summary_hash
+    recs = copy.deepcopy(REAL["records"])
+    cbt = next(r for r in recs if r["id"] == "tin:cbt")
+    sound = next(r for r in recs if r["id"] == "tin:sound-therapy-devices")
+    rec = tmp_path / "recs" / "r.json"
+    rec.parent.mkdir(parents=True)
+    rec.write_text(json.dumps({"records": recs}))
+    (rec.parent / "summary_checks.json").write_text(json.dumps({"records": {
+        "tin:cbt": {"status": "flagged", "summary_hash": summary_hash(cbt), "checked_on": "2026-11-25"},
+        "tin:sound-therapy-devices": {"status": "ok", "summary_hash": summary_hash(sound), "checked_on": "2026-11-25"},
+        "tin:bimodal-neuromodulation": {"status": "flagged", "summary_hash": "stale", "checked_on": "2026-11-01"}}}))
+    out = tmp_path / "public"
+    assert build_site.main(["--config", str(CFG_PATH), "--records", str(rec), "--out", str(out), "--exports", str(tmp_path / "x")]) == 0
+    assert "Summary under review" in (out / "treatments/cbt/index.html").read_text()
+    assert "independent automated check on 2026-11-25" in (out / "treatments/sound-therapy-devices/index.html").read_text()
+    assert "Summary under review" not in (out / "treatments/bimodal-neuromodulation/index.html").read_text()
+    assert "Nightly summary check" in (out / "about/index.html").read_text()
+    _, plain = build(tmp_path / "plain")
+    assert "Nightly summary check" not in (plain / "about/index.html").read_text()
+
+
+def test_launched_about_page_links_the_licence_and_commercial_terms(tmp_path):
+    out = launched(tmp_path, contact_email="corrections@example.org")
+    about = (out / "about/index.html").read_text()
+    assert 'href="https://creativecommons.org/licenses/by-nc/4.0/"' in about and "separate licence" in about

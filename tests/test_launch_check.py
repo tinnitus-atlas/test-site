@@ -18,9 +18,15 @@ def states(cfg, recs=RECS):
 def test_shipped_config_is_not_ready():
     st = states(CFG)
     assert st["Test mode off"] == lc.BLOCK
-    assert st["Data licence chosen"] == lc.BLOCK
+    assert st["Data licence chosen"] == lc.DONE  # chosen 25 Nov: CC BY-NC 4.0
     assert st["Corrections address published"] == lc.BLOCK
     assert st["Own domain"] == lc.WARN and st["Records"] == lc.WARN and st["Clinician review"] == lc.WARN
+
+
+def test_licence_blocks_until_decided():
+    cfg = copy.deepcopy(CFG)
+    cfg["site"]["licence_decided"] = False
+    assert states(cfg)["Data licence chosen"] == lc.BLOCK
 
 
 def test_ready_when_decisions_are_made_and_only_warnings_remain(tmp_path):
@@ -35,5 +41,5 @@ def test_ready_when_decisions_are_made_and_only_warnings_remain(tmp_path):
 def test_cli_exit_codes(tmp_path):
     rec = ROOT / "records" / "tinnitus.records.json"
     assert lc.main(["--config", str(ROOT / "kit.tinnitus.yaml"), "--records", str(rec), "--report", str(tmp_path / "r.md")]) == 1
-    assert "Not ready: 3 blockers." in (tmp_path / "r.md").read_text()
+    assert "Not ready: 2 blockers." in (tmp_path / "r.md").read_text()
     assert lc.main(["--config", str(tmp_path / "missing.yaml"), "--records", str(rec)]) == 2
