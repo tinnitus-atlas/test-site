@@ -161,11 +161,6 @@ class Site:
         return pair[1 if reverse else 0]
 
     # ---- page frame ----------------------------------------------------------
-    def nav(self, path: str) -> str:
-        links = [("/treatments/", "Treatments"), ("/trials/", "Trials"), ("/graph/", "Graph"), ("/about/", "About")]
-        cur = ' aria-current="page"'
-        return "".join(f'<a href="{u}"{cur if path.startswith(u) else ""}>{t}</a>' for u, t in links)
-
     def page(self, title: str, body: str, description: str = "", jsonld: dict | None = None, path: str = "/") -> str:
         t = self.s.get("title", "Knowledge graph")
         ld = f'<script type="application/ld+json">{script_json(jsonld)}</script>' if jsonld else ""
@@ -183,7 +178,7 @@ class Site:
 {social}{canon}{'<meta name="robots" content="noindex, nofollow">' if self.test else ''}<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css">{ld}</head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="site"><div class="wrap"><a class="brand" href="/"><img src="/assets/logo.svg" alt="" width="28" height="28"><span>{e(t)}</span></a>
-<nav class="top" aria-label="Main">{self.nav(path)}</nav></div></header>
+<nav class="top" aria-label="Main"><a href="/treatments/">Treatments</a><a href="/trials/">Trials</a><a href="/graph/">Graph</a><a href="/about/">About</a></nav></div></header>
 <main id="main"><div class="wrap">{body}</div></main>
 <footer class="site"><div class="wrap">Not medical advice. Every statement links to its source; check anything that matters there.
 Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', ''))} · built {e(self.today)} ·
@@ -350,36 +345,17 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
                 f'<div class="table-scroll"><table id="tbl"><thead>{head}</thead><tbody>{"".join(rows)}</tbody></table></div>')
         return self.page(km["plural"], body, f"{km['plural']} in the {self.s.get('title', '')}", path=f"/{km['path']}/")
 
-    def audiogram(self) -> str:
-        # Decorative: an audiogram grid (frequency across, hearing level down) with the notch around 4 kHz that
-        # often goes with noise-related tinnitus. aria-hidden: it carries no data.
-        xs = [("250", 80), ("500", 240), ("1k", 400), ("2k", 560), ("4k", 720), ("8k", 880)]
-        v = "".join(f'<line x1="{x}" y1="40" x2="{x}" y2="430"/>' for _, x in xs)
-        h = "".join(f'<line x1="40" y1="{y}" x2="960" y2="{y}"/>' for y in range(40, 431, 65))
-        labels = "".join(f'<text x="{x}" y="455" text-anchor="middle">{t} Hz</text>' if t[-1] != "k" else
-                         f'<text x="{x}" y="455" text-anchor="middle">{t[:-1]} kHz</text>' for t, x in xs)
-        return ('<svg class="audiogram" viewBox="0 0 1000 470" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">'
-                '<defs><linearGradient id="fade" x1="0" x2="1"><stop offset=".38" stop-color="#fff" stop-opacity="0"/>'
-                '<stop offset=".62" stop-color="#fff"/></linearGradient><mask id="right"><rect width="1000" height="470" fill="url(#fade)"/></mask></defs>'
-                f'<g class="grid">{v}{h}</g><g mask="url(#right)">{labels}'
-                '<polyline class="curve" points="80,120 240,128 400,140 560,175 720,330 880,210"/>'
-                '<circle class="notch" cx="720" cy="330" r="18"/><circle class="notch" cx="720" cy="330" r="34"/></g></svg>')
-
     def home(self, groups: dict) -> str:
-        items = "".join(f'<li><a href="/{e(self.kind_meta(k)["path"])}/"><span>{e(self.kind_meta(k)["plural"])}</span><span class="n">{len(v)}</span></a></li>'
+        cards = "".join(f'<a class="card" href="/{e(self.kind_meta(k)["path"])}/"><span class="n">{len(v)}</span><span class="l">{e(self.kind_meta(k)["plural"])}</span></a>'
                         for k, v in groups.items())
-        total = sum(len(v) for v in groups.values())
-        body = (f'<section class="hero">{self.audiogram()}<div class="inner">'
-                f"<h1>{e(self.s.get('title', ''))}</h1><p class=\"lede\">{e(self.s.get('tagline', ''))}</p>"
-                f'<div class="searchbox"><label for="site-search">Search treatments, trials, papers and devices</label>'
+        body = (f"<h1>{e(self.s.get('title', ''))}</h1><p class=\"lede\">{e(self.s.get('tagline', ''))}</p>{self.banner()}"
+                f'<label for="site-search" class="meta">Search everything</label>'
                 f'<input id="site-search" type="search" data-index="/api/v1/index.json" placeholder="Try: sound therapy, CBT, trial">'
-                f'<ul id="search-results" class="results"></ul></div>'
-                f'<p class="scale">{total} records, each linked to its sources. Checked every night.</p></div></section>'
-                f'{self.banner()}<h2>Browse</h2><ul class="index">{items}</ul>'
-                f'<h2>How this works</h2><ul class="steps"><li>Every statement links to a primary source, with a short verbatim quote where it states a finding.</li>'
+                f'<ul id="search-results" class="results"></ul><h2>Browse</h2><div class="grid">{cards}</div>'
+                f'<h2>How this works</h2><ul><li>Every statement links to a primary source, with a short verbatim quote where it states a finding.</li>'
                 f'<li>Automated checks run every night: cited papers are matched to their claims, quotes are found in the source, trial statuses are compared with the registry, and stale records are flagged.</li>'
                 f'<li>Changes found overnight are proposed, not applied; a person approves each one.</li></ul>'
-                f'<p><a href="/graph/">Explore the graph</a> or read the <a href="/about/">method and licence</a>.</p>')
+                f'<p><a href="/graph/">Explore the graph</a> · <a href="/about/">Method and licence</a></p>')
         return self.page(self.s.get("title", "Knowledge graph"), body, self.s.get("tagline", ""), self.dataset_ld(), "/")
 
     def dataset_ld(self) -> dict:
