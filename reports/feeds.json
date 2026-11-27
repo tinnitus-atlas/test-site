@@ -1,55 +1,14 @@
 {
-  "generated": "2026-11-06T16:15:03+00:00",
+  "generated": "2026-11-27T01:08:14+00:00",
   "check": "feeds",
+  "mode": "backfill",
+  "since": "2026-09-08",
+  "until": "2026-10-28",
   "trials": {
     "status": "ok",
-    "since": "2026-10-07",
+    "since": "2026-09-08",
+    "until": "2026-10-28",
     "candidates": [
-      {
-        "nct": "NCT07877701",
-        "title": "Acute Nicotine Gum and Auditory Brain Responses in Adults With Chronic Tinnitus",
-        "status": "not_yet_recruiting",
-        "phase": "phase1/phase2",
-        "sponsor": "San Diego State University",
-        "last_update": "2026-11-06",
-        "url": "https://clinicaltrials.gov/study/NCT07877701"
-      },
-      {
-        "nct": "NCT07777549",
-        "title": "A Study of the Safety and Efficacy of TRTL-913 in Healthy Volunteers (Part A) and in Adults With Tinnitus (Part B)",
-        "status": "recruiting",
-        "phase": "phase2",
-        "sponsor": "Tortugas Neuroscience, Inc.",
-        "last_update": "2026-11-04",
-        "url": "https://clinicaltrials.gov/study/NCT07777549"
-      },
-      {
-        "nct": "NCT04172766",
-        "title": "Apple Hearing Study",
-        "status": "terminated",
-        "phase": null,
-        "sponsor": "Apple Inc.",
-        "last_update": "2026-11-02",
-        "url": "https://clinicaltrials.gov/study/NCT04172766"
-      },
-      {
-        "nct": "NCT05618002",
-        "title": "Lemborexant vs Clonidine vs Sedatives to Treat Insomnia in Chronic Pain Patients",
-        "status": "recruiting",
-        "phase": null,
-        "sponsor": "Salem Anaesthesia Pain Clinic",
-        "last_update": "2026-11-02",
-        "url": "https://clinicaltrials.gov/study/NCT05618002"
-      },
-      {
-        "nct": "NCT06646302",
-        "title": "Residual Inhibition of 40 Hz Burst Sound in Tinnitus Patients",
-        "status": "completed",
-        "phase": "na",
-        "sponsor": "Eye & ENT Hospital of Fudan University",
-        "last_update": "2026-10-27",
-        "url": "https://clinicaltrials.gov/study/NCT06646302"
-      },
       {
         "nct": "NCT05650645",
         "title": "The Efficacy of Incobotulinum Toxin A Injections for Treatment of Tinnitus: a Randomized Controlled Trial",
@@ -69,13 +28,13 @@
         "url": "https://clinicaltrials.gov/study/NCT06799169"
       },
       {
-        "nct": "NCT07893860",
-        "title": "Effect of a Totally Implantable Cochlear Implant on Tinnitus Severity in Adults With Preoperative Tinnitus",
-        "status": "not_yet_recruiting",
+        "nct": "NCT06646302",
+        "title": "Residual Inhibition of 40 Hz Burst Sound in Tinnitus Patients",
+        "status": "completed",
         "phase": "na",
-        "sponsor": "Cochlear",
-        "last_update": "2026-10-26",
-        "url": "https://clinicaltrials.gov/study/NCT07893860"
+        "sponsor": "Eye & ENT Hospital of Fudan University",
+        "last_update": "2026-10-27",
+        "url": "https://clinicaltrials.gov/study/NCT06646302"
       },
       {
         "nct": "NCT07895004",
@@ -130,61 +89,159 @@
         "sponsor": "San Diego State University",
         "last_update": "2026-10-16",
         "url": "https://clinicaltrials.gov/study/NCT07772089"
+      },
+      {
+        "nct": "NCT05245318",
+        "title": "The CATT Trial: Cost-effectiveness of a Smartphone Application for Tinnitus Treatment",
+        "status": "completed",
+        "phase": "na",
+        "sponsor": "Hasselt University",
+        "last_update": "2026-10-01",
+        "url": "https://clinicaltrials.gov/study/NCT05245318"
+      },
+      {
+        "nct": "NCT07106593",
+        "title": "Treatment for PTSD and Tinnitus",
+        "status": "recruiting",
+        "phase": "na",
+        "sponsor": "The University of Texas Health Science Center at San Antonio",
+        "last_update": "2026-09-25",
+        "url": "https://clinicaltrials.gov/study/NCT07106593"
+      },
+      {
+        "nct": "NCT07435298",
+        "title": "Navigated Repetitive TMS for Chronic Tinnitus",
+        "status": "suspended",
+        "phase": "na",
+        "sponsor": "National University Hospital, Singapore",
+        "last_update": "2026-09-23",
+        "url": "https://clinicaltrials.gov/study/NCT07435298"
+      },
+      {
+        "nct": "NCT07830069",
+        "title": "Advanced Neurofeedback for Tinnitus",
+        "status": "not_yet_recruiting",
+        "phase": "na",
+        "sponsor": "University of Zurich",
+        "last_update": "2026-09-21",
+        "url": "https://clinicaltrials.gov/study/NCT07830069"
+      },
+      {
+        "nct": "NCT04800107",
+        "title": "Effect of Highly Bioavailable Curcumin on Subjective Tinnitus",
+        "status": "withdrawn",
+        "phase": "na",
+        "sponsor": "Henry Ford Health System",
+        "last_update": "2026-09-18",
+        "url": "https://clinicaltrials.gov/study/NCT04800107"
+      },
+      {
+        "nct": "NCT07826507",
+        "title": "A Study Testing Safety and Efficacy of Transtympanic Paliroden for the Treatment of Cochlear Synaptopathy in Participants With Chronic, Constant Tinnitus",
+        "status": "not_yet_recruiting",
+        "phase": "phase1/phase2",
+        "sponsor": "Cilcare SAS",
+        "last_update": "2026-09-17",
+        "url": "https://clinicaltrials.gov/study/NCT07826507"
+      },
+      {
+        "nct": "NCT07190482",
+        "title": "Treatment of Tinnitus With Olanzapine",
+        "status": "completed",
+        "phase": "phase1",
+        "sponsor": "University of Sao Paulo",
+        "last_update": "2026-09-15",
+        "url": "https://clinicaltrials.gov/study/NCT07190482"
+      },
+      {
+        "nct": "NCT04661995",
+        "title": "Notched Noise Therapy for Suppression of Tinnitus",
+        "status": "completed",
+        "phase": "na",
+        "sponsor": "VA Office of Research and Development",
+        "last_update": "2026-09-14",
+        "url": "https://clinicaltrials.gov/study/NCT04661995"
+      },
+      {
+        "nct": "NCT07240649",
+        "title": "Emerging Indications for Hyperbaric Oxygen Treatment",
+        "status": "not_yet_recruiting",
+        "phase": "phase4",
+        "sponsor": "Jay C. Buckey Jr.",
+        "last_update": "2026-09-09",
+        "url": "https://clinicaltrials.gov/study/NCT07240649"
+      },
+      {
+        "nct": "NCT07631403",
+        "title": "CBT, Breathing Exercises, and Psychoeducation on Tinnitus-Related Distress",
+        "status": "completed",
+        "phase": "na",
+        "sponsor": "Ege University",
+        "last_update": "2026-09-09",
+        "url": "https://clinicaltrials.gov/study/NCT07631403"
+      },
+      {
+        "nct": "NCT06782308",
+        "title": "Tinnitus Patient Preferences Survey",
+        "status": "completed",
+        "phase": null,
+        "sponsor": "Nicolas Gninenko",
+        "last_update": "2026-09-09",
+        "url": "https://clinicaltrials.gov/study/NCT06782308"
       }
     ],
-    "off_topic_skipped": []
+    "off_topic_skipped": [
+      "NCT07272473"
+    ]
   },
   "papers": {
     "status": "ok",
-    "since": "2026-10-07",
+    "since": "2026-09-08",
+    "until": "2026-10-28",
     "candidates": [
       {
-        "title": "A dual behavioral and electrophysiological evaluation of the sodium salicylate induced tinnitus model in rats: Comparing click and chirp stimuli in auditory brainstem responses",
-        "doi": "10.1016/j.bbr.2026.116529",
-        "pmid": "42860223",
-        "journal": "Behav Brain Res",
-        "published": "2026-10-11",
-        "url": "https://doi.org/10.1016/j.bbr.2026.116529"
+        "title": "Audiologic Assessment of Tinnitus: Integrating Contemporary Clinical Practice and International Guideline Recommendations",
+        "doi": "10.1016/j.otc.2026.08.005",
+        "pmid": "42810932",
+        "journal": "Otolaryngol Clin North Am",
+        "published": "2026-09-29",
+        "pub_type": "review; journal article",
+        "url": "https://doi.org/10.1016/j.otc.2026.08.005",
+        "evidence_rank": 0,
+        "evidence_level": "guideline or consensus"
       },
       {
-        "title": "Pulsatile Tinnitus Alleviated by Contralateral Stent Implantation",
-        "doi": "10.1161/strokeaha.126.056600",
-        "pmid": "42932401",
-        "journal": "Stroke",
-        "published": "2026-10-26",
-        "url": "https://doi.org/10.1161/strokeaha.126.056600"
+        "title": "Executive Summary of the Clinical Practice Guideline on Tinnitus Update",
+        "doi": "10.1002/ohn.70418",
+        "pmid": "42861486",
+        "journal": "Otolaryngol Head Neck Surg",
+        "published": "2026-10-01",
+        "pub_type": "practice guideline; journal article",
+        "url": "https://doi.org/10.1002/ohn.70418",
+        "evidence_rank": 0,
+        "evidence_level": "guideline or consensus"
       },
       {
-        "title": "Eustachian Tube Dysfunction and Tinnitus: A Rapid Review of the Potential Complementary Role of Acoustic Immittance",
-        "doi": "10.65717/iao.2026.262472",
-        "pmid": "42973397",
-        "journal": "J Int Adv Otol",
-        "published": "2026-10-23",
-        "url": "https://doi.org/10.65717/iao.2026.262472"
+        "title": "Plain Language Summary: Clinical Practice Guideline: Tinnitus Update",
+        "doi": "10.1002/ohn.70419",
+        "pmid": "42861475",
+        "journal": "Otolaryngol Head Neck Surg",
+        "published": "2026-10-01",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1002/ohn.70419",
+        "evidence_rank": 0,
+        "evidence_level": "guideline or consensus"
       },
       {
-        "title": "Exploring tinnitus-like central hyperactivity in a large language model-based computational analog of hearing loss",
-        "doi": "10.1016/j.heares.2026.109845",
-        "pmid": "42956687",
-        "journal": "Hear Res",
-        "published": "2026-10-23",
-        "url": "https://doi.org/10.1016/j.heares.2026.109845"
-      },
-      {
-        "title": "Establishment of an animal model of GPIAS-defined tinnitus-like behavior with normal auditory brainstem response threshold profiles",
-        "doi": "10.1016/j.neuroscience.2026.10.043",
-        "pmid": "42951056",
-        "journal": "Neuroscience",
-        "published": "2026-10-28",
-        "url": "https://doi.org/10.1016/j.neuroscience.2026.10.043"
-      },
-      {
-        "title": "Enhanced auditory gain and tinnitus-like behavior in mice lacking KCTD12, an auxiliary subunit of GABA&lt;sub&gt;B&lt;/sub&gt; receptors",
-        "doi": "10.1016/j.nbd.2026.107664",
-        "pmid": "42946148",
-        "journal": "Neurobiol Dis",
-        "published": "2026-10-27",
-        "url": "https://doi.org/10.1016/j.nbd.2026.107664"
+        "title": "Clinical Practice Guideline: Tinnitus Update",
+        "doi": "10.1002/ohn.70417",
+        "pmid": "42861423",
+        "journal": "Otolaryngol Head Neck Surg",
+        "published": "2026-10-01",
+        "pub_type": "practice guideline; journal article",
+        "url": "https://doi.org/10.1002/ohn.70417",
+        "evidence_rank": 0,
+        "evidence_level": "guideline or consensus"
       },
       {
         "title": "Clinical practice guidance for imaging selection in pulsatile tinnitus: an evidence-based expert consensus",
@@ -192,23 +249,32 @@
         "pmid": "42880154",
         "journal": "Eur J Radiol",
         "published": "2026-10-09",
-        "url": "https://doi.org/10.1016/j.ejrad.2026.113299"
+        "pub_type": "review; journal article",
+        "url": "https://doi.org/10.1016/j.ejrad.2026.113299",
+        "evidence_rank": 0,
+        "evidence_level": "guideline or consensus"
       },
       {
-        "title": "Speech Perception in Noise in Individuals With Tinnitus: Top-Down and Bottom-Up Processes",
-        "doi": "10.1097/aud.0000000000001896",
-        "pmid": "42878672",
-        "journal": "Ear Hear",
-        "published": "2026-10-15",
-        "url": "https://doi.org/10.1097/aud.0000000000001896"
+        "title": "Efficacy of acupuncture for tinnitus with anxiety: a systematic review and meta-analysis",
+        "doi": "10.3389/fneur.2026.1920000",
+        "pmid": "42839938",
+        "journal": "Front Neurol",
+        "published": "2026-09-22",
+        "pub_type": "meta-analysis; systematic review; systematic-review; journal article",
+        "url": "https://doi.org/10.3389/fneur.2026.1920000",
+        "evidence_rank": 1,
+        "evidence_level": "systematic review or meta-analysis"
       },
       {
-        "title": "The history of tinnitus: from ancient interpretations to contemporary neuroscience and neuromodulation",
-        "doi": "10.1007/s00405-026-10711-0",
-        "pmid": "42867651",
-        "journal": "Eur Arch Otorhinolaryngol",
-        "published": "2026-10-13",
-        "url": "https://doi.org/10.1007/s00405-026-10711-0"
+        "title": "Tinnitus and hearing outcomes following stapes surgery in otosclerosis patients: A systematic review and meta-analysis",
+        "doi": "10.1016/j.amjoto.2026.104957",
+        "pmid": "42822231",
+        "journal": "Am J Otolaryngol",
+        "published": "2026-09-30",
+        "pub_type": "meta-analysis; systematic review; journal article",
+        "url": "https://doi.org/10.1016/j.amjoto.2026.104957",
+        "evidence_rank": 1,
+        "evidence_level": "systematic review or meta-analysis"
       },
       {
         "title": "Effect of the vagus nerve stimulation combined with sound therapy for tinnitus treatment: a systematic review and meta-analysis",
@@ -216,63 +282,76 @@
         "pmid": "42867641",
         "journal": "Eur Arch Otorhinolaryngol",
         "published": "2026-10-13",
-        "url": "https://doi.org/10.1007/s00405-026-10713-y"
+        "pub_type": "review; journal article",
+        "url": "https://doi.org/10.1007/s00405-026-10713-y",
+        "evidence_rank": 1,
+        "evidence_level": "systematic review or meta-analysis"
       },
       {
-        "title": "Multidomain Auditory Differences in Tinnitus With a Clinically Normal Audiogram: Accounting for Extended High-Frequency Hearing",
-        "doi": "10.1044/2026_jslhr-26-00071",
-        "pmid": "42862891",
-        "journal": "J Speech Lang Hear Res",
-        "published": "2026-10-12",
-        "url": "https://doi.org/10.1044/2026_jslhr-26-00071"
-      },
-      {
-        "title": "Tinnitus and inhibitory control in adults with bilateral hearing loss: A Stroop study in hearing aid users",
-        "doi": "10.1080/23279095.2026.2747122",
-        "pmid": "42860782",
-        "journal": "Appl Neuropsychol Adult",
-        "published": "2026-10-11",
-        "url": "https://doi.org/10.1080/23279095.2026.2747122"
-      },
-      {
-        "title": "Learning Perspectives in the Management of Sigmoid Sinus Diverticulum in the Absence of Pulsatile Tinnitus",
-        "doi": "10.1177/01455613261480423",
-        "pmid": "42854672",
-        "journal": "Ear Nose Throat J",
-        "published": "2026-10-09",
-        "url": "https://doi.org/10.1177/01455613261480423"
-      },
-      {
-        "title": "Editorial: Tinnitus in relation to auditory processing: unravelling complex relationships",
-        "doi": "10.3389/fnins.2026.1814945",
-        "pmid": "42973638",
-        "journal": "Front Neurosci",
-        "published": "2026-10-19",
-        "url": "https://doi.org/10.3389/fnins.2026.1814945"
-      },
-      {
-        "title": "Embolization of jugular bulb diverticula in the management of pulsatile tinnitus",
-        "doi": "10.3389/fneur.2026.1951324",
-        "pmid": "42922877",
+        "title": "Study protocol for a randomized controlled trial comparing penetrating needling and cognitive behavioral therapy for subjective tinnitus",
+        "doi": "10.3389/fneur.2026.1877858",
+        "pmid": "42827440",
         "journal": "Front Neurol",
-        "published": "2026-10-08",
-        "url": "https://doi.org/10.3389/fneur.2026.1951324"
+        "published": "2026-09-18",
+        "pub_type": "clinical trial protocol; methods-article; journal article",
+        "url": "https://doi.org/10.3389/fneur.2026.1877858",
+        "evidence_rank": 2,
+        "evidence_level": "randomized trial"
       },
       {
-        "title": "Everolimus for Tinnitus: A Questionable Causal Chain [Letter]",
-        "doi": "10.2147/dddt.s659416",
-        "pmid": "42903802",
-        "journal": "Drug Des Devel Ther",
-        "published": "2026-10-16",
-        "url": "https://doi.org/10.2147/dddt.s659416"
+        "title": "Differential mechanisms of continuous theta burst stimulation and low-frequency repetitive transcranial magnetic stimulation for chronic tinnitus: preliminary efficacy dissociation by local focalization vs. network dispersion",
+        "doi": "10.3389/fneur.2026.1921227",
+        "pmid": "42876536",
+        "journal": "Front Neurol",
+        "published": "2026-09-30",
+        "pub_type": "research-article; randomized controlled trial; journal article",
+        "url": "https://doi.org/10.3389/fneur.2026.1921227",
+        "evidence_rank": 2,
+        "evidence_level": "randomized trial"
       },
       {
-        "title": "Phenylacetylglutamine and memory B cells as mediators of the migraine–tinnitus relationship: a multi-omics two-step Mendelian randomization study",
-        "doi": "10.21203/rs.3.rs-11247243/v1",
-        "pmid": null,
-        "journal": null,
-        "published": "2026-10-20",
-        "url": "https://doi.org/10.21203/rs.3.rs-11247243/v1"
+        "title": "[Multiple associations between tinnitus and cognition]",
+        "doi": "10.1007/s00106-026-01801-w",
+        "pmid": "42714575",
+        "journal": "HNO",
+        "published": "2026-09-09",
+        "pub_type": "review; journal article; english abstract",
+        "url": "https://doi.org/10.1007/s00106-026-01801-w",
+        "evidence_rank": 3,
+        "evidence_level": "other review"
+      },
+      {
+        "title": "A Multi-Integrated Approach to Tinnitus Phenotype-Guided Otolaryngological, Dental, and Physiotherapeutic Care",
+        "doi": "10.3390/life16101588",
+        "pmid": "42942176",
+        "journal": "Life (Basel)",
+        "published": "2026-09-23",
+        "pub_type": "review-article; review; journal article",
+        "url": "https://doi.org/10.3390/life16101588",
+        "evidence_rank": 3,
+        "evidence_level": "other review"
+      },
+      {
+        "title": "Tinnitus and Tinnitus-Like Symptoms in Cerebral Venous Outflow Disorders: A Critical Review",
+        "doi": "10.3791/72090",
+        "pmid": "42825490",
+        "journal": "J Vis Exp",
+        "published": "2026-10-01",
+        "pub_type": "video-audio media; review; journal article",
+        "url": "https://doi.org/10.3791/72090",
+        "evidence_rank": 3,
+        "evidence_level": "other review"
+      },
+      {
+        "title": "The history of tinnitus: from ancient interpretations to contemporary neuroscience and neuromodulation",
+        "doi": "10.1007/s00405-026-10711-0",
+        "pmid": "42867651",
+        "journal": "Eur Arch Otorhinolaryngol",
+        "published": "2026-10-13",
+        "pub_type": "review; journal article",
+        "url": "https://doi.org/10.1007/s00405-026-10711-0",
+        "evidence_rank": 3,
+        "evidence_level": "other review"
       },
       {
         "title": "Pulsatile Tinnitus: A Multimodality Imaging Review of Etiology and Diagnostic Evaluation",
@@ -280,7 +359,265 @@
         "pmid": null,
         "journal": null,
         "published": "2026-10-16",
-        "url": "https://doi.org/10.21203/rs.3.rs-10916152/v1"
+        "pub_type": "preprint",
+        "url": "https://doi.org/10.21203/rs.3.rs-10916152/v1",
+        "evidence_rank": 3,
+        "evidence_level": "other review"
+      },
+      {
+        "title": "Eustachian Tube Dysfunction and Tinnitus: A Rapid Review of the Potential Complementary Role of Acoustic Immittance",
+        "doi": "10.65717/iao.2026.262472",
+        "pmid": "42973397",
+        "journal": "J Int Adv Otol",
+        "published": "2026-10-23",
+        "pub_type": "review; journal article",
+        "url": "https://doi.org/10.65717/iao.2026.262472",
+        "evidence_rank": 3,
+        "evidence_level": "other review"
+      },
+      {
+        "title": "Efficacy of donepezil in patients with chronic tinnitus",
+        "doi": "10.1016/j.clinsp.2026.101135",
+        "pmid": "42710361",
+        "journal": "Clinics (Sao Paulo)",
+        "published": "2026-09-08",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.1016/j.clinsp.2026.101135",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Outcomes of Cochlear Implantation for Single-Sided Deafness and Asymmetric Hearing Loss: Quality of Life, Tinnitus, and the Effect of Deafness Duration",
+        "doi": "10.21053/ceo.2026-00144",
+        "pmid": "42706939",
+        "journal": "Clin Exp Otorhinolaryngol",
+        "published": "2026-09-08",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.21053/ceo.2026-00144",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Tinnitus Practice Patterns in Korean University Hospitals: Findings from a 2025 Nationwide Survey and Comparison with 2013",
+        "doi": "10.21053/ceo.2026-00159",
+        "pmid": "42706937",
+        "journal": "Clin Exp Otorhinolaryngol",
+        "published": "2026-09-08",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.21053/ceo.2026-00159",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Are there distinctive EEG Signatures of tinnitus-related emotional distress? Evidence from spectral parameterization and source-level functional connectivity",
+        "doi": "10.1016/j.heares.2026.109807",
+        "pmid": "42732697",
+        "journal": "Hear Res",
+        "published": "2026-09-09",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1016/j.heares.2026.109807",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Dynamic and static spontaneous activity alterations and neurotransmitter coupling in chronic tinnitus",
+        "doi": "10.1016/j.brainresbull.2026.112115",
+        "pmid": "42716315",
+        "journal": "Brain Res Bull",
+        "published": "2026-09-09",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1016/j.brainresbull.2026.112115",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Higher social support is associated with lower tinnitus-related disability among institutionalized older adults: a cross-sectional study",
+        "doi": "10.3389/fpubh.2026.1886767",
+        "pmid": "42780264",
+        "journal": "Front Public Health",
+        "published": "2026-09-09",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.3389/fpubh.2026.1886767",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Digital treatment for tinnitus combining tinnitus retraining therapy and cognitive behavioral therapy: a Norwegian naturalistic study",
+        "doi": "10.3389/fpsyt.2026.1868527",
+        "pmid": "42787411",
+        "journal": "Front Psychiatry",
+        "published": "2026-09-10",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.3389/fpsyt.2026.1868527",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Acupuncture for chronic tinnitus: study protocol for a clinical trial with auditory brainstem response outcomes",
+        "doi": "10.3389/fneur.2026.1928456",
+        "pmid": "42787075",
+        "journal": "Front Neurol",
+        "published": "2026-09-10",
+        "pub_type": "clinical trial protocol; methods-article; journal article",
+        "url": "https://doi.org/10.3389/fneur.2026.1928456",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "The impact of hearing loss on tinnitus-related brain reorganization: evidence from multimodal resting-state functional magnetic resonance imaging",
+        "doi": "10.21037/qims-2026-1069",
+        "pmid": "42861109",
+        "journal": "Quant Imaging Med Surg",
+        "published": "2026-09-15",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.21037/qims-2026-1069",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      }
+    ],
+    "queued": [
+      {
+        "title": "Everolimus Attenuates Salicylate-Induced Tinnitus-Like Behavior and Auditory Cortical Hyperexcitability",
+        "doi": "10.2147/dddt.s632911",
+        "pmid": "42780685",
+        "journal": "Drug Des Devel Ther",
+        "published": "2026-09-18",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.2147/dddt.s632911",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Sedentary Time and Current Tinnitus in Midlife Korean Women (Aged 40 to 64 Years): A Cross-Sectional Analysis from KNHANES 2014-2018",
+        "doi": "10.3390/healthcare14183094",
+        "pmid": "42793632",
+        "journal": "Healthcare (Basel)",
+        "published": "2026-09-20",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.3390/healthcare14183094",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "A familial case series of refractory head noise, tinnitus, and sleep disorders caused by internal jugular vein stenosis: illustrative cases",
+        "doi": "10.3171/case25693",
+        "pmid": "42766864",
+        "journal": "J Neurosurg Case Lessons",
+        "published": "2026-09-21",
+        "pub_type": "journal article; case-report",
+        "url": "https://doi.org/10.3171/case25693",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "An ICF-based content analysis of the overlap between questionnaires assessing tinnitus distress and depressive symptoms",
+        "doi": "10.1371/journal.pone.0358644",
+        "pmid": "42766619",
+        "journal": "PLoS One",
+        "published": "2026-09-21",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.1371/journal.pone.0358644",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Combined Bioinformatic Analysis and RNA Sequencing Uncover Key Tinnitus-Related Molecules in the Cingulate Gyrus",
+        "doi": "10.3390/ijms27198543",
+        "pmid": "42883790",
+        "journal": "Int J Mol Sci",
+        "published": "2026-09-24",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.3390/ijms27198543",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Pulsed Radiofrequency of the Stellate Ganglion for Tinnitus: A Two-Case Series Suggesting a Novel Approach",
+        "doi": "10.1155/cria/3203716",
+        "pmid": "42787500",
+        "journal": "Case Rep Anesthesiol",
+        "published": "2026-09-24",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1155/cria/3203716",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Improved stacking ensemble learning for objective tinnitus severity assessment based on functional near-infrared spectroscopy signals",
+        "doi": "10.21203/rs.3.rs-10976756/v1",
+        "pmid": null,
+        "journal": null,
+        "published": "2026-09-25",
+        "pub_type": "preprint",
+        "url": "https://doi.org/10.21203/rs.3.rs-10976756/v1",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Tinnitus outcomes after cochlear implantation in single-sided deafness: an exploratory prospective multicenter study",
+        "doi": "10.3389/fneur.2026.1970581",
+        "pmid": "42865451",
+        "journal": "Front Neurol",
+        "published": "2026-09-28",
+        "pub_type": "research-article; multicenter study; journal article; observational study",
+        "url": "https://doi.org/10.3389/fneur.2026.1970581",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Tinnitus in urban settings: insights into lifestyle and medical factors from the Hamburg City Health Study",
+        "doi": "10.1007/s00405-026-10518-z",
+        "pmid": "42806132",
+        "journal": "Eur Arch Otorhinolaryngol",
+        "published": "2026-09-29",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.1007/s00405-026-10518-z",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Effects of individualized phase-amplitude-coupled transcranial alternating current stimulation on tinnitus and cognition",
+        "doi": "10.3389/fnins.2026.1905125",
+        "pmid": "42877219",
+        "journal": "Front Neurosci",
+        "published": "2026-09-30",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.3389/fnins.2026.1905125",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Relationship Between Gut Microbiota and Serum Metabolites in Patients With Tinnitus",
+        "doi": "10.1002/oto2.70321",
+        "pmid": "43075205",
+        "journal": "OTO Open",
+        "published": "2026-10-01",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.1002/oto2.70321",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Correction: Objective measurement of tinnitus using functional near-infrared spectroscopy and machine learning",
+        "doi": "10.1371/journal.pone.0359852",
+        "pmid": "42821511",
+        "journal": "PLoS One",
+        "published": "2026-10-01",
+        "pub_type": "published erratum; correction",
+        "url": "https://doi.org/10.1371/journal.pone.0359852",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Embolization of jugular bulb diverticula in the management of pulsatile tinnitus",
+        "doi": "10.3389/fneur.2026.1951324",
+        "pmid": "42922877",
+        "journal": "Front Neurol",
+        "published": "2026-10-08",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.3389/fneur.2026.1951324",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
       },
       {
         "title": "Objective markers of altered neural gain dissociate tinnitus and self-reported listening problems in individuals with exceptional hearing thresholds",
@@ -288,13 +625,192 @@
         "pmid": null,
         "journal": null,
         "published": "2026-10-08",
-        "url": "https://doi.org/10.64898/2026.10.01.755864"
+        "pub_type": "preprint",
+        "url": "https://doi.org/10.64898/2026.10.01.755864",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Learning Perspectives in the Management of Sigmoid Sinus Diverticulum in the Absence of Pulsatile Tinnitus",
+        "doi": "10.1177/01455613261480423",
+        "pmid": "42854672",
+        "journal": "Ear Nose Throat J",
+        "published": "2026-10-09",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1177/01455613261480423",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Tinnitus and inhibitory control in adults with bilateral hearing loss: A Stroop study in hearing aid users",
+        "doi": "10.1080/23279095.2026.2747122",
+        "pmid": "42860782",
+        "journal": "Appl Neuropsychol Adult",
+        "published": "2026-10-11",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1080/23279095.2026.2747122",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Multidomain Auditory Differences in Tinnitus With a Clinically Normal Audiogram: Accounting for Extended High-Frequency Hearing",
+        "doi": "10.1044/2026_jslhr-26-00071",
+        "pmid": "42862891",
+        "journal": "J Speech Lang Hear Res",
+        "published": "2026-10-12",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1044/2026_jslhr-26-00071",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Audiological Outcomes, Tinnitus, Quality of Life, and Tumor Size After Stereotactic Radiosurgery for Vestibular Schwannoma: A Prospective Study",
+        "doi": "10.7759/cureus.117976",
+        "pmid": "43034687",
+        "journal": "Cureus",
+        "published": "2026-10-15",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.7759/cureus.117976",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Speech Perception in Noise in Individuals With Tinnitus: Top-Down and Bottom-Up Processes",
+        "doi": "10.1097/aud.0000000000001896",
+        "pmid": "42878672",
+        "journal": "Ear Hear",
+        "published": "2026-10-15",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1097/aud.0000000000001896",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Everolimus for Tinnitus: A Questionable Causal Chain [Letter]",
+        "doi": "10.2147/dddt.s659416",
+        "pmid": "42903802",
+        "journal": "Drug Des Devel Ther",
+        "published": "2026-10-16",
+        "pub_type": "letter",
+        "url": "https://doi.org/10.2147/dddt.s659416",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Editorial: Tinnitus in relation to auditory processing: unravelling complex relationships",
+        "doi": "10.3389/fnins.2026.1814945",
+        "pmid": "42973638",
+        "journal": "Front Neurosci",
+        "published": "2026-10-19",
+        "pub_type": "editorial",
+        "url": "https://doi.org/10.3389/fnins.2026.1814945",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Phenylacetylglutamine and memory B cells as mediators of the migraine–tinnitus relationship: a multi-omics two-step Mendelian randomization study",
+        "doi": "10.21203/rs.3.rs-11247243/v1",
+        "pmid": null,
+        "journal": null,
+        "published": "2026-10-20",
+        "pub_type": "preprint",
+        "url": "https://doi.org/10.21203/rs.3.rs-11247243/v1",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Exploring tinnitus-like central hyperactivity in a large language model-based computational analog of hearing loss",
+        "doi": "10.1016/j.heares.2026.109845",
+        "pmid": "42956687",
+        "journal": "Hear Res",
+        "published": "2026-10-23",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1016/j.heares.2026.109845",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Tinnitus",
+        "doi": null,
+        "pmid": "28613560",
+        "journal": null,
+        "published": "2026-10-25",
+        "pub_type": "study guide",
+        "url": "https://europepmc.org/article/MED/28613560",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Pulsatile Tinnitus Alleviated by Contralateral Stent Implantation",
+        "doi": "10.1161/strokeaha.126.056600",
+        "pmid": "42932401",
+        "journal": "Stroke",
+        "published": "2026-10-26",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1161/strokeaha.126.056600",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Is routine serum TSH testing useful in the evaluation of primary subjective tinnitus? A case-control study",
+        "doi": "10.3389/fneur.2026.1973811",
+        "pmid": "43005404",
+        "journal": "Front Neurol",
+        "published": "2026-10-26",
+        "pub_type": "research-article; journal article",
+        "url": "https://doi.org/10.3389/fneur.2026.1973811",
+        "evidence_rank": 4,
+        "evidence_level": "other study"
+      },
+      {
+        "title": "Validating the Gap-Startle Paradigm for Tinnitus Detection: A Machine Learning Approach in CBA/CaJ Mice",
+        "doi": "10.64898/2026.09.05.747694",
+        "pmid": null,
+        "journal": null,
+        "published": "2026-09-09",
+        "pub_type": "preprint",
+        "url": "https://doi.org/10.64898/2026.09.05.747694",
+        "evidence_rank": 5,
+        "evidence_level": "animal or laboratory study"
+      },
+      {
+        "title": "A dual behavioral and electrophysiological evaluation of the sodium salicylate induced tinnitus model in rats: Comparing click and chirp stimuli in auditory brainstem responses",
+        "doi": "10.1016/j.bbr.2026.116529",
+        "pmid": "42860223",
+        "journal": "Behav Brain Res",
+        "published": "2026-10-11",
+        "pub_type": "comparative study; journal article",
+        "url": "https://doi.org/10.1016/j.bbr.2026.116529",
+        "evidence_rank": 5,
+        "evidence_level": "animal or laboratory study"
+      },
+      {
+        "title": "Enhanced auditory gain and tinnitus-like behavior in mice lacking KCTD12, an auxiliary subunit of GABA&lt;sub&gt;B&lt;/sub&gt; receptors",
+        "doi": "10.1016/j.nbd.2026.107664",
+        "pmid": "42946148",
+        "journal": "Neurobiol Dis",
+        "published": "2026-10-27",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1016/j.nbd.2026.107664",
+        "evidence_rank": 5,
+        "evidence_level": "animal or laboratory study"
+      },
+      {
+        "title": "Establishment of an animal model of GPIAS-defined tinnitus-like behavior with normal auditory brainstem response threshold profiles",
+        "doi": "10.1016/j.neuroscience.2026.10.043",
+        "pmid": "42951056",
+        "journal": "Neuroscience",
+        "published": "2026-10-28",
+        "pub_type": "journal article",
+        "url": "https://doi.org/10.1016/j.neuroscience.2026.10.043",
+        "evidence_rank": 5,
+        "evidence_level": "animal or laboratory study"
       }
     ]
   },
   "devices": {
     "status": "ok",
-    "since": "2026-08-08",
+    "since": "1753-02-11",
     "product_codes": [
       "KLW",
       "QVN"
@@ -308,6 +824,699 @@
         "decision": "Substantially Equivalent",
         "product_code": "KLW",
         "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK260413"
+      },
+      {
+        "number": "K260614",
+        "device_name": "Tinnitus Therapy",
+        "applicant": "Sivantos GmbH",
+        "decision_date": "2026-06-10",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK260614"
+      },
+      {
+        "number": "K233435",
+        "device_name": "Peace N Quiet (0.7.0)",
+        "applicant": "Pnq Health",
+        "decision_date": "2024-02-27",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK233435"
+      },
+      {
+        "number": "K223694",
+        "device_name": "Tinearity G1 (6103); Tinearity G1 Adapters x3 (6042)",
+        "applicant": "Duearity AB",
+        "decision_date": "2023-06-30",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK223694"
+      },
+      {
+        "number": "K221168",
+        "device_name": "Tinnitogram Signal Generator",
+        "applicant": "Goldenear Company, Inc.",
+        "decision_date": "2023-02-01",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK221168"
+      },
+      {
+        "number": "K221125",
+        "device_name": "SilentCloud",
+        "applicant": "Aureliym GmbH",
+        "decision_date": "2023-01-04",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK221125"
+      },
+      {
+        "number": "K201370",
+        "device_name": "Multiflex Tinnitus Technology",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "2020-06-19",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK201370"
+      },
+      {
+        "number": "K193303",
+        "device_name": "Tinnitus Sound Generator Module",
+        "applicant": "GN Hearing A/S",
+        "decision_date": "2020-02-20",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK193303"
+      },
+      {
+        "number": "K180495",
+        "device_name": "Tinnitus Sound Generator Module",
+        "applicant": "GN Hearing A/S",
+        "decision_date": "2018-11-30",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK180495"
+      },
+      {
+        "number": "K181586",
+        "device_name": "Tinnitus Sound Generator Module",
+        "applicant": "GN Hearing A/S",
+        "decision_date": "2018-07-13",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK181586"
+      },
+      {
+        "number": "K171243",
+        "device_name": "audifon Tinnitus-Module",
+        "applicant": "Audiofon USA, Inc.",
+        "decision_date": "2017-10-19",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK171243"
+      },
+      {
+        "number": "K163094",
+        "device_name": "TinniLogic Mobile Tinnitus Management Device",
+        "applicant": "Jiangsu Betterlife Medical Co., Ltd.",
+        "decision_date": "2017-05-17",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK163094"
+      },
+      {
+        "number": "K161562",
+        "device_name": "Sound Options Tinnitus Treatment",
+        "applicant": "Sound Options Tinnitus Treatments, Inc.",
+        "decision_date": "2016-09-28",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK161562"
+      },
+      {
+        "number": "K161331",
+        "device_name": "HyperSound Tinnitus Module",
+        "applicant": "Turtle Beach Corporation",
+        "decision_date": "2016-08-23",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK161331"
+      },
+      {
+        "number": "K151558",
+        "device_name": "Desyncra for Tinnitus Therapy System, Desyncra for Tinnitus Pro System",
+        "applicant": "Neurotherapies Reset GmbH",
+        "decision_date": "2016-01-20",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK151558"
+      },
+      {
+        "number": "K151719",
+        "device_name": "REVE134",
+        "applicant": "Kw Ear Lab, Inc.",
+        "decision_date": "2015-10-09",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK151719"
+      },
+      {
+        "number": "K150014",
+        "device_name": "Serenity",
+        "applicant": "Sanuthera, Inc.",
+        "decision_date": "2015-07-27",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK150014"
+      },
+      {
+        "number": "K150171",
+        "device_name": "Tinnitus Sound Generator Module",
+        "applicant": "Gn Resound A/S",
+        "decision_date": "2015-05-14",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK150171"
+      },
+      {
+        "number": "K150065",
+        "device_name": "SoundCure Serenade Tinnitus Treatment System",
+        "applicant": "Soundcure, Inc.",
+        "decision_date": "2015-04-13",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK150065"
+      },
+      {
+        "number": "K140845",
+        "device_name": "LEVO TINNITUS MASKING SOFTWARE DEVICE",
+        "applicant": "Otoharmonics Corp",
+        "decision_date": "2014-07-18",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK140845"
+      },
+      {
+        "number": "K132965",
+        "device_name": "SOLACE SOUND GENERATORS",
+        "applicant": "Amplisound Hearing Products & Services",
+        "decision_date": "2014-03-25",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK132965"
+      },
+      {
+        "number": "K133308",
+        "device_name": "TINNITUS SOUNDSUPPORT",
+        "applicant": "Oticon A/S",
+        "decision_date": "2014-03-18",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK133308"
+      },
+      {
+        "number": "K130937",
+        "device_name": "WAVE 2G, SOUL",
+        "applicant": "Hansaton Akustik GmbH",
+        "decision_date": "2014-01-03",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK130937"
+      },
+      {
+        "number": "K130514",
+        "device_name": "AUDIFON ARRIVA CIC, IS, IS+, M, S, S+, X TRT, AUDIFON VICO, AUDIFON PRADO, AUDIFON ELIA, CIC, IS, IS+, M, S TRT",
+        "applicant": "Audifon-USA, Inc.",
+        "decision_date": "2013-11-21",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK130514"
+      },
+      {
+        "number": "K130417",
+        "device_name": "AUDIFON SUENO CIC, AUDIFON SUENO S, AUDIFON SUENO T CIC, AUDIFON SUENO T S",
+        "applicant": "Audifon-USA, Inc.",
+        "decision_date": "2013-09-12",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK130417"
+      },
+      {
+        "number": "K130494",
+        "device_name": "UNITRON TINNITUS MASKER FEATURE",
+        "applicant": "Unitron Hearing",
+        "decision_date": "2013-05-07",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK130494"
+      },
+      {
+        "number": "K123450",
+        "device_name": "PHONAK TINNITUS BALANCE",
+        "applicant": "Phonak, LLC",
+        "decision_date": "2013-02-11",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK123450"
+      },
+      {
+        "number": "K122876",
+        "device_name": "MULTIFLEX TINNITUS TECHNOLOGY",
+        "applicant": "Starkey Laboratories",
+        "decision_date": "2012-10-31",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK122876"
+      },
+      {
+        "number": "K112752",
+        "device_name": "TINNITUS THERAPY SYSTEM ANM T30 CR",
+        "applicant": "Anm Adaptive Neuromodulation GmbH",
+        "decision_date": "2011-12-16",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK112752"
+      },
+      {
+        "number": "K111293",
+        "device_name": "SOUNDCURE SERENADE TINNITUS TREATMENT SYSTEM",
+        "applicant": "Soundcure, Inc.",
+        "decision_date": "2011-08-24",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK111293"
+      },
+      {
+        "number": "K110973",
+        "device_name": "IE-ZEN (IN CLEAR SERIES HEARING AID)",
+        "applicant": "Widex USA",
+        "decision_date": "2011-05-05",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK110973"
+      },
+      {
+        "number": "K110932",
+        "device_name": "TINNITUS SOUND GENERATOR MODULE",
+        "applicant": "Gn Resound A/S",
+        "decision_date": "2011-05-03",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK110932"
+      },
+      {
+        "number": "K093715",
+        "device_name": "EVOK 900 SERIES HEARING AID/TINNITUS MASKER OPTION DEVICE",
+        "applicant": "Magnatone Hearing Aid Corp. Dba Persona Medical",
+        "decision_date": "2010-12-22",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK093715"
+      },
+      {
+        "number": "K091552",
+        "device_name": "SWITCH TRT",
+        "applicant": "Audifon GmbH & Co. KG",
+        "decision_date": "2009-08-12",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK091552"
+      },
+      {
+        "number": "K083488",
+        "device_name": "JUMP S+ TRT, JUMP CIC TRT, JUMP S TRT, JUMP C TRT",
+        "applicant": "Audifon-USA, Inc.",
+        "decision_date": "2009-02-19",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK083488"
+      },
+      {
+        "number": "K080955",
+        "device_name": "ZEN PROGRAM (MIND 440 HEARING AID)",
+        "applicant": "Widex Hearing Aid Co., Inc.",
+        "decision_date": "2008-06-27",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK080955"
+      },
+      {
+        "number": "K073636",
+        "device_name": "TINNITUS SOUND GENERATOR MODULE",
+        "applicant": "Gn Resound A/S",
+        "decision_date": "2008-03-13",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK073636"
+      },
+      {
+        "number": "K070599",
+        "device_name": "CUSTOMIZED SOUND THERAPY (CST)",
+        "applicant": "Tinnitus Otosound Products, LLC",
+        "decision_date": "2007-07-13",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK070599"
+      },
+      {
+        "number": "K070648",
+        "device_name": "THE INHIBITOR, MODEL 001",
+        "applicant": "Melmedtronics, Inc.",
+        "decision_date": "2007-06-29",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK070648"
+      },
+      {
+        "number": "K061459",
+        "device_name": "TRANQUIL TRI-BTE",
+        "applicant": "General Hearing Instruments, Inc.",
+        "decision_date": "2006-06-30",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK061459"
+      },
+      {
+        "number": "K061111",
+        "device_name": "TINNITUS PHASE-OUT",
+        "applicant": "Tinnitus Control, Inc.",
+        "decision_date": "2006-05-16",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK061111"
+      },
+      {
+        "number": "K043274",
+        "device_name": "NEUROMONICS TINNITUS TREATMENT",
+        "applicant": "Neuromonics Pty, Ltd.",
+        "decision_date": "2005-01-28",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK043274"
+      },
+      {
+        "number": "K041302",
+        "device_name": "REFUGE SOUND GENERATOR",
+        "applicant": "Micro-Ear Technology, Inc.",
+        "decision_date": "2004-07-01",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK041302"
+      },
+      {
+        "number": "K040330",
+        "device_name": "QUIESCENCE",
+        "applicant": "Spectral Visualization & Development, Inc.",
+        "decision_date": "2004-04-12",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK040330"
+      },
+      {
+        "number": "K030180",
+        "device_name": "CRESCENT TINNITUS RETAINING SOUND GENERATOR",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "2003-09-17",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK030180"
+      },
+      {
+        "number": "K031624",
+        "device_name": "TINNITUS RX",
+        "applicant": "Tinnitus Control, Inc.",
+        "decision_date": "2003-07-24",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK031624"
+      },
+      {
+        "number": "K030791",
+        "device_name": "ANMP (ACOUSTIC NEURO MODULATION PROTOCOL)",
+        "applicant": "Tinnitech, Ltd.",
+        "decision_date": "2003-04-17",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK030791"
+      },
+      {
+        "number": "K021202",
+        "device_name": "ULTRAQUIET",
+        "applicant": "Sound Technique System, LLC",
+        "decision_date": "2002-07-13",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK021202"
+      },
+      {
+        "number": "K013827",
+        "device_name": "TST - SUPPRESSOR MODEL #1000",
+        "applicant": "Neurosim Limited",
+        "decision_date": "2002-05-21",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK013827"
+      },
+      {
+        "number": "K013253",
+        "device_name": "HISONIC-TRD TINNITUS RELIEF DEVICE",
+        "applicant": "Hearing Innovations, Inc.",
+        "decision_date": "2002-04-05",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK013253"
+      },
+      {
+        "number": "K011364",
+        "device_name": "CUSTOM TCI (TINNITUS CONTROL INSTRUMENT)",
+        "applicant": "Siemens Hearing Instruments, Inc.",
+        "decision_date": "2001-06-07",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK011364"
+      },
+      {
+        "number": "K011366",
+        "device_name": "CUSTOM TCI-COMBI (TINNITUS CONTROL INSTRUMENT COMBINATION)",
+        "applicant": "Siemens Hearing Instruments, Inc.",
+        "decision_date": "2001-06-01",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK011366"
+      },
+      {
+        "number": "K003559",
+        "device_name": "TCI (TINNITUS CONTROL INSTRUMENT)",
+        "applicant": "Siemens Hearing Instruments, Inc.",
+        "decision_date": "2001-04-26",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK003559"
+      },
+      {
+        "number": "K982451",
+        "device_name": "TTCGHI-T AND TTCTN3-T-T",
+        "applicant": "Tinnitus Treatment Centers, Inc.",
+        "decision_date": "1999-05-07",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK982451"
+      },
+      {
+        "number": "K982432",
+        "device_name": "PILLOW MASKER, C2007M, C2008M,CE2000, WONDER EAR, MINI WONDER EAR, PT-2SM, PT-3SM, PT-3LFM, PT-3HFM, PT3CM, PT5-SM, PT5-",
+        "applicant": "Tinnitus Treatment Centers, Inc.",
+        "decision_date": "1999-01-25",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK982432"
+      },
+      {
+        "number": "K984243",
+        "device_name": "TELEX TINNITUS-COMPANION",
+        "applicant": "Telex Communications, Inc.",
+        "decision_date": "1999-01-21",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK984243"
+      },
+      {
+        "number": "K981704",
+        "device_name": "AUREX-3",
+        "applicant": "Adm Tronics Unltd, Inc.",
+        "decision_date": "1998-08-05",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK981704"
+      },
+      {
+        "number": "K974501",
+        "device_name": "DIGITAL TINNITUS MASKING SYSTEM",
+        "applicant": "Petroff Audio Technologies",
+        "decision_date": "1998-01-20",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK974501"
+      },
+      {
+        "number": "K964216",
+        "device_name": "STARKEY TM-3, TM-5 HIGH FREQUENCY TINNITUS MASKER",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "1996-12-06",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK964216"
+      },
+      {
+        "number": "K963838",
+        "device_name": "STARKEY TM AIR CONDUCTION TINNITUS MASKER",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "1996-11-26",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK963838"
+      },
+      {
+        "number": "K963995",
+        "device_name": "STARKEY MA-3 AIR CONDUCTION COMBINATION HEARING AID/TINNITUS MASKER",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "1996-11-26",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK963995"
+      },
+      {
+        "number": "K941834",
+        "device_name": "AUDITORY CASSETTE",
+        "applicant": "Ltmlt, Inc.",
+        "decision_date": "1994-10-31",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK941834"
+      },
+      {
+        "number": "K940567",
+        "device_name": "MODEL#1550 MARSONA(R) TINNITUS MASKER",
+        "applicant": "Marpac, Inc.",
+        "decision_date": "1994-07-06",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK940567"
+      },
+      {
+        "number": "K924991",
+        "device_name": "MICRO MASKER",
+        "applicant": "Associated Hearing Instruments",
+        "decision_date": "1993-06-14",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK924991"
+      },
+      {
+        "number": "K922572",
+        "device_name": "321Q MINIMUM ENERGY TINNITUS SUPPRESSOR",
+        "applicant": "Microbio-Medics, Inc.",
+        "decision_date": "1992-11-02",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK922572"
+      },
+      {
+        "number": "K802750",
+        "device_name": "NUVOX BEDSIDE TINNITUS MASKER",
+        "applicant": "Hal-Hen Co., Inc.",
+        "decision_date": "1980-12-31",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK802750"
+      },
+      {
+        "number": "K802234",
+        "device_name": "BEDSIDE TINNITUS MASKER #1500",
+        "applicant": "Marpac, Inc.",
+        "decision_date": "1980-10-10",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK802234"
+      },
+      {
+        "number": "K800702",
+        "device_name": "TA-641 TINNITUS INSTRUMENT",
+        "applicant": "Audiotrone",
+        "decision_date": "1980-05-08",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK800702"
+      },
+      {
+        "number": "K800784",
+        "device_name": "MINUET MASKER; JUBILEE MASKER",
+        "applicant": "Beltone Electronics Corp.",
+        "decision_date": "1980-04-29",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK800784"
+      },
+      {
+        "number": "K800701",
+        "device_name": "T-570 TINNITUS MASKER",
+        "applicant": "Audiotrone",
+        "decision_date": "1980-04-10",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK800701"
+      },
+      {
+        "number": "K791790",
+        "device_name": "MODEL TM5 BEHIND EAR TINNITUS MASKER",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "1979-10-26",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK791790"
+      },
+      {
+        "number": "K791142",
+        "device_name": "HEARING AID, MODEL MA-1",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "1979-09-28",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK791142"
+      },
+      {
+        "number": "K791071",
+        "device_name": "MODEL MA3 BEHIND-THE-EAR MASKER/HEARING",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "1979-07-03",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK791071"
+      },
+      {
+        "number": "K790190",
+        "device_name": "TINNITUS MASKERS MODEL S584",
+        "applicant": "Vican Instrument Co.",
+        "decision_date": "1979-02-12",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK790190"
+      },
+      {
+        "number": "K781798",
+        "device_name": "TINNITUS MASKER",
+        "applicant": "Starkey Laboratories, Inc.",
+        "decision_date": "1978-11-03",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK781798"
+      },
+      {
+        "number": "K780546",
+        "device_name": "BEHIND-THE-EAR MASKING AMPLIFIER,735S",
+        "applicant": "Danavox, Inc.",
+        "decision_date": "1978-04-10",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK780546"
+      },
+      {
+        "number": "K771769",
+        "device_name": "TINNITUS MASKERS, MODELS S564&S574",
+        "applicant": "Vicon Instrument Co.",
+        "decision_date": "1978-01-03",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK771769"
+      },
+      {
+        "number": "K770938",
+        "device_name": "TINNITUS AID, MODEL S244",
+        "applicant": "Vicon Instrument Co.",
+        "decision_date": "1977-06-28",
+        "decision": "Substantially Equivalent",
+        "product_code": "KLW",
+        "url": "https://api.fda.gov/device/510k.json?search=k_number%3AK770938"
       }
     ]
   }
