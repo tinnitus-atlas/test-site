@@ -275,3 +275,22 @@ def test_launched_about_page_links_the_licence_and_commercial_terms(tmp_path):
     out = launched(tmp_path, contact_email="corrections@example.org")
     about = (out / "about/index.html").read_text()
     assert 'href="https://creativecommons.org/licenses/by-nc/4.0/"' in about and "separate licence" in about
+
+
+def test_api_extras(tmp_path):
+    _, out = build(tmp_path)
+    for p in ["api/index.html", "feed.xml", "api/v1/changes.json", "api/v1/trials.json", "api/v1/relations.json",
+              "api/v1/sources.json", "api/v1/sources.ris", "api/v1/sources.bib", "api/v1/records.csv",
+              "api/v1/relations.csv", "api/v1/openapi.json"]:
+        assert (out / p).exists(), p
+    changes = json.loads((out / "api/v1/changes.json").read_text())["changes"]
+    assert len(changes) == len(REAL["records"])
+    dates = [c["asOf"] for c in changes]
+    assert dates == sorted(dates, reverse=True)
+    trials = json.loads((out / "api/v1/trials.json").read_text())["trials"]
+    assert {t["id"] for t in trials} == {r["id"] for r in REAL["records"] if r["kind"] == "trial"}
+    spec = json.loads((out / "api/v1/openapi.json").read_text())
+    assert spec["openapi"].startswith("3.1") and "/api/v1/trials.json" in spec["paths"]
+    import xml.dom.minidom
+    xml.dom.minidom.parseString((out / "feed.xml").read_text())
+    assert (out / "api/v1/records.csv").read_text().count("\n") == len(REAL["records"]) + 1
