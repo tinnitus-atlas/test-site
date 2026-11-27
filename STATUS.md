@@ -2,6 +2,8 @@
 
 New chat: read this file first; it overrides the Now and Next sections of the claude.ai status doc. Reply format (owner, 25 Nov 20:41): the short lines he named (what was done, progress, what worked, what broke, the fix, what is needed from him, next); extra sections only when he asks. Details go here, not in chat.
 
+Roadmap and feature list: ROADMAP.md (this branch).
+
 ## Now (25 Nov 2026)
 - Site: launch-ready in test mode (pilot banner, disclaimer, privacy and corrections pages, CC BY-NC 4.0, launch check: 2 blockers left: test mode, corrections address).
 - Summary check: built; runs locally on the drafting computer (second local model) once the local job is live; GitHub nightly is the fallback.
