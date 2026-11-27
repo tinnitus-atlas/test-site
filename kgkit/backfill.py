@@ -68,6 +68,9 @@ def evidence_rank(paper: dict) -> int:
     return 4
 
 
+DEVICE_CAP = 15              # devices per review pull request; the rest wait in backfill_queue.json
+MAX_REVIEW_CHARS = 60000     # GitHub refuses pull request text over 65,536 characters
+
 RANK_LABEL = {0: "guideline or consensus", 1: "systematic review or meta-analysis", 2: "randomized trial",
               3: "other review", 4: "other study", 5: "animal or laboratory study"}
 
@@ -174,6 +177,8 @@ def pilot_markdown(rep: dict) -> str:
     if off:
         lines.append("Off-topic registry numbers (spot-check about ten): " + ", ".join(off[:40]) + (" ..." if len(off) > 40 else ""))
     lines.append(f"Papers queued for later (beyond the cap): {len(pa.get('queued') or [])}")
+    if rep.get("queued_proposals"):
+        lines.append(f"Other items queued for a later review (to keep this one readable): {rep['queued_proposals']}")
     levels: dict[str, int] = {}
     for p in pa.get("candidates") or []:
         levels[p["evidence_level"]] = levels.get(p["evidence_level"], 0) + 1
@@ -210,6 +215,17 @@ def run(records: list[dict], cfg: dict, http: Http, reports_dir, since_days: int
         else:
             kept.append(p)
     screen(kept, cfg, history)
+    # Keep one review pull request readable and within GitHub's 65,536-character limit for its text:
+    # at most DEVICE_CAP devices (the device registry has no date window, so it returns every listing at once),
+    # then trim from the end until the review text fits. Everything trimmed is queued, not lost.
+    queued_props: list[dict] = []
+    devs = [p for p in kept if p["origin"] == "openfda_device"]
+    if len(devs) > DEVICE_CAP:
+        extra = {id(p) for p in devs[DEVICE_CAP:]}
+        queued_props += [p for p in kept if id(p) in extra]
+        kept = [p for p in kept if id(p) not in extra]
+    while kept and len(proposals.to_markdown(kept)) > MAX_REVIEW_CHARS:
+        queued_props.insert(0, kept.pop())
     for p in kept:
         p["why"] = p["why"].replace("A new paper matching", "An older paper matching").replace(" was published", " was published in the backfill window")
         p["auto_apply"] = False
@@ -222,8 +238,10 @@ def run(records: list[dict], cfg: dict, http: Http, reports_dir, since_days: int
     write_report(reports, "proposals", {"check": "proposals", "mode": "backfill", "count": len(kept), "auto_apply": 0,
                                         "already_reviewed_skipped": excluded["seen"], "proposals": kept})
     (reports / "proposals.md").write_text(proposals.to_markdown(kept), encoding="utf-8")
-    write_report(reports, "backfill_queue", {"papers": feed_report["papers"].get("queued") or []})
+    write_report(reports, "backfill_queue", {"papers": feed_report["papers"].get("queued") or [],
+                                             "proposals": queued_props})
     rep = {"since": start, "until": end, "count": len(kept), "by_type": by_type, "excluded": excluded,
+           "queued_proposals": len(queued_props),
            "feeds": feed_report, "seconds": round(time.time() - t0, 1)}
     (reports / "backfill_pilot.md").write_text(pilot_markdown(rep), encoding="utf-8")
     return rep
