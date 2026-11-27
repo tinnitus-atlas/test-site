@@ -175,9 +175,9 @@ class Site:
         return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(title)}{' · ' + e(t) if title != t else ''}</title><meta name="description" content="{e(desc)}">
-{social}{canon}{'<meta name="robots" content="noindex, nofollow">' if self.test else ''}<link rel="stylesheet" href="/assets/style.css">{ld}</head>
+{social}{canon}{'<meta name="robots" content="noindex, nofollow">' if self.test else ''}<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css">{ld}</head>
 <body><a class="skip" href="#main">Skip to content</a>
-<header class="site"><div class="wrap"><a class="brand" href="/">{e(t)}</a>
+<header class="site"><div class="wrap"><a class="brand" href="/"><img src="/assets/logo.svg" alt="" width="28" height="28"><span>{e(t)}</span></a>
 <nav class="top" aria-label="Main"><a href="/treatments/">Treatments</a><a href="/trials/">Trials</a><a href="/graph/">Graph</a><a href="/about/">About</a></nav></div></header>
 <main id="main"><div class="wrap">{body}</div></main>
 <footer class="site"><div class="wrap">Not medical advice. Every statement links to its source; check anything that matters there.
