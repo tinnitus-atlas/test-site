@@ -263,3 +263,15 @@ def test_backfill_workflow_starts_only_after_a_merged_review_and_never_runs_pull
     assert "merged == true" in job["if"]
     assert job["steps"][0]["with"]["ref"] == "${{ github.event.repository.default_branch }}"
     assert not any("${{ inputs" in (s.get("run") or "") for s in job["steps"]), "inputs go through env, not the script"
+
+
+def test_devices_capped_per_review_and_review_text_fits_github(tmp_path):
+    devices = [{"k_number": f"K2{n:05d}", "device_name": f"Masker {n}", "applicant": "A", "decision_date": "2012-01-01",
+                "decision_description": "Substantially Equivalent", "product_code": "QVN"} for n in range(80)]
+    rep = run(tmp_path, Standin(devices=devices))
+    assert rep["by_type"]["devices"] <= backfill.DEVICE_CAP
+    assert rep["queued_proposals"] == 80 - rep["by_type"]["devices"]
+    assert len((tmp_path / "proposals.md").read_text()) <= backfill.MAX_REVIEW_CHARS
+    queue = json.loads((tmp_path / "backfill_queue.json").read_text())
+    assert len(queue["proposals"]) == rep["queued_proposals"]
+    assert "queued for a later review" in (tmp_path / "backfill_pilot.md").read_text()
