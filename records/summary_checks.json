@@ -1,0 +1,258 @@
+{
+ "records": {
+  "tin:aao-hns-guideline-2014": {
+   "summary_hash": "ab5a1f59cdd6c30a",
+   "source_hash": "cfbbff468e3d95c8",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "unclear",
+   "claims": [
+    {
+     "claim": "This is a US clinical guideline.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "The guideline recommends cognitive behavioural therapy for persistent, bothersome tinnitus.",
+     "verdict": "supported",
+     "evidence": "recommend cognitive behavioral therapy to patients with persistent, bothersome tinnitus."
+    },
+    {
+     "claim": "The guideline recommends hearing aid evaluation when hearing loss is present.",
+     "verdict": "supported",
+     "evidence": "recommend a hearing aid evaluation for patients who have persistent, bothersome tinnitus associated with documented hearing loss."
+    }
+   ]
+  },
+  "tin:bimodal-neuromodulation": {
+   "summary_hash": "ba14781586dc0004",
+   "source_hash": "22e798fd6a2e1ce4",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "unclear",
+   "claims": [
+    {
+     "claim": "The approach pairs sound with electrical stimulation to the tongue.",
+     "verdict": "supported",
+     "evidence": "a noninvasive device that delivers sound to the ears and electrical stimulation to the tongue"
+    },
+    {
+     "claim": "The sound is played through headphones.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "The electrical pulses are mild.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "The treatment aims to retrain how the brain processes sound.",
+     "verdict": "not_found",
+     "evidence": ""
+    }
+   ]
+  },
+  "tin:cbt": {
+   "summary_hash": "d82f970a5221649d",
+   "source_hash": "dd10c65de276f51e",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "unclear",
+   "claims": [
+    {
+     "claim": "CBT is a talking therapy.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "CBT changes how a person thinks about tinnitus.",
+     "verdict": "supported",
+     "evidence": "CBT may reduce negatively biased interpretations of tinnitus."
+    },
+    {
+     "claim": "CBT changes how a person reacts to tinnitus.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "CBT does not remove the tinnitus sound.",
+     "verdict": "not_found",
+     "evidence": ""
+    }
+   ]
+  },
+  "tin:hearing-impairment": {
+   "summary_hash": "b813d1149b087609",
+   "source_hash": "41468960babb8e23",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "unclear",
+   "claims": [
+    {
+     "claim": "Reduced ability to hear sound.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "Hearing-related factors are among the few tinnitus risk factors with supporting evidence.",
+     "verdict": "not_found",
+     "evidence": ""
+    }
+   ]
+  },
+  "tin:lenire": {
+   "summary_hash": "a9fd23d88bf0a079",
+   "source_hash": "ef3a3b58d11cdfd0",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "unclear",
+   "claims": [
+    {
+     "claim": "The device is commercial.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "The device uses bimodal acoustic and electrical stimulation.",
+     "verdict": "supported",
+     "evidence": "a combined acoustic and electrical intraoral stimulation device for the relief of tinnitus"
+    },
+    {
+     "claim": "The device is a neuromodulation device.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "The device is for tinnitus relief.",
+     "verdict": "supported",
+     "evidence": "a combined acoustic and electrical intraoral stimulation device for the relief of tinnitus"
+    },
+    {
+     "claim": "The FDA classified the device as class II on 6 March 2023.",
+     "verdict": "supported",
+     "evidence": "On March 6, 2023, FDA issued an order to the requester classifying the device into class II."
+    },
+    {
+     "claim": "The FDA classified it through the De Novo pathway.",
+     "verdict": "not_found",
+     "evidence": ""
+    }
+   ]
+  },
+  "tin:neuromod-devices": {
+   "summary_hash": "6b15792fded4c3db",
+   "source_hash": "e3b0c44298fc1c14",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "no_source",
+   "claims": []
+  },
+  "tin:sound-therapy-devices": {
+   "summary_hash": "07095f4a22e4efed",
+   "source_hash": "5dfe1dcebfc763d5",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "unclear",
+   "claims": [
+    {
+     "claim": "The devices amplify outside sound or add background sound.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "The review was published in 2018.",
+     "verdict": "not_found",
+     "evidence": ""
+    },
+    {
+     "claim": "The devices may make little or no difference to tinnitus severity.",
+     "verdict": "supported",
+     "evidence": "Using a combination device, hearing aid or sound generator might result in little or no difference in tinnitus symptom severity."
+    },
+    {
+     "claim": "The evidence for this finding was low-certainty.",
+     "verdict": "supported",
+     "evidence": "The quality of evidence for the reported outcomes, assessed using GRADE, was low."
+    }
+   ]
+  },
+  "tin:tinnitus": {
+   "summary_hash": "4a60629c5fa0ff9d",
+   "source_hash": "cfbbff468e3d95c8",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "unclear",
+   "claims": [
+    {
+     "claim": "Tinnitus is the perception of sound when no external sound is present.",
+     "verdict": "supported",
+     "evidence": "Tinnitus is the perception of sound without an external source."
+    },
+    {
+     "claim": "The sound may be ringing, buzzing, or hissing.",
+     "verdict": "not_found",
+     "evidence": ""
+    }
+   ]
+  },
+  "tin:tinnitus-handicap-inventory": {
+   "summary_hash": "3ce9bdea2e04efd7",
+   "source_hash": "46795018691a3a8a",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "ok",
+   "claims": [
+    {
+     "claim": "It is a self-report questionnaire.",
+     "verdict": "supported",
+     "evidence": "a self-report tinnitus handicap measure"
+    },
+    {
+     "claim": "It scores how much tinnitus affects daily life.",
+     "verdict": "supported",
+     "evidence": "quantify the impact of tinnitus on daily living"
+    }
+   ]
+  },
+  "tin:trial-tent-a": {
+   "summary_hash": "d726b693d040447f",
+   "source_hash": "c3e72d481b732eb1",
+   "checked_on": "2026-11-28",
+   "model_family": "openai",
+   "status": "ok",
+   "claims": [
+    {
+     "claim": "The study is randomised.",
+     "verdict": "supported",
+     "evidence": "This is a two-site, randomised, triple-blind, exploratory study"
+    },
+    {
+     "claim": "The study is triple-blind.",
+     "verdict": "supported",
+     "evidence": "This is a two-site, randomised, triple-blind, exploratory study"
+    },
+    {
+     "claim": "The study is exploratory.",
+     "verdict": "supported",
+     "evidence": "This is a two-site, randomised, triple-blind, exploratory study"
+    },
+    {
+     "claim": "The study takes place in Ireland and Germany.",
+     "verdict": "supported",
+     "evidence": "The study will enrol 342 patients, split 80:20 between two sites (Dublin, Ireland and Regensburg, Germany)"
+    },
+    {
+     "claim": "The study compares three bimodal stimulation settings.",
+     "verdict": "supported",
+     "evidence": "Three different bimodal stimulation parameter sets will be examined."
+    },
+    {
+     "claim": "Participants complete 12 weeks of treatment.",
+     "verdict": "supported",
+     "evidence": "to complete 12 weeks of treatment with the device."
+    }
+   ]
+  }
+ }
+}
