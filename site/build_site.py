@@ -105,6 +105,13 @@ def security_headers(analytics: bool = False) -> str:
 
 SECURITY_HEADERS = security_headers()
 CORS = "/api/*\n  Access-Control-Allow-Origin: *\n/context/*\n  Access-Control-Allow-Origin: *\n"
+# The editor page (/admin/) loads the pinned Sveltia CMS script from unpkg and talks to GitHub from the browser, so it
+# gets its own policy; this rule comes after /* so its "!" removes the site-wide policy first.
+ADMIN_HEADERS = ("/admin/*\n  ! Content-Security-Policy\n"
+                 "  Content-Security-Policy: default-src 'self'; script-src 'self' https://unpkg.com; "
+                 "style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: blob: https:; font-src 'self' data: https:; "
+                 "connect-src 'self' https://api.github.com https://*.githubusercontent.com https://unpkg.com; worker-src 'self' blob:; "
+                 "frame-ancestors 'none'; base-uri 'self'; object-src 'none'\n  X-Robots-Tag: noindex, nofollow\n")
 
 
 class Site:
@@ -597,6 +604,9 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
         if out.exists():
             shutil.rmtree(out)
         (out / "assets").mkdir(parents=True)
+        admin = Path(__file__).resolve().parent / "admin"
+        if admin.is_dir():
+            shutil.copytree(admin, out / "admin")
         for f in ASSETS.iterdir():
             shutil.copy(f, out / "assets" / f.name)
         if exports and exports.exists():
@@ -676,10 +686,10 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
             (out / "sitemap.xml").write_text("\n".join(sm) + "\n", encoding="utf-8")
         if self.test:
             (out / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
-            (out / "_headers").write_text(SECURITY_HEADERS.replace("/*\n", "/*\n  X-Robots-Tag: noindex, nofollow\n", 1) + CORS, encoding="utf-8")
+            (out / "_headers").write_text(SECURITY_HEADERS.replace("/*\n", "/*\n  X-Robots-Tag: noindex, nofollow\n", 1) + CORS + ADMIN_HEADERS, encoding="utf-8")
         else:
-            (out / "robots.txt").write_text("User-agent: *\nAllow: /\n" + (f"Sitemap: {self.base}/sitemap.xml\n" if self.base else ""), encoding="utf-8")
-            (out / "_headers").write_text(security_headers(bool(self.analytics)) + CORS, encoding="utf-8")
+            (out / "robots.txt").write_text("User-agent: *\nAllow: /\nDisallow: /admin/\n" + (f"Sitemap: {self.base}/sitemap.xml\n" if self.base else ""), encoding="utf-8")
+            (out / "_headers").write_text(security_headers(bool(self.analytics)) + CORS + ADMIN_HEADERS, encoding="utf-8")
         return {"pages": len(urls), "records": len(self.records), "withheld": sorted(self.held)}
 
 

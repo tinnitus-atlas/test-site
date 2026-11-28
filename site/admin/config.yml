@@ -1,0 +1,140 @@
+# Editor settings (Sveltia CMS). Saves go to the edits branch; the open pull request from edits is published with Ship it.
+backend:
+  name: github
+  repo: tinnitus-atlas/test-site
+  branch: edits
+site_url: https://tinnitus-atlas-test.pages.dev
+media_folder: site/assets/uploads
+public_folder: /assets/uploads
+collections:
+- name: data
+  label: Records
+  files:
+  - name: records
+    label: All records
+    file: records/tinnitus.records.json
+    format: json
+    fields:
+    - label: Note
+      name: _note
+      widget: hidden
+      required: false
+    - label: Records
+      label_singular: Record
+      name: records
+      widget: list
+      summary: '{{fields.name}} ({{fields.kind}})'
+      fields:
+      - label: Id (for example tin:cbt)
+        name: id
+        widget: string
+      - label: Section
+        name: kind
+        widget: select
+        options:
+        - condition
+        - related_condition
+        - mechanism
+        - drug
+        - intervention
+        - device
+        - app
+        - trial
+        - paper
+        - researcher
+        - organisation
+        - gene
+        - anatomy
+        - risk_factor
+        - measure
+        - open_question
+      - label: Name
+        name: name
+        widget: string
+      - label: Summary (one or two plain-English sentences)
+        name: tldr
+        widget: text
+      - label: Last checked (YYYY-MM-DD)
+        name: asOf
+        widget: string
+      - label: Trial status
+        name: status
+        widget: string
+        required: false
+      - label: Standard codes (for example HP:0000360)
+        name: xrefs
+        widget: list
+        required: false
+      - label: Sources
+        name: sources
+        widget: list
+        fields:
+        - label: Address
+          name: url
+          widget: string
+        - label: Title
+          name: label
+          widget: string
+        - label: DOI
+          name: doi
+          widget: string
+          required: false
+        - label: PubMed ID
+          name: pmid
+          widget: string
+          required: false
+      - label: Relationships
+        name: relations
+        widget: list
+        required: false
+        fields:
+        - label: Relationship
+          name: predicate
+          widget: select
+          options:
+          - treats
+          - in_trials_for
+          - studied_to_treat
+          - applied_to_treat
+          - ameliorates
+          - beneficial_in_models_for
+          - side_effect
+          - adverse_event
+          - contributes_to
+          - causes
+          - predisposes_to
+          - subtype_of
+          - has_phenotype
+          - target_for
+          - located_in
+          - member_of
+          - studies_condition
+          - related_to
+        - label: Linked record (id, for example tin:cbt)
+          name: object
+          widget: string
+        - label: Quote from the source
+          name: quote
+          widget: text
+          required: false
+        - label: Papers (doi:... or pmid:...)
+          name: publications
+          widget: list
+          required: false
+        - label: Evidence level
+          name: knowledgeLevel
+          widget: select
+          options:
+          - knowledge_assertion
+          - statistical_association
+          - observation
+          - prediction
+          - not_provided
+        - label: Made by
+          name: agentType
+          widget: select
+          options:
+          - manual_agent
+          - automated_agent
+          - manual_validation_of_automated_agent
+          default: manual_agent
