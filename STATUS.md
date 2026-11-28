@@ -35,6 +35,7 @@ Roadmap and feature list: ROADMAP.md (this branch).
 | Roadmap doc (claude.ai) is stale since 5 Nov; this file replaces its Now/Next | Claude | 25 Nov |
 
 ## Log
+- 28 Nov 15:35: #45 (API), #48 (Ship it fix), #51 (launcher look) merged. #50 conflict in tests/test_site.py resolved (kept both tests; 60/60 site and Ship it tests). Owner reviewing #30 and #49. Open decision: one Atlas hub with a section per condition vs separate sites (recommended: hub, spin out a condition to its own domain once it takes off).
 - 28 Nov 03:45: editor built: #50 (Sveltia CMS at /admin/, pinned 0.173.0, saves to the edits branch, own CSP for /admin/, hidden from search engines; Registry row added). edits branch created from main. After the owner's first save: open the edits pull request and check that unknown fields (facts) survive.
 - 28 Nov 03:20: #43, #44, #46 merged. #45's tick was voided by Ship it itself (update from main changed a shared file); fix in #48 (fingerprint = the PR's own added/removed lines; 39/39 tests). Backfill re-run after #46: success, review #49 opened (64 items).
 - 27 Nov 13:15: roadmap written (ROADMAP.md, six milestones; keyed API moved up; editor option B chosen). Launcher clickable mockup: https://claude.ai/artifact/BsaYTqzgXp6tMrcWi6mCSM (five steps plus control page). Next: Sveltia editor (option B), then keyed API.
