@@ -506,3 +506,14 @@ def test_behind_main_on_the_same_files_is_updated_first(monkeypatch):
     fake.main_files = [{"filename": "a.py", "status": "modified", "sha": "8"}]
     ship(fake, (7, "tick", HEAD), monkeypatch)
     assert not merged(fake) and any(p.endswith("/update-branch") for _, p, _ in fake.calls)
+
+
+def test_update_from_main_keeps_approval_when_main_changed_the_same_file_elsewhere():
+    before = {"filename": "site/build_site.py", "status": "modified", "sha": "aaa",
+              "patch": "@@ -10,6 +10,7 @@ def page():\n context\n+new line\n context"}
+    after = dict(before, sha="bbb", patch="@@ -14,6 +14,7 @@ def page():\n other context\n+new line\n context")
+    assert shipit.fingerprint("main", {"files": [before]}) == shipit.fingerprint("main", {"files": [after]})
+    changed = dict(before, patch="@@ -10,6 +10,7 @@\n context\n+a different line\n context")
+    assert shipit.fingerprint("main", {"files": [before]}) != shipit.fingerprint("main", {"files": [changed]})
+    binary = {"filename": "site/assets/logo.png", "status": "modified", "sha": "ccc"}
+    assert shipit.fingerprint("main", {"files": [binary]}) != shipit.fingerprint("main", {"files": [dict(binary, sha="ddd")]})

@@ -389,7 +389,7 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
                    else "A contact address will be published here before launch.") + "</p>" if self.s.get("licence_commercial") and not self.test else "")
                 + ("<h2>Nightly summary check</h2><p>An AI model from a different family from the one that wrote a summary compares it with "
                 "the source text every night. A summary it finds at odds with its source is marked \"Summary under review\" until a person fixes it.</p>" if self.summary_checks else "")
-                + "<h2>For developers and AI agents</h2><p><a href=\"/api/v1/index.json\">JSON index</a> · <a href=\"/api/v1/records.json\">all records</a> · "
+                + "<h2>For developers and AI agents</h2><p><a href=\"/api/\">API guide</a> · <a href=\"/api/v1/index.json\">JSON index</a> · <a href=\"/api/v1/records.json\">all records</a> · "
                 "<a href=\"/api/v1/graph.json\">graph</a> · <a href=\"/llms.txt\">llms.txt</a>"
                 + (" · <a href=\"/api/v1/kgx/\">Biolink KGX files</a>" if self._kgx_present else "") + "</p>")
         return self.page("About", body, "Method, checks and licence", path="/about/")
@@ -456,6 +456,131 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
         return self.page("Graph", body, "Interactive graph of the knowledge base", path="/graph/")
 
     # ---- data outputs ------------------------------------------------------------
+    # ---- Extra read-only API files (all static: no server, no key) ----
+    API_FILES = [
+        ("/api/v1/index.json", "Every record: id, name, kind, one-line summary, page address, date last checked."),
+        ("/api/v1/records.json", "Every record in full, with relationships, quotes and sources."),
+        ("/api/v1/records/{slug}.json", "One record in full."),
+        ("/api/v1/graph.json", "Nodes and links, for drawing the graph."),
+        ("/api/v1/changes.json", "Every record with the date it was last checked, newest first. Keep the newest date you saw and read down to it."),
+        ("/feed.xml", "The same changes as an Atom feed, for feed readers and alert services."),
+        ("/api/v1/trials.json", "Every trial with its registry number, status, phase, enrolment and dates."),
+        ("/api/v1/relations.json", "Every relationship as one row: subject, relationship, object, evidence level, quote and the papers behind it."),
+        ("/api/v1/sources.json", "Every source once, with the records that cite it."),
+        ("/api/v1/sources.ris", "The sources as a RIS file for reference managers (Zotero, EndNote, Mendeley)."),
+        ("/api/v1/sources.bib", "The sources as a BibTeX file."),
+        ("/api/v1/records.csv", "Every record as a spreadsheet row."),
+        ("/api/v1/relations.csv", "Every relationship as a spreadsheet row."),
+        ("/api/v1/openapi.json", "Machine-readable description of these files (OpenAPI 3.1)."),
+    ]
+
+    def api_extras(self, out: Path, api: Path, attribution: str, pub: list[dict]) -> None:
+        import csv
+        import io
+        dump = lambda name, obj: (api / name).write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+        base = self.base or ""
+        # Changes, newest first, and an Atom feed of the same
+        ch = sorted(({"id": r["id"], "name": r["name"], "kind": r["kind"], "asOf": r.get("asOf") or "",
+                      "url": base + self.url(r), "tldr": r.get("tldr", "")} for r in self.records),
+                    key=lambda x: (x["asOf"], x["name"]), reverse=True)
+        dump("changes.json", {"attribution": attribution, "built": self.today, "changes": ch})
+        title = self.s.get("title", "")
+        entries = "".join(
+            f"<entry><title>{e(c['name'])}</title><id>{e(base + '/' + c['id'])}:{e(c['asOf'])}</id>"
+            f"<link href=\"{e(c['url'])}\"/><updated>{e(c['asOf'] or self.today)}T00:00:00Z</updated>"
+            f"<summary>{e(c['tldr'])}</summary></entry>" for c in ch[:50])
+        (out / "feed.xml").write_text(
+            f'<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"><title>{e(title)}: changes</title>'
+            f'<id>{e(base or title)}/feed.xml</id><updated>{e(ch[0]["asOf"] if ch and ch[0]["asOf"] else self.today)}T00:00:00Z</updated>'
+            f'<link rel="self" href="{e(base)}/feed.xml"/><author><name>{e(title)}</name></author>{entries}</feed>\n', encoding="utf-8")
+        # Trials
+        trials = []
+        for r in self.records:
+            if r["kind"] != "trial":
+                continue
+            facts = r.get("facts") or {}
+            fv = lambda k: (facts.get(k) or {}).get("value") if isinstance(facts.get(k), dict) else facts.get(k)
+            reg = [x.split(":", 1)[1] for x in r.get("xrefs") or [] if x.upper().startswith("CLINICALTRIALS:")]
+            trials.append({"id": r["id"], "name": r["name"], "registry_id": reg[0] if reg else None,
+                           "status": r.get("status") or fv("status"), "phase": r.get("phase") or fv("phase"),
+                           "enrollment": fv("enrollment"), "start_date": fv("start_date"),
+                           "primary_completion_date": fv("primary_completion_date"),
+                           "asOf": r.get("asOf"), "url": base + self.url(r)})
+        dump("trials.json", {"attribution": attribution, "built": self.today, "trials": trials})
+        # Relations, one row each
+        rels = []
+        for r in self.records:
+            for rel in r.get("relations") or []:
+                if rel.get("object") not in self.by_id:
+                    continue
+                rels.append({"subject": r["id"], "subject_name": r["name"], "predicate": rel["predicate"],
+                             "relationship": self.phrase(rel["predicate"]), "object": rel["object"],
+                             "object_name": self.by_id[rel["object"]]["name"],
+                             "evidence_level": LEVEL_LABEL.get(rel.get("knowledgeLevel"), "Link"),
+                             "quote": rel.get("quote", ""), "publications": rel.get("publications") or [],
+                             "made_by": rel.get("agentType", "")})
+        dump("relations.json", {"attribution": attribution, "built": self.today, "relations": rels})
+        # Sources, each once
+        srcs: dict = {}
+        for r in self.records:
+            for s_ in r.get("sources") or []:
+                key = s_.get("doi") or s_.get("pmid") or s_.get("url")
+                if not key:
+                    continue
+                item = srcs.setdefault(key, {"label": s_.get("label") or s_.get("url"), "url": s_.get("url"),
+                                             "doi": s_.get("doi"), "pmid": s_.get("pmid"), "cited_by": []})
+                if r["id"] not in item["cited_by"]:
+                    item["cited_by"].append(r["id"])
+        sources = sorted(srcs.values(), key=lambda x: (x["label"] or "").lower())
+        dump("sources.json", {"attribution": attribution, "built": self.today, "sources": sources})
+        ris, bib = [], []
+        for i, s_ in enumerate(sources, 1):
+            ris += ["TY  - GEN", f"TI  - {s_['label']}"] + ([f"UR  - {s_['url']}"] if s_.get("url") else []) \
+                + ([f"DO  - {s_['doi']}"] if s_.get("doi") else []) + ([f"AN  - PMID:{s_['pmid']}"] if s_.get("pmid") else []) + ["ER  - ", ""]
+            fields = [f"  title = {{{s_['label']}}}"] + ([f"  url = {{{s_['url']}}}"] if s_.get("url") else []) \
+                + ([f"  doi = {{{s_['doi']}}}"] if s_.get("doi") else []) + ([f"  note = {{PMID {s_['pmid']}}}"] if s_.get("pmid") else [])
+            bib.append(f"@misc{{source{i},\n" + ",\n".join(fields) + "\n}\n")
+        (api / "sources.ris").write_text("\n".join(ris), encoding="utf-8")
+        (api / "sources.bib").write_text("\n".join(bib), encoding="utf-8")
+        # Spreadsheets
+        def to_csv(name: str, header: list[str], rows: list[list]) -> None:
+            buf = io.StringIO()
+            w = csv.writer(buf)
+            w.writerow(header)
+            w.writerows(rows)
+            (api / name).write_text(buf.getvalue(), encoding="utf-8")
+        to_csv("records.csv", ["id", "kind", "name", "summary", "last_checked", "url", "sources"],
+               [[r["id"], r["kind"], r["name"], r.get("tldr", ""), r.get("asOf", ""), base + self.url(r),
+                 " | ".join(s_.get("url", "") for s_ in r.get("sources") or [])] for r in self.records])
+        to_csv("relations.csv", ["subject", "subject_name", "relationship", "object", "object_name", "evidence_level", "quote", "publications"],
+               [[x["subject"], x["subject_name"], x["relationship"], x["object"], x["object_name"], x["evidence_level"],
+                 x["quote"], " | ".join(x["publications"])] for x in rels])
+        # OpenAPI description and a human guide
+        paths = {}
+        for path, desc in self.API_FILES:
+            if path == "/feed.xml":
+                continue
+            mt = "text/csv" if path.endswith(".csv") else "application/x-research-info-systems" if path.endswith(".ris") \
+                else "application/x-bibtex" if path.endswith(".bib") else "application/json"
+            op = {"summary": desc, "responses": {"200": {"description": "OK", "content": {mt: {}}}}}
+            if "{slug}" in path:
+                op["parameters"] = [{"name": "slug", "in": "path", "required": True, "schema": {"type": "string"},
+                                     "description": "The last part of the record's page address, for example cbt."}]
+            paths[path] = {"get": op}
+        dump("openapi.json", {"openapi": "3.1.0",
+                              "info": {"title": f"{title} API", "version": "1",
+                                       "description": f"Read-only, static JSON, CSV and citation files, rebuilt every night. {attribution}. No key needed."},
+                              "servers": [{"url": base or "/"}], "paths": paths})
+        rows = "".join(f'<tr><td><code>{e(p_)}</code></td><td>{e(d_)}</td></tr>' for p_, d_ in self.API_FILES)
+        licence = e(self.s.get("licence_data", ""))
+        body = (f"<h1>API</h1><p class=\"lede\">Free, read-only files, rebuilt every night. No key or sign-up. "
+                f"Data licence: {licence}; commercial use needs a separate licence (see <a href=\"/about/\">About</a>).</p>"
+                f'<div class="table-scroll"><table><thead><tr><th>Address</th><th>What it holds</th></tr></thead><tbody>{rows}</tbody></table></div>'
+                f"<h2>For AI agents</h2><p>A short guide for language models is at <a href=\"/llms.txt\">/llms.txt</a>, and every record has a plain-text "
+                f"page under <code>/context/</code>. A connector for AI tools (MCP) is in the repository's <code>mcp</code> folder.</p>"
+                f'<p class="meta">Machine-readable description: <a href="/api/v1/openapi.json">/api/v1/openapi.json</a>.</p>')
+        (out / "api" / "index.html").write_text(self.page("API", body, f"Free data files from {title}", path="/api/"), encoding="utf-8")
+
     def public_record(self, r: dict) -> dict:
         out = {k: v for k, v in r.items()}
         out["relations"] = [rel for rel in r.get("relations") or [] if rel.get("object") in self.by_id]
@@ -538,6 +663,7 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
                     degree[rel["object"]] += 1
         nodes = [{"id": i["id"], "name": i["name"], "kind_label": i["kind_label"], "url": i["url"], "degree": degree[i["id"]]} for i in index]
         (api / "graph.json").write_text(json.dumps({"nodes": nodes, "edges": edges}, ensure_ascii=False), encoding="utf-8")
+        self.api_extras(out, api, attribution, pub)
 
         ctx = out / "context"
         ctx.mkdir()
@@ -545,7 +671,9 @@ Data {e(self.s.get('licence_data', ''))} · code {e(self.s.get('licence_code', '
             (ctx / f"{self.slugs[r['id']]}.md").write_text(self.context_md(r), encoding="utf-8")
         llms = [f"# {self.s.get('title', '')}", "", f"> {self.s.get('tagline', '')}", "",
                 "Open, cited knowledge graph. Not medical advice. Every statement links to its source.", "",
-                "## Data", "- [All records (JSON)](/api/v1/records.json)", "- [Index (JSON)](/api/v1/index.json)", "- [Graph (JSON)](/api/v1/graph.json)"]
+                "## Data", "- [API guide](/api/)", "- [All records (JSON)](/api/v1/records.json)", "- [Index (JSON)](/api/v1/index.json)",
+                "- [Graph (JSON)](/api/v1/graph.json)", "- [Changes, newest first (JSON)](/api/v1/changes.json)", "- [Trials (JSON)](/api/v1/trials.json)",
+                "- [Relations with evidence levels (JSON)](/api/v1/relations.json)", "- [Sources (JSON)](/api/v1/sources.json)"]
         if self._kgx_present:
             llms.append("- [Biolink KGX files](/api/v1/kgx/)")
         llms += ["", "## Records"] + [f"- [{r['name']}](/context/{self.slugs[r['id']]}.md): {r.get('tldr', '')}" for r in self.records]
