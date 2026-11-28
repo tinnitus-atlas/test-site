@@ -275,3 +275,15 @@ def test_launched_about_page_links_the_licence_and_commercial_terms(tmp_path):
     out = launched(tmp_path, contact_email="corrections@example.org")
     about = (out / "about/index.html").read_text()
     assert 'href="https://creativecommons.org/licenses/by-nc/4.0/"' in about and "separate licence" in about
+
+
+def test_editor_page_is_published_hidden_and_has_its_own_policy(tmp_path):
+    _, out = build(tmp_path)
+    assert (out / "admin/index.html").exists() and (out / "admin/config.yml").exists()
+    page = (out / "admin/index.html").read_text()
+    assert "noindex" in page and "@sveltia/cms@0." in page  # pinned to one version
+    cfg = yaml.safe_load((out / "admin/config.yml").read_text())
+    assert cfg["backend"]["branch"] == "edits"  # edits never go straight to the live site
+    headers = (out / "_headers").read_text()
+    assert headers.index("/admin/*") > headers.index("/*\n")  # the detach must come after the site-wide rule
+    assert "! Content-Security-Policy" in headers
