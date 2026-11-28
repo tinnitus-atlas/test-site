@@ -71,9 +71,21 @@ def fingerprint(base_ref: str, compare: dict, skip_records: bool = False) -> str
     files = compare.get("files")
     if files is None or len(files) >= MAX_FILES:
         return None
-    rows = sorted((f["filename"], f.get("status"), f.get("sha"), f.get("previous_filename")) for f in files
+    rows = sorted((f["filename"], f.get("status"), _change(f), f.get("previous_filename")) for f in files
                   if not (skip_records and f["filename"].startswith("records/")))
     return hashlib.sha256(json.dumps([base_ref, rows]).encode()).hexdigest()
+
+
+def _change(f: dict) -> str | None:
+    """What the pull request itself changes in one file: the hash of its added and removed lines. A file that main
+    also changed (elsewhere) after the tick then keeps the same fingerprint when the branch is brought up to date;
+    any change to the pull request's own lines still voids it. Without a text diff (binary or very large files)
+    the whole file's content hash is used, as before."""
+    patch = f.get("patch")
+    if patch is None:
+        return f.get("sha")
+    lines = [ln for ln in patch.split("\n") if ln[:1] in "+-" and not ln.startswith(("+++", "---"))]
+    return "patch:" + hashlib.sha256("\n".join(lines).encode()).hexdigest()
 
 
 def body_hash(body: str | None) -> str:
