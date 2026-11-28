@@ -1,40 +1,40 @@
 # Tinnitus Atlas: status (updated every working turn; newest first in the log)
 
-New chat: read this file first; it overrides the Now and Next sections of the claude.ai status doc. Reply format (owner, 25 Nov 20:41): the short lines he named (what was done, progress, what worked, what broke, the fix, what is needed from him, next); extra sections only when he asks. Details go here, not in chat.
+New chat: read this file first, then ROADMAP.md (same branch). It overrides the claude.ai status doc. Work directly in the repository (the owner's build pipeline / Claude Code loop is broken since 25 Nov: do not route work through it). Reply format: short lines (done, progress, what broke, fix, what is needed from the owner, next); details stay here.
 
-Roadmap and feature list: ROADMAP.md (this branch).
+Access: attach tinnitus-atlas/test-site with push access (main, status and edits branches). Pull requests: create with `gh api repos/tinnitus-atlas/test-site/pulls` (GraphQL is blocked). Every pull request description starts with a plain summary of its content and ends with the Ship it line; never edit a description after opening (it wipes the owner's tick). Only the owner merges: he ticks Ship it.
 
-## Now (25 Nov 2026)
-- Site: launch-ready in test mode (pilot banner, disclaimer, privacy and corrections pages, CC BY-NC 4.0, launch check: 2 blockers left: test mode, corrections address).
-- Summary check: built; runs locally on the drafting computer (second local model) once the local job is live; GitHub nightly is the fallback.
-- Records: 10 (target about 150). Content is blocked on the owner's review of #30 (45 proposals; 5 of 90 boxes ticked, gh api pulls/30 at 20:27), whose merge also starts the 6-month backfill.
-- Local job (tinnitus-local-2027, report 20:31): key works, drafting model qwen3.6-35b-a3b-mlx found, job clone and daily schedule installed. Stopped: the job's Python lacks PyYAML (vetting card proposed in the Registry tab); no Gemma checker model listed in LM Studio yet.
+## Now (28 Nov 2026, 16:15)
+- Site (test mode, https://tinnitus-atlas-test.pages.dev): new logo, launcher look, phone layout, API files and guide (/api/), feed (/feed.xml). Launch blockers: corrections address and test mode.
+- Content: 10 records live. Waiting on the owner's review: #30 (45 proposals) and #49 (backfill, 64). Merging #49 starts the 12-month backfill, then 24 months.
+- Local drafting on the Studio runs daily (works; drafts 0 until reviews merge). Summary checker waits for the Gemma model download.
+- Editor: #50 (Sveltia at /admin/, saves to the edits branch) is conflict-free and waiting for Ship it (re-tick if it has not merged).
+- Decisions made 26-28 Nov: hub first (one Atlas hub, a section per condition, winners spin out to own domains); editor option B; keyed API moved up; launcher is a paid feature and layer 1 of a wider app (layers in ROADMAP.md).
 
-## Next (roadmap, in order)
-1. Local jobs on the drafting computer: drafting (Qwen) + summary check (Gemma 4 26B A4B QAT). Live job: agent-loop approvals/approved-brief-tinnitus-local-2027.md (hard stop 21:30 Sofia; reuses the LM Studio key OpenCode already uses; reports whether LM Studio listens only on this computer). The chat checks agent-loop reports/tinnitus-local-2027*.md and the studio-status branch; no progress at the first check = alert the owner.
-2. Owner reviews #30 now -> its merge starts the backfill chain (6, 12, 24 months back) -> more proposals -> local drafts in each Monday review. Claude watches the backfill pull requests.
-3. DONE in #43 (awaiting Ship it). Site look: owner finds it dated ("90s vibe"). Make a simple logo and a modern restyle in the owner's brand direction (minimal, light grey background, dark Prussian blue accent #003153, clean sans-serif type), show it before building; then one pull request.
-4. Re-plan gate G1 (about 150 verified records) from the first week of local drafting throughput.
-5. Studio domain (owner, later) -> corrections address -> test mode off -> public pilot.
-6. Security audit before the public pilot (owner switched the scheduled audit off until then).
+## Next (in order)
+1. Owner: review #30 and #49; Ship it on #50; make the GitHub fine-grained key and do one test edit at /admin/ (steps in the chat of 28 Nov). Claude: open the edits pull request after his first save and check that unknown fields (facts) survive; add a facts form if not.
+2. Owner: next topic for the hub. Claude: separate the engine from the tinnitus content (one settings file plus empty records per topic), turn the site into a hub with a section per condition, then run the launcher flow on the new topic.
+3. Claude: keyed API (Cloudflare Worker, self-serve key page, usage limits, Stripe test mode).
+4. Claude: onco.cc-style pages (data dictionary, data sources, recent changes, re-check dates, suggest an edit, what's missing), then the email digest.
+5. Claude: opportunity report on layer 3 (Sly, VibeNest, Vibe Starter, CreateOS, VibeRaven: price, reviews, gaps) before building beyond layer 2.
+6. Owner: studio name, then domain, corrections@, test mode off; security check before the public pilot.
 
 ## Open loops (nothing leaves this list without a decision)
 | Item | Waiting on | Since |
 | --- | --- | --- |
-| Review #30 (merge starts the backfill) | owner | 24 Nov |
-| Readiness check not published (no studio-status branch after the 20:46 run; the job discards its output): build pipeline fix, keep its output in the log and find the failing step | Claude (next brief) | 25 Nov 20:55 |
-| Doorbell to this chat + Accept button fix: loop-doorbell-2052, held for the owner's Approve click (routing change) | owner click, then Claude Code | 25 Nov 20:55 |
-| Gemma 4 26B A4B QAT still downloading; then set CHECKER_MODEL | owner, then Claude | 25 Nov 20:41 |
-| Confirm LM Studio is not reachable from the Wi-Fi ("Serve on Local Network" off): answered by the job's readiness check | tinnitus-local-2027 | 25 Nov |
-| Loop: reports from Claude Code do not reach GitHub from its sandbox (since 22 Nov); kit page has no switch button | loop fix job (not yet planned) | 22 Nov |
-| Ship it: retry with a rebase when an update conflicts | Claude | 25 Nov |
-| Ship it: the "void" note should list the changed items | Claude | 24 Nov |
-| Setup wizard: PyNaCl vetting card, then live test and Mac packaging | owner approval of the card | 24 Nov |
-| Approval Desk product: A1, A2 or A3 | owner | 24 Nov |
-| Studio name | owner (after the build) | 25 Nov |
-| Roadmap doc (claude.ai) is stale since 5 Nov; this file replaces its Now/Next | Claude | 25 Nov |
+| Review #30 and #49 | owner | 24 / 28 Nov |
+| Ship it on #50 (editor); key and first test edit | owner | 28 Nov |
+| Summary-check pull requests #42, #47 (nightly bot) | owner review or close | 26-27 Nov |
+| Next topic for the hub | owner | 28 Nov |
+| Gemma 4 26B A4B download, then CHECKER_MODEL on the Studio | owner, then Claude Code | 25 Nov |
+| Studio name, domain, corrections@ | owner | 25 Nov |
+| Readiness check not published from the Studio (output discarded) | Claude (code fix) | 25 Nov |
+| Three leftover branches proposals/backfill-* | owner (delete in GitHub) | 27 Nov |
+| Build pipeline: bot's GitHub allowance flooded by an unknown caller; Claude Code refuses planning-chat approvals | owner decision (parked) | 25 Nov |
+| Launcher mockup: https://claude.ai/artifact/BsaYTqzgXp6tMrcWi6mCSM | reference for layer 1 | 27 Nov |
 
 ## Log
+- 28 Nov 16:15: handoff to a new chat. STATUS rewritten from verified state (main at 2ac6506; open PRs #30, #42, #47, #49, #50).
 - 28 Nov 16:10: owner chose hub first (one Atlas hub, a section per condition, spin out winners). App layers 1-3 added to ROADMAP.md; layer-3 market research done (competitors found: Sly, VibeNest, Vibe Starter, CreateOS, VibeRaven). Owner picking the next topic.
 - 28 Nov 15:35: #45 (API), #48 (Ship it fix), #51 (launcher look) merged. #50 conflict in tests/test_site.py resolved (kept both tests; 60/60 site and Ship it tests). Owner reviewing #30 and #49. Open decision: one Atlas hub with a section per condition vs separate sites (recommended: hub, spin out a condition to its own domain once it takes off).
 - 28 Nov 03:45: editor built: #50 (Sveltia CMS at /admin/, pinned 0.173.0, saves to the edits branch, own CSP for /admin/, hidden from search engines; Registry row added). edits branch created from main. After the owner's first save: open the edits pull request and check that unknown fields (facts) survive.
