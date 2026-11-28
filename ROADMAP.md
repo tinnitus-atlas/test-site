@@ -73,3 +73,10 @@ The package has two parts that grow together: content (records, checked nightly)
 | Feature | Status | Done when |
 | --- | --- | --- |
 | Find and stop what floods the bot's GitHub allowance | decision | flood stopped; Accept fix merged (approval route to Claude Code is broken) |
+
+## App layers (decided 28 Nov: hub first; launcher built as layer 1 of a wider app)
+| Layer | What it does | Status |
+| --- | --- | --- |
+| 1 Launcher | Stand up a new Atlas: a section in the hub (owner) or a standalone site (paying customer) | next: separate the engine from the tinnitus content, then run it on the owner's next topic |
+| 2 Atlas console | Run Atlas sites day to day: review and Ship it, the Sveltia editor, nightly and backfill status, API keys and billing, health | parts exist (Ship it, editor in #50, status pages planned) |
+| 3 Console for AI-built projects on GitHub | Any repository: connect accounts, store keys, deploy, approve and publish in plain words, job health and alerts, undo, content editing (Sveltia works on any repo), one dashboard | research done 28 Nov; validate against Sly, VibeNest, Vibe Starter, CreateOS, VibeRaven before building |
